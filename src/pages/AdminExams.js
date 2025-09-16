@@ -30,6 +30,8 @@ function AdminExams() {
 
   const navigate = useNavigate();
 
+
+  
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (!token) return;
