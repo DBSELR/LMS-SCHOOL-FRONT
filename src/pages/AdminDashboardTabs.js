@@ -10,6 +10,7 @@ import GroupsTab from "./Courses Ware/GroupsTab";
 import SubjectsBankTab from "./Courses Ware/SubjectsBankTab";
 import CourseGroupAssignmentTab from "./Courses Ware/CourseGroupAssignmentTab";
 import SubjectsListTab from "./Courses Ware/SubjectsListTab";
+import BatchTab from "./Courses Ware/BatchTab";
 
 
 
@@ -18,10 +19,11 @@ function AdminDashboardTabs() {
 
 
 const tabs = [
-  { key: "courses", label: "Programmes", component: <CoursesTab isActive={activeTab === "courses"} /> },
-  { key: "groups", label: "Groups", component: <GroupsTab isActive={activeTab === "groups"} /> },
+  { key: "batch", label: "Batch", component: <BatchTab isActive={activeTab === "batch"} /> },
+  { key: "courses", label: "Board", component: <CoursesTab isActive={activeTab === "courses"} /> },
+  { key: "groups", label: "Classes", component: <GroupsTab isActive={activeTab === "groups"} /> },
   { key: "subjects", label: "Subjects Bank", component: <SubjectsBankTab isActive={activeTab === "subjects"} /> },
-  { key: "assignment", label: "Pgrm & Grp Assignment", component: <CourseGroupAssignmentTab isActive={activeTab === "assignment"} /> },
+  { key: "assignment", label: "Board & Class Assignment", component: <CourseGroupAssignmentTab isActive={activeTab === "assignment"} /> },
   // { key: "subjectsList", label: "Subjects Overview", component: <SubjectsListTab isActive={activeTab === "subjectsList"} /> },
 ];
 
@@ -42,7 +44,7 @@ const tabs = [
                 <i class="fa-solid fa-book"></i> Subject Master – Courseware Module
               </h2>
               <p className="text-muted mb-0">
-                Manage Programmes, Groups, Subjects, and Assignments with streamlined workflow.
+                Manage Boards, Classes, Subjects, and Assignments with streamlined workflow.
               </p>
             </div>
           </div>
@@ -54,7 +56,7 @@ const tabs = [
             <div className="card welcome-card animate-welcome">
               <div className="card-header bg-primary text-white d-flex align-items-center ">
                 <FaChalkboardTeacher className="mr-2" />
-                <h6 className="mb-0">LMS Programmes Configuration</h6>
+                <h6 className="mb-0">LMS Board Configuration</h6>
               </div>
 
 

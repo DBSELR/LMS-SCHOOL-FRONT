@@ -4,22 +4,26 @@ import { toast } from "react-toastify";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import API_BASE_URL from "../../config";
 
+const CLASS_CODE_OPTIONS = ["06", "07", "08", "09", "10"];
+
 const GroupsTab = ({ isActive }) => {
   const [groups, setGroups] = useState([]);
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
   const [batchcourse, setBatchCourse] = useState([]);
+
   const [form, setForm] = useState({
     groupId: null,
     groupCode: "",
     groupName: "",
     batchName: "",
     courseValue: "",
+    // hidden/derived
     programmeId: "",
     programmeName: "",
     numberOfSemesters: 1,
     fee: "",
-    installments:"",
+    installments: "",
     isNoGrp: false,
   });
 
@@ -34,14 +38,11 @@ const GroupsTab = ({ isActive }) => {
     try {
       const token = localStorage.getItem("jwt");
       const res = await fetch(`${API_BASE_URL}/Programme/All`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       setCourses(data);
-      const uniqueBatches = [...new Set(data.map((p) => p.batchName))];
-      setBatches(uniqueBatches);
+      setBatches([...new Set(data.map((p) => p.batchName))]);
     } catch {
       toast.dismiss();
       toast.error("❌ Failed to load courses");
@@ -52,13 +53,10 @@ const GroupsTab = ({ isActive }) => {
     try {
       const token = localStorage.getItem("jwt");
       const res = await fetch(`${API_BASE_URL}/Group/All`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       setGroups(data);
-      console.log("Loaded Groups : ", groups)
     } catch {
       toast.dismiss();
       toast.error("❌ Failed to load groups");
@@ -68,11 +66,10 @@ const GroupsTab = ({ isActive }) => {
   const fetchCoursesByBatch = async (Batch) => {
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch(`${API_BASE_URL}/Group/GetCoursesByBatch?Batch=${Batch}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/Group/GetCoursesByBatch?Batch=${encodeURIComponent(Batch)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       const data = await res.json();
       setBatchCourse(data);
     } catch {
@@ -83,22 +80,49 @@ const GroupsTab = ({ isActive }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (name === "batchName") {
-      setForm((prev) => ({ ...prev, batchName: value, courseValue: "" }));
-      fetchCoursesByBatch(value);
-    } else {
       setForm((prev) => ({
         ...prev,
-        [name]: name === "numberOfSemesters" ? parseInt(value) : value,
+        batchName: value,
+        courseValue: "",
+        programmeId: "",
+        programmeName: "",
+        numberOfSemesters: 1,
+        fee: "",
+        installments: "",
+        isNoGrp: false,
+        groupCode: "",
+        groupName: "",
       }));
+      if (value) fetchCoursesByBatch(value);
+      return;
     }
+
+    if (name === "fee") {
+      setForm((prev) => ({ ...prev, fee: value }));
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Class Code dropdown handler -> mirrors Class Name as "class - XX"
+  const handleGroupCodeChange = (e) => {
+    const code = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      groupCode: code,
+      groupName: prev.isNoGrp ? prev.groupName : (code ? `Class - ${code}` : ""),
+    }));
+  };
+
+  // When board changes, derive hidden values from selected course
   const handleCourseChange = (e) => {
     const selected = e.target.value;
     const [programmeId, batchName] = selected.split("||");
     const course = courses.find(
-      (c) => c.programmeId.toString() === programmeId && c.batchName === batchName
+      (c) => c.programmeId?.toString() === programmeId && c.batchName === batchName
     );
 
     if (course) {
@@ -109,102 +133,117 @@ const GroupsTab = ({ isActive }) => {
         programmeId: course.programmeId,
         programmeName: course.programmeName,
         batchName: course.batchName,
-        numberOfSemesters: course.numberOfSemesters,
-        fee: course.fee,
-        installments: course.installments,
+        numberOfSemesters: course.numberOfSemesters ?? 1,
+        fee: course.fee ?? "",
+        installments: course.installments ?? "",
         isNoGrp: noGrp,
-        groupCode: noGrp ? "00" : "",
-        groupName: noGrp ? "---" : "",
+        // For No-Group keep 00/---; otherwise keep chosen code and mirror name format.
+        groupCode: noGrp ? "00" : prev.groupCode,
+        groupName: noGrp ? "---" : (prev.groupCode ? `class - ${prev.groupCode}` : ""),
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        courseValue: "",
+        programmeId: "",
+        programmeName: "",
+        numberOfSemesters: 1,
+        fee: "",
+        installments: "",
+        isNoGrp: false,
+        groupName: prev.groupCode ? `class - ${prev.groupCode}` : "",
       }));
     }
   };
 
- const handleSave = async () => {
-  toast.dismiss(); // Clear existing toasts
+  const handleSave = async () => {
+    toast.dismiss();
 
-  const {
-    groupId,
-    groupCode,
-    groupName,
-    batchName,
-    programmeId,
-    programmeName,
-    numberOfSemesters,
-    fee,
-    installments,
-  } = form;
+    const {
+      groupId,
+      groupCode,
+      groupName,
+      batchName,
+      programmeId,
+      programmeName,
+      numberOfSemesters,
+      fee,
+      installments,
+      isNoGrp,
+    } = form;
 
-  if (!groupCode || !groupName || !batchName || !programmeId || !programmeName || !fee || !installments) {
-    toast.error("❌ Please fill all fields", {
-      autoClose: 3000,
-      toastId: "missing-fields",
-    });
-    return;
-  }
+    if (!batchName || !programmeId) {
+      toast.error("❌ Please select Batch and Board", { autoClose: 3000 });
+      return;
+    }
+    if (!isNoGrp) {
+      if (!groupCode) {
+        toast.error("❌ Please select Class Code", { autoClose: 3000 });
+        return;
+      }
+      if (!groupName) {
+        toast.error("❌ Class Name not generated. Re-select Class Code.", { autoClose: 3000 });
+        return;
+      }
+    }
+    if (!numberOfSemesters || !fee || !installments) {
+      toast.error("❌ Board must provide Semesters, Fee & Installments. Re-select the Board.", {
+        autoClose: 3500,
+      });
+      return;
+    }
 
-  const payload = {
-  groupCode,
-  groupName,
-  programmeId,
-  programmeName,
-  batchName,
-  numberOfSemesters,
-  fee: parseFloat(fee),
-  installments: parseInt(installments),
-  selectedSemesters: Array.from({ length: numberOfSemesters }, (_, i) => i + 1),
-};
+    const payload = {
+      groupCode: isNoGrp ? "00" : groupCode,
+      groupName: isNoGrp ? "---" : groupName,
+      programmeId,
+      programmeName,
+      batchName,
+      numberOfSemesters: Number(numberOfSemesters),
+      fee: parseFloat(fee),
+      installments: parseInt(installments, 10),
+      selectedSemesters: Array.from({ length: Number(numberOfSemesters) }, (_, i) => i + 1),
+    };
+    if (groupId) payload.groupId = groupId;
 
+    const url = groupId
+      ? `${API_BASE_URL}/Group/Update/${groupId}`
+      : `${API_BASE_URL}/Group/Create`;
+    const method = groupId ? "PUT" : "POST";
 
-  console.log("Sent Data : " ,payload);
+    try {
+      const token = localStorage.getItem("jwt");
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
 
+      const resultText = await res.text();
+      if (!res.ok) throw new Error(resultText || "Unknown server error");
 
-  const url = groupId
-    ? `${API_BASE_URL}/Group/Update/${groupId}`
-    : `${API_BASE_URL}/Group/Create`;
-  const method = groupId ? "PUT" : "POST";
+      toast.success(`✅ Class ${groupId ? "updated" : "created"} successfully`, { autoClose: 3000 });
 
-  if (groupId) payload.groupId = groupId;
+      setForm({
+        groupId: null,
+        groupCode: "",
+        groupName: "",
+        batchName: "",
+        courseValue: "",
+        programmeId: "",
+        programmeName: "",
+        numberOfSemesters: 1,
+        fee: "",
+        installments: "",
+        isNoGrp: false,
+      });
 
-  try {
-    const token = localStorage.getItem("jwt");
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(payload),
-    });
-
-    const resultText = await res.text();
-    if (!res.ok) throw new Error(resultText || "Unknown server error");
-
-    toast.success(`✅ Group ${groupId ? "updated" : "created"} successfully`, {
-      autoClose: 3000,
-      toastId: "group-save-success",
-    });
-
-    setForm({
-      groupId: null,
-      groupCode: "",
-      groupName: "",
-      batchName: "",
-      courseValue: "",
-      programmeId: "",
-      programmeName: "",
-      numberOfSemesters: 1,
-      fee: "",
-      installments:"",
-      isNoGrp: false,
-    });
-
-    fetchGroups();
-  } catch (err) {
-    toast.error(`❌ ${err.message}`, {
-      autoClose: 4000,
-      toastId: "group-save-error",
-    });
-    console.error("Group Save Error:", err.message); // Optional debug
-  }
-};
-
+      fetchGroups();
+    } catch (err) {
+      toast.error(`❌ ${err.message}`, { autoClose: 4000 });
+      console.error("Group Save Error:", err.message);
+    }
+  };
 
   const handleDelete = async (groupId) => {
     toast.dismiss();
@@ -212,9 +251,7 @@ const GroupsTab = ({ isActive }) => {
       const token = localStorage.getItem("jwt");
       const res = await fetch(`${API_BASE_URL}/Group/Delete/${groupId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success("🗑️ Group deleted successfully");
@@ -229,17 +266,23 @@ const GroupsTab = ({ isActive }) => {
       (c) => c.programmeId === g.programmeId && c.batchName === g.batchName && c.isNoGrp
     );
     await fetchCoursesByBatch(g.batchName);
+
+    // If not No-Group, normalize Class Name to "class - XX"
+    const normalizedName =
+      isNoGrp ? "---" :
+      (g.groupCode ? `class - ${g.groupCode}` : (g.groupName || ""));
+
     setForm({
       groupId: g.groupId,
-      groupCode: g.groupCode,
-      groupName: g.groupName,
+      groupCode: isNoGrp ? "00" : g.groupCode,
+      groupName: normalizedName,
       batchName: g.batchName,
       courseValue: `${g.programmeId}||${g.batchName}`,
       programmeId: g.programmeId,
       programmeName: g.programmeName,
       numberOfSemesters: g.numberOfSemesters,
       fee: g.fee,
-      installments:g.installments,
+      installments: g.installments,
       isNoGrp,
     });
   };
@@ -247,9 +290,10 @@ const GroupsTab = ({ isActive }) => {
   return (
     <div className="container py-4">
       <div className="mb-4 bg-glass p-4 border">
-        <h5 className="mb-4 text-primary">Add / Edit Group</h5>
+        <h5 className="mb-4 text-primary">Add / Edit Class</h5>
         <Form>
           <div className="row gy-3">
+            {/* Batch Name */}
             <div className="col-md-6">
               <Form.Group>
                 <Form.Label>Batch Name</Form.Label>
@@ -268,9 +312,10 @@ const GroupsTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
+            {/* Select Board */}
             <div className="col-md-6">
               <Form.Group>
-                <Form.Label>Select Programme</Form.Label>
+                <Form.Label>Select Board</Form.Label>
                 <Form.Control
                   as="select"
                   name="courseValue"
@@ -278,7 +323,7 @@ const GroupsTab = ({ isActive }) => {
                   onChange={handleCourseChange}
                   required
                 >
-                  <option value="">Select Programme</option>
+                  <option value="">Select Board</option>
                   {batchcourse.map((c) => (
                     <option key={`${c.programmeId}-${c.batchName}`} value={`${c.programmeId}||${c.batchName}`}>
                       {c.programmeCode} - {c.programmeName}
@@ -288,46 +333,40 @@ const GroupsTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            <div className="col-md-6">
+            {/* Class Code (dropdown) */}
+            <div className="col-md-4">
               <Form.Group>
-                <Form.Label>Group Code</Form.Label>
+                <Form.Label>Class Code</Form.Label>
                 <Form.Control
-                type="number"
+                  as="select"
                   name="groupCode"
                   value={form.groupCode}
-                  onChange={handleChange}
+                  onChange={handleGroupCodeChange}
                   disabled={form.isNoGrp}
-                />
+                >
+                  <option value="">Select Class Code</option>
+                  {CLASS_CODE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </Form.Control>
               </Form.Group>
             </div>
 
-            <div className="col-md-6">
+            {/* Class Name (derived from Class Code) */}
+            <div className="col-md-4">
               <Form.Group>
-                <Form.Label>Group Name</Form.Label>
+                <Form.Label>Class Name</Form.Label>
                 <Form.Control
                   name="groupName"
                   value={form.groupName}
-                  onChange={handleChange}
+                  readOnly
                   disabled={form.isNoGrp}
                 />
               </Form.Group>
             </div>
 
-            <div className="col-md-6">
-              <Form.Group>
-                <Form.Label>Number of Semesters</Form.Label>
-                <Form.Control
-                  type="number"
-                  name="numberOfSemesters"
-                  value={form.numberOfSemesters}
-                  onChange={handleChange}
-                  min={1}
-                  disabled={form.isNoGrp}
-                />
-              </Form.Group>
-            </div>
-
-            <div className="col-md-3">
+            {/* Total Fee (visible, same old logic: auto from Board, editable unless No-Group) */}
+            <div className="col-md-4">
               <Form.Group>
                 <Form.Label>Total Fee</Form.Label>
                 <Form.Control
@@ -338,17 +377,7 @@ const GroupsTab = ({ isActive }) => {
                 />
               </Form.Group>
             </div>
-        <div className="col-md-3">
-              <Form.Group>
-                <Form.Label>Installments</Form.Label>
-                <Form.Control
-                  name="installments"
-                  value={form.installments}
-                  onChange={handleChange}
-                  disabled={form.isNoGrp}
-                />
-              </Form.Group>
-            </div>
+
             <div className="col-12 mt-3">
               <Button
                 className="w-100 w-md-auto"
@@ -365,13 +394,13 @@ const GroupsTab = ({ isActive }) => {
         </Form>
       </div>
 
-      <h5 className="mb-3">Groups List</h5>
+      <h5 className="mb-3">Classes List</h5>
       {groups.length === 0 ? (
-        <p>No groups found.</p>
+        <p>No classes found.</p>
       ) : (
         groups.map((g) => (
           <div key={g.groupId} className="group-card mb-3">
-            <strong>{g.batchName}</strong> | {g.programmeCode} - {g.programmeName} | {g.groupCode} - {g.groupName} | Sem: {g.numberOfSemesters} | Fee: ₹{g.fee}
+            <strong>{g.batchName}</strong> | {g.programmeCode} - {g.programmeName} | {g.groupCode} - {g.groupName} | Fee: ₹{g.fee}
             <div className="d-flex justify-content-end gap-2 mt-2">
               <button className="btn btn-sm btn-outline-info" onClick={() => handleEdit(g)}>
                 <FaEdit /> Edit
