@@ -519,7 +519,7 @@ function StudentsPage() {
                                             style={{ cursor: "pointer" }}
                                           >
                                             <div>
-                                              <strong>Group:</strong> {groupName}
+                                              <strong>Class:</strong> {groupName}
                                             </div>
                                             <i
                                               className={`fa ml-2 ${openGroup[groupKey] ? "fa-chevron-up" : "fa-chevron-down"
