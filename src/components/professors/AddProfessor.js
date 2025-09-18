@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify"; // ✅ import toast
+import { toast } from "react-toastify";
 import API_BASE_URL from "../../config";
 
 const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [], onCancel }) => {
@@ -7,7 +7,6 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
   const editMode = mode === "edit";
 
   const [departments, setDepartments] = useState([]);
-
 
   const [formData, setFormData] = useState({
     username: "",
@@ -47,117 +46,103 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
   }, [professor]);
 
   useEffect(() => {
-  const fetchDepartments = async () => {
-    try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${API_BASE_URL}/Department`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setDepartments(data);
-        console.log("✅ Departments fetched:", data);
-      } else {
-        console.warn("⚠️ Department API did not return an array:", data);
+    const fetchDepartments = async () => {
+      try {
+        const token = localStorage.getItem("jwt");
+        const res = await fetch(`${API_BASE_URL}/Department`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setDepartments(data);
+          console.log("✅ Departments fetched:", data);
+        } else {
+          console.warn("⚠️ Department API did not return an array:", data);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching departments:", error);
+        toast.error("Failed to load departments");
       }
-    } catch (error) {
-      console.error("❌ Error fetching departments:", error);
-      toast.error("Failed to load departments");
+    };
+    fetchDepartments();
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "phoneNumber") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: digitsOnly }));
+    } else if (name === "socialMediaLinks") {
+      setFormData((prev) => ({ ...prev, [name]: value.split(",").map((link) => link.trim()) }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
-
-  fetchDepartments();
-}, []);
-
-
-const handleInputChange = (e) => {
-  const { name, value } = e.target;
-
-  if (name === "phoneNumber") {
-    const digitsOnly = value.replace(/\D/g, "").slice(0, 10); // Only numbers, max 10 digits
-    setFormData((prev) => ({ ...prev, [name]: digitsOnly }));
-  } else if (name === "socialMediaLinks") {
-    setFormData((prev) => ({ ...prev, [name]: value.split(",").map((link) => link.trim()) }));
-  } else {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }
-};
-
 
   const handleCourseChange = (e) => {
-    const selectedCourses = Array.from(e.target.selectedOptions, option => option.value);
-    setFormData((prev) => ({
-      ...prev,
-      assignedCourses: selectedCourses,
-    }));
+    const selectedCourses = Array.from(e.target.selectedOptions, (option) => option.value);
+    setFormData((prev) => ({ ...prev, assignedCourses: selectedCourses }));
   };
 
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     if (onSubmit) {
-//       const payload = {
-//         ...formData,
-//         userId: professor?.userId,
-//       };
-//       onSubmit(payload);
-// console.log("Sent Data",payload);
-//       toast.success(`✅ Professor ${editMode ? "updated" : "added"} successfully`, {
-//         autoClose: 3000,
-//         toastId: "professor-submit-toast",
-//       });
-//     }
-//   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = { ...formData, userId: professor?.userId };
 
-  const payload = {
-    ...formData,
-    userId: professor?.userId,
-  };
+    try {
+      if (onSubmit) {
+        await onSubmit(payload);
+        toast.success(`✅ Professor ${editMode ? "updated" : "added"} successfully`, {
+          autoClose: 3000,
+          toastId: "professor-submit-toast",
+        });
+      }
+    } catch (err) {
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Save failed";
 
-  try {
-    if (onSubmit) {
-      // Call the provided onSubmit function and wait for it to complete
-      await onSubmit(payload);
-
-      toast.success(`✅ Professor ${editMode ? "updated" : "added"} successfully`, {
+      toast.error(`❌ ${errorMessage}`, {
         autoClose: 3000,
-        toastId: "professor-submit-toast",
+        toastId: "professor-submit-error",
       });
     }
-  } catch (err) {
-    const errorMessage =
-      err?.response?.data?.message || // Axios error with message object
-      err?.response?.data ||          // Axios error with plain string response
-      err?.message ||                 // JS error message
-      "Save failed";                  // fallback
+  };
 
-    toast.error(`❌ ${errorMessage}`, {
-      autoClose: 3000,
-      toastId: "professor-submit-error",
-    });
-  }
-};
+  // ---- NEW: helper to mark auto-generated fields ----
+  const isAutoField = (name) => name === "username" || name === "password";
 
+  // Updated render helper: auto fields are disabled + label shows (Auto-generated)
+  const renderInput = (label, name, type = "text", extra = {}) => {
+    const auto = isAutoField(name);
+    const finalLabel = auto ? `${label} (Auto-generated)` : label;
 
-
-  const renderInput = (label, name, type = "text", extra = {}) => (
-    <div className="form-group col-md-6">
-      <label htmlFor={name} className="form-label">{label}</label>
-      <input
-        type={type}
-        id={name}
-        name={name}
-        className="form-control"
-        value={Array.isArray(formData[name]) ? formData[name].join(", ") : formData[name]}
-        onChange={handleInputChange}
-        disabled={readOnly}
-        {...extra}
-      />
-    </div>
-  );
+    return (
+      <div className="form-group col-md-6">
+        <label htmlFor={name} className="form-label">{finalLabel}</label>
+        <input
+          type={type}
+          id={name}
+          name={name}
+          className="form-control"
+          value={Array.isArray(formData[name]) ? formData[name].join(", ") : formData[name]}
+          onChange={handleInputChange}
+          // Disabled if read-only OR auto-generated field
+          disabled={readOnly || auto}
+          placeholder={auto ? "Auto-generated" : extra.placeholder}
+          autoComplete={name === "password" ? "new-password" : "off"}
+          {...extra}
+        />
+        {auto && (
+          <small className="text-muted d-block mt-1">
+            This will be generated automatically when saving.
+          </small>
+        )}
+      </div>
+    );
+  };
 
   return (
     <form onSubmit={handleSubmit} className="container-fluid">
@@ -166,30 +151,32 @@ const handleSubmit = async (e) => {
       </h4>
 
       <div className="row">
+        {/* NOTE: you currently hide these in edit mode. They will be disabled in add/view. */}
         {!editMode && renderInput("Username", "username")}
         {!editMode && renderInput("Password", "password", "password")}
         {renderInput("First Name", "firstName")}
         {renderInput("Last Name", "lastName")}
         {renderInput("Email", "email", "email")}
         {renderInput("Phone Number", "phoneNumber")}
+
         <div className="form-group col-md-6">
-  <label htmlFor="department">Department</label>
-  <select
-    name="department"
-    id="department"
-    className="form-control"
-    value={formData.department}
-    onChange={handleInputChange}
-    disabled={readOnly}
-  >
-    <option value="">-- Select Department --</option>
-    {departments.map((dept) => (
-      <option key={dept.code} value={dept.name}>
-        {dept.name}
-      </option>
-    ))}
-  </select>
-</div>
+          <label htmlFor="department">Department</label>
+          <select
+            name="department"
+            id="department"
+            className="form-control"
+            value={formData.department}
+            onChange={handleInputChange}
+            disabled={readOnly}
+          >
+            <option value="">-- Select Department --</option>
+            {departments.map((dept) => (
+              <option key={dept.code} value={dept.name}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {renderInput("Profile Picture URL", "profilePictureUrl")}
         {renderInput("Office Location", "officeLocation")}

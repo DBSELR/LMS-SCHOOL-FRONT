@@ -15,7 +15,7 @@ import BatchTab from "./Courses Ware/BatchTab";
 
 
 function AdminDashboardTabs() {
-  const [activeTab, setActiveTab] = useState("courses");
+  const [activeTab, setActiveTab] = useState("batch");
 
 
 const tabs = [
