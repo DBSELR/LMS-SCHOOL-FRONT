@@ -359,7 +359,7 @@ function StudentsPage() {
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                   />
-                  {role === "Admin" && (
+                  {role === "Admin" || "Faculty" && (
                     <button className="btn btn-primary" onClick={handleAddNew}>
                       ➕ Add Student
                     </button>

@@ -1,3 +1,4 @@
+// src/pages/RoleMenuMapping.jsx
 import React, { useState, useEffect } from "react";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
@@ -9,6 +10,79 @@ import Footer from "../components/Footer";
 
 const RoleMenu_API = `${API_BASE_URL}/rolemenu`;
 
+/* ============================= DEBUG CONSOLE ============================= */
+const DEBUG = true; // ⬅️ flip to false to silence all logs
+
+function ts() {
+  return new Date().toISOString();
+}
+function log(...args) {
+  if (!DEBUG) return;
+  console.log(`[ROLE-MENU ${ts()}]`, ...args);
+}
+function group(label) {
+  if (!DEBUG) return { end: () => {} };
+  console.groupCollapsed(`🧭 ${label}`);
+  return { end: () => console.groupEnd() };
+}
+function logRequest(label, { url, method = "GET", headers, body }) {
+  if (!DEBUG) return;
+  console.groupCollapsed(`📤 ${label} REQUEST`);
+  console.log("URL:", url);
+  console.log("Method:", method);
+  console.log("Headers:", headers);
+  if (body !== undefined) {
+    try {
+      console.log("Body (parsed):", JSON.parse(body));
+    } catch {
+      console.log("Body (text):", body);
+    }
+  }
+  console.groupEnd();
+}
+function logResponse(label, res, ms, textPeek) {
+  if (!DEBUG) return;
+  console.groupCollapsed(`📥 ${label} RESPONSE`);
+  console.log("Status:", res.status, res.statusText);
+  console.log("Duration:", `${ms.toFixed(1)} ms`);
+  try {
+    console.log("Peek (first 300 chars):", (textPeek || "").slice(0, 300));
+  } catch {}
+  console.groupEnd();
+}
+async function apiFetch(label, url, options = {}) {
+  const start = performance.now();
+  const outHeaders = options.headers || {};
+  logRequest(label, { url, method: options.method || "GET", headers: outHeaders, body: options.body });
+
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (err) {
+    if (DEBUG) {
+      console.groupCollapsed(`❌ ${label} NETWORK ERROR`);
+      console.error(err);
+      console.groupEnd();
+    }
+    throw err;
+  }
+
+  // Clone to log body without consuming the original stream
+  const clone = res.clone();
+  const text = await clone.text().catch(() => "");
+  const elapsed = performance.now() - start;
+  logResponse(label, res, elapsed, text);
+
+  let json;
+  try {
+    json = text ? JSON.parse(text) : undefined;
+  } catch {
+    // non-JSON or invalid JSON
+  }
+  return { res, json, text, elapsed };
+}
+/* =========================== END DEBUG CONSOLE =========================== */
+
 function RoleMenuMapping() {
   const [roles, setRoles] = useState([]);
   const [menus, setMenus] = useState([]);
@@ -18,64 +92,103 @@ function RoleMenuMapping() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  // small helper to build auth headers safely
+  const authHeaders = () => {
+    const token = localStorage.getItem("jwt");
+    if (DEBUG) log("🔐 JWT present?", Boolean(token));
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   // ✅ Fetch roles
   const fetchRoles = async () => {
+    const label = "Fetch Roles";
     try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${RoleMenu_API}/roles`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { res, json } = await apiFetch(label, `${RoleMenu_API}/roles`, {
+        headers: { ...authHeaders() },
       });
-      const data = await res.json();
-      setRoles(Array.isArray(data) ? data : []);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list = Array.isArray(json) ? json : [];
+      setRoles(list);
+      if (DEBUG) {
+        const g = group("Roles Loaded");
+        console.table(list);
+        g.end();
+      }
     } catch (err) {
       console.error("Error fetching roles", err);
+      toast.error("Error fetching roles");
     }
   };
 
   // ✅ Fetch menus
   const fetchMenus = async () => {
+    const label = "Fetch Menus";
     try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${RoleMenu_API}/menus`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { res, json } = await apiFetch(label, `${RoleMenu_API}/menus`, {
+        headers: { ...authHeaders() },
       });
-      const data = await res.json();
-      setMenus(Array.isArray(data) ? data : []);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list = Array.isArray(json) ? json : [];
+      setMenus(list);
+      if (DEBUG) {
+        const g = group("Menus Loaded");
+        console.table(list);
+        g.end();
+      }
     } catch (err) {
       console.error("Error fetching menus", err);
+      toast.error("Error fetching menus");
     }
   };
 
   // ✅ Fetch mappings
   const fetchMappings = async () => {
+    const label = "Fetch Role-Menu Mappings";
     try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${RoleMenu_API}/rolemenumappings`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { res, json } = await apiFetch(label, `${RoleMenu_API}/rolemenumappings`, {
+        headers: { ...authHeaders() },
       });
-      const data = await res.json();
-      setMappings(Array.isArray(data) ? data : []);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list = Array.isArray(json) ? json : [];
+      setMappings(list);
+      if (DEBUG) {
+        const g = group("Mappings Loaded");
+        console.table(list);
+        g.end();
+      }
     } catch (err) {
       console.error("Error fetching mappings", err);
+      toast.error("Error fetching mappings");
     }
   };
 
   // ✅ Fetch details for edit
   const fetchMappingDetails = async (roleId) => {
+    const label = `Fetch Mapping Details (roleId=${roleId})`;
     try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${RoleMenu_API}/rolemenumapping/${roleId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { res, json } = await apiFetch(label, `${RoleMenu_API}/rolemenumapping/${roleId}`, {
+        headers: { ...authHeaders() },
       });
       if (!res.ok) throw new Error("Failed to fetch mapping details");
-      const data = await res.json();
 
-      setSelectedRole(data.role.roleId);
-      const selectedIds = data.menus.map((m) => m.menuId);
+      // expected shape: { role: { roleId }, menus: [{ menuId }, ...] }
+      if (DEBUG) {
+        const g = group("Mapping Details Raw");
+        console.log(json);
+        g.end();
+      }
+
+      setSelectedRole(json?.role?.roleId ?? "");
+      const selectedIds = Array.isArray(json?.menus) ? json.menus.map((m) => m.menuId) : [];
       setSelectedMenus(selectedIds);
 
       setEditMode(true);
       setShowModal(true);
+
+      if (DEBUG) {
+        log("✏️ Entering EDIT MODE for roleId:", json?.role?.roleId);
+        console.table(selectedIds.map((id) => ({ menuId: id })));
+      }
     } catch (err) {
       console.error("Error fetching mapping details", err);
       toast.error("Error fetching mapping details");
@@ -83,20 +196,28 @@ function RoleMenuMapping() {
   };
 
   useEffect(() => {
+    if (DEBUG) log("🔄 initial load…");
     fetchRoles();
     fetchMenus();
     fetchMappings();
   }, []);
 
   const handleMenuChange = (menuId) => {
-    setSelectedMenus((prev) =>
-      prev.includes(menuId)
-        ? prev.filter((id) => id !== menuId)
-        : [...prev, menuId]
-    );
+    setSelectedMenus((prev) => {
+      const next = prev.includes(menuId) ? prev.filter((id) => id !== menuId) : [...prev, menuId];
+      if (DEBUG) {
+        const g = group("Menu Selection Changed");
+        console.log("Clicked menuId:", menuId);
+        console.log("Prev count:", prev.length, "Next count:", next.length);
+        console.table(next.map((id) => ({ menuId: id })));
+        g.end();
+      }
+      return next;
+    });
   };
 
   const openModal = (map = null) => {
+    if (DEBUG) log("🪟 openModal called with:", map);
     if (map) {
       fetchMappingDetails(map.roleId);
     } else {
@@ -104,11 +225,13 @@ function RoleMenuMapping() {
       setSelectedRole("");
       setSelectedMenus([]);
       setShowModal(true);
+      if (DEBUG) log("➕ Entering ADD MODE");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!selectedRole) {
       toast.error("Please select a role");
       return;
@@ -118,19 +241,29 @@ function RoleMenuMapping() {
       return;
     }
 
+    const payload = {
+      roleId: parseInt(selectedRole, 10),
+      menuIds: selectedMenus.join(","),
+    };
+    if (DEBUG) {
+      const g = group("Submitting Mapping Payload");
+      console.log(payload);
+      g.end();
+    }
+
     try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${RoleMenu_API}/rolemenumapping`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          roleId: parseInt(selectedRole),
-          menuIds: selectedMenus.join(","),
-        }),
-      });
+      const { res } = await apiFetch(
+        editMode ? "Update Mapping" : "Create Mapping",
+        `${RoleMenu_API}/rolemenumapping`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to save mapping");
 
@@ -147,11 +280,12 @@ function RoleMenuMapping() {
 
   const handleDelete = async (roleId) => {
     if (!window.confirm("Are you sure you want to delete this mapping?")) return;
+    if (DEBUG) log("🗑️ Deleting mapping for roleId:", roleId);
+
     try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${RoleMenu_API}/rolemenumapping/${roleId}`, {
+      const { res } = await apiFetch("Delete Mapping", `${RoleMenu_API}/rolemenumapping/${roleId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { ...authHeaders() },
       });
 
       if (!res.ok) throw new Error("Failed to delete mapping");
@@ -178,9 +312,7 @@ function RoleMenuMapping() {
               <h2 className="page-title text-primary">
                 <i className="fa-solid fa-diagram-project"></i> Role Menu Mapping
               </h2>
-              <p className="text-muted mb-0">
-                Assign menus to roles and manage mappings
-              </p>
+              <p className="text-muted mb-0">Assign menus to roles and manage mappings</p>
             </div>
 
             {/* Card Section */}
@@ -249,16 +381,9 @@ function RoleMenuMapping() {
       </div>
 
       {/* Add/Edit Modal */}
-      <Modal
-        show={showModal}
-        onHide={() => setShowModal(false)}
-        centered
-        size="lg"
-      >
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
         <Modal.Header>
-          <Modal.Title>
-            {editMode ? "Edit Mapping" : "Assign Menus to Role"}
-          </Modal.Title>
+          <Modal.Title>{editMode ? "Edit Mapping" : "Assign Menus to Role"}</Modal.Title>
           <button className="close" onClick={() => setShowModal(false)}>
             <span>&times;</span>
           </button>
@@ -266,7 +391,9 @@ function RoleMenuMapping() {
         <Modal.Body>
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label><b>Select Role</b></label>
+              <label>
+                <b>Select Role</b>
+              </label>
               <select
                 className="form-control"
                 value={selectedRole}
@@ -284,11 +411,10 @@ function RoleMenuMapping() {
             </div>
 
             <div className="mb-3">
-              <label><b>Select Menus</b></label>
-              <div
-                className="border rounded p-2"
-                style={{ maxHeight: "250px", overflowY: "auto" }}
-              >
+              <label>
+                <b>Select Menus</b>
+              </label>
+              <div className="border rounded p-2" style={{ maxHeight: "250px", overflowY: "auto" }}>
                 {menus.map((m) => (
                   <div key={m.menuId} className="form-check">
                     <input
@@ -298,10 +424,7 @@ function RoleMenuMapping() {
                       checked={selectedMenus.includes(m.menuId)}
                       onChange={() => handleMenuChange(m.menuId)}
                     />
-                    <label
-                      className="form-check-label"
-                      htmlFor={`menu-${m.menuId}`}
-                    >
+                    <label className="form-check-label" htmlFor={`menu-${m.menuId}`}>
                       {m.menuName}
                     </label>
                   </div>

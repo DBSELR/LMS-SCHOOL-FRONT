@@ -52,7 +52,7 @@ function Login() {
           case "Admin":
             navigate("/admin-dashboard");
             break;
-          case "Instructor":
+          case "Faculty":
             navigate("/instructor-dashboard");
             break;
             case "SRO":

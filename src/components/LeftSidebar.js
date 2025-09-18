@@ -69,7 +69,7 @@ function LeftSidebar({ role: propRole }) {
       { icon: "fa fa-book-open", label: "Courseware", href: "/my-courseware" },
       { icon: "fa fa-pencil", label: "Subject List", href: "/student-examinations" },
       { icon: "fa fa-file-pen", label: "Exams", href: "/student-exams" },
-      { icon: "fa fa-archive", label: "Library", href: "/studentlibrary" },
+      { icon: "fa fa-archive", label: "Library", href: "/studentlibrary" }, 
       { icon: "fa fa-bar-chart", label: "My Submissions", href: "/student-submissions" },
       { icon: "fa fa-check-circle", label: "My Progress", href: "/student/attendance" },
       { icon: "fa fa-calendar", label: "Calendar", href: "/events" },
@@ -77,8 +77,9 @@ function LeftSidebar({ role: propRole }) {
       { icon: "fa fa-credit-card", label: "Fee Status", href: "/fees/student" },
       { icon: "fa fa-headset", label: "Support", href: "/student/support-tickets" },
     ],
-    Instructor: [
+    Faculty: [
       { icon: "fa fa-dashboard", label: "Dashboard", href: "/instructor-dashboard" },
+      { icon: "fa fa-user-graduate", label: " Add Students", href: "/students" },
       { icon: "fa fa-archive", label: "Library", href: "/library" },
       { icon: "fa fa-book-open", label: "My Courseware", href: "/my-courseware" },
       { icon: "fa fa-video-camera", label: "Live Classes", href: "/instructor/live-classes" },
