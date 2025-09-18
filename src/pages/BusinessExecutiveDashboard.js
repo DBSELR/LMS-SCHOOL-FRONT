@@ -1,4 +1,6 @@
-// File: src/pages/AdminDashboard.jsx
+
+
+// File: src/pages/BusinessExecutiveDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import HeaderTop from "../components/HeaderTop";
@@ -8,7 +10,7 @@ import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-function AdminDashboard() {
+function BusinessExecutiveDashboard() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState({
     students: 0,
@@ -21,7 +23,7 @@ function AdminDashboard() {
     tasks: 0,
     leaves: 0
   });
-  const [adminName, setAdminName] = useState("Admin");
+  const [businessName, setBusinessName] = useState("Business Executive");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,8 +36,8 @@ function AdminDashboard() {
     try {
       const decoded = jwtDecode(token);
       const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-      const name = decoded["Username"] || decoded.name || "Admin";
-      setAdminName(name);
+      const name = decoded["Username"] || decoded.name || "Business_Executive";
+      setBusinessName(name);
 
       if (role !== "Admin" && role !== "Business_Executive") {
         setLoading(false);
@@ -104,10 +106,10 @@ function AdminDashboard() {
             {/* Welcome Header */}
             <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
                           <h2 className="page-title text-primary">
-                            Welcome back, <strong>{adminName}</strong> 👋
+                            Welcome back, <strong>{businessName}</strong> 👋
                           </h2>
                           <p className="text-muted mb-0">
-                            Here’s a quick snapshot of your Admin LMS dashboard.
+                            Here’s a quick snapshot of your Business Executive LMS dashboard.
                           </p>
                         </div>
             {/* Dashboard Cards */}
@@ -158,4 +160,4 @@ function AdminDashboard() {
   );
 }
 
-export default AdminDashboard;
+export default BusinessExecutiveDashboard;

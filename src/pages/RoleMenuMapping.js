@@ -1,5 +1,5 @@
 // src/pages/RoleMenuMapping.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import API_BASE_URL from "../config";
@@ -67,7 +67,6 @@ async function apiFetch(label, url, options = {}) {
     throw err;
   }
 
-  // Clone to log body without consuming the original stream
   const clone = res.clone();
   const text = await clone.text().catch(() => "");
   const elapsed = performance.now() - start;
@@ -76,9 +75,7 @@ async function apiFetch(label, url, options = {}) {
   let json;
   try {
     json = text ? JSON.parse(text) : undefined;
-  } catch {
-    // non-JSON or invalid JSON
-  }
+  } catch {}
   return { res, json, text, elapsed };
 }
 /* =========================== END DEBUG CONSOLE =========================== */
@@ -91,6 +88,13 @@ function RoleMenuMapping() {
   const [selectedMenus, setSelectedMenus] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
+
+  // NEW: search queries
+  const [roleQuery, setRoleQuery] = useState("");
+  const [menuQuery, setMenuQuery] = useState("");
+
+  // NEW: master checkbox ref for tri-state
+  const masterMenuRef = useRef(null);
 
   // small helper to build auth headers safely
   const authHeaders = () => {
@@ -171,7 +175,6 @@ function RoleMenuMapping() {
       });
       if (!res.ok) throw new Error("Failed to fetch mapping details");
 
-      // expected shape: { role: { roleId }, menus: [{ menuId }, ...] }
       if (DEBUG) {
         const g = group("Mapping Details Raw");
         console.log(json);
@@ -181,6 +184,10 @@ function RoleMenuMapping() {
       setSelectedRole(json?.role?.roleId ?? "");
       const selectedIds = Array.isArray(json?.menus) ? json.menus.map((m) => m.menuId) : [];
       setSelectedMenus(selectedIds);
+
+      // reset searches when opening
+      setMenuQuery("");
+      setRoleQuery("");
 
       setEditMode(true);
       setShowModal(true);
@@ -224,6 +231,8 @@ function RoleMenuMapping() {
       setEditMode(false);
       setSelectedRole("");
       setSelectedMenus([]);
+      setMenuQuery("");
+      setRoleQuery("");
       setShowModal(true);
       if (DEBUG) log("➕ Entering ADD MODE");
     }
@@ -296,6 +305,62 @@ function RoleMenuMapping() {
       console.error("Error deleting mapping", err);
       toast.error("Error deleting mapping");
     }
+  };
+
+  /* ======================= SEARCH / FILTER DERIVATIONS ======================= */
+  const filteredRoles = useMemo(() => {
+    const q = roleQuery.trim().toLowerCase();
+    if (!q) return roles;
+    return roles.filter((r) => (r.roleName || "").toLowerCase().includes(q));
+  }, [roles, roleQuery]);
+
+  const filteredMenus = useMemo(() => {
+    const q = menuQuery.trim().toLowerCase();
+    if (!q) return menus;
+    return menus.filter((m) => (m.menuName || "").toLowerCase().includes(q));
+  }, [menus, menuQuery]);
+
+  const visibleIds = useMemo(() => filteredMenus.map((m) => m.menuId), [filteredMenus]);
+
+  const selectedVisibleCount = useMemo(
+    () => visibleIds.filter((id) => selectedMenus.includes(id)).length,
+    [visibleIds, selectedMenus]
+  );
+
+  const allVisibleSelected = filteredMenus.length > 0 && selectedVisibleCount === filteredMenus.length;
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
+
+  // Tri-state master checkbox
+  useEffect(() => {
+    if (masterMenuRef.current) {
+      masterMenuRef.current.indeterminate = someVisibleSelected;
+    }
+  }, [someVisibleSelected]);
+
+  const toggleSelectAllVisible = (checked) => {
+    setSelectedMenus((prev) => {
+      const set = new Set(prev);
+      if (checked) {
+        // add all visible
+        visibleIds.forEach((id) => set.add(id));
+      } else {
+        // remove all visible
+        visibleIds.forEach((id) => set.delete(id));
+      }
+      const next = Array.from(set);
+      if (DEBUG) {
+        const g = group(checked ? "Select ALL (visible) Menus" : "Clear ALL (visible) Menus");
+        console.log("Visible count:", visibleIds.length);
+        console.log("Result selected count:", next.length);
+        g.end();
+      }
+      return next;
+    });
+  };
+
+  const clearAllMenus = () => {
+    setSelectedMenus([]);
+    if (DEBUG) log("🧹 Cleared ALL menus");
   };
 
   return (
@@ -390,10 +455,26 @@ function RoleMenuMapping() {
         </Modal.Header>
         <Modal.Body>
           <form onSubmit={handleSubmit}>
+            {/* ======= Role Select (with search) ======= */}
             <div className="mb-3">
               <label>
                 <b>Select Role</b>
               </label>
+
+              <div className="input-group mb-2">
+                <span className="input-group-text">
+                  <i className="fa fa-search" />
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search role..."
+                  value={roleQuery}
+                  onChange={(e) => setRoleQuery(e.target.value)}
+                  disabled={editMode} // cannot change role while editing mapping
+                />
+              </div>
+
               <select
                 className="form-control"
                 value={selectedRole}
@@ -402,7 +483,7 @@ function RoleMenuMapping() {
                 disabled={editMode}
               >
                 <option value="">-- Select Role --</option>
-                {roles.map((r) => (
+                {filteredRoles.map((r) => (
                   <option key={r.roleId} value={r.roleId}>
                     {r.roleName}
                   </option>
@@ -410,25 +491,86 @@ function RoleMenuMapping() {
               </select>
             </div>
 
+            {/* ======= Menus (search + select-all) ======= */}
             <div className="mb-3">
               <label>
                 <b>Select Menus</b>
               </label>
-              <div className="border rounded p-2" style={{ maxHeight: "250px", overflowY: "auto" }}>
-                {menus.map((m) => (
-                  <div key={m.menuId} className="form-check">
+
+              {/* search + select all row */}
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <div className="flex-grow-1">
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="fa fa-search" />
+                    </span>
                     <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id={`menu-${m.menuId}`}
-                      checked={selectedMenus.includes(m.menuId)}
-                      onChange={() => handleMenuChange(m.menuId)}
+                      type="text"
+                      className="form-control"
+                      placeholder="Search menus..."
+                      value={menuQuery}
+                      onChange={(e) => setMenuQuery(e.target.value)}
                     />
-                    <label className="form-check-label" htmlFor={`menu-${m.menuId}`}>
-                      {m.menuName}
-                    </label>
                   </div>
-                ))}
+                </div>
+
+                <div className="form-check ms-2">
+                  <input
+                    ref={masterMenuRef}
+                    type="checkbox"
+                    className="form-check-input"
+                    id="selectAllVisible"
+                    checked={allVisibleSelected}
+                    onChange={(e) => toggleSelectAllVisible(e.target.checked)}
+                    disabled={filteredMenus.length === 0}
+                  />
+                  <label className="form-check-label" htmlFor="selectAllVisible">
+                    Select all ({filteredMenus.length})
+                  </label>
+                </div>
+              </div>
+
+              {/* counts + clear all */}
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <small className="text-muted">
+                  Selected: <b>{selectedMenus.length}</b> / Total Menus: <b>{menus.length}</b>{" "}
+                  {menuQuery && (
+                    <>
+                      &nbsp;|&nbsp; Visible selected: <b>{selectedVisibleCount}</b> /{" "}
+                      <b>{filteredMenus.length}</b>
+                    </>
+                  )}
+                </small>
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm p-0"
+                  onClick={clearAllMenus}
+                  disabled={selectedMenus.length === 0}
+                >
+                  Clear all
+                </button>
+              </div>
+
+              {/* menu list */}
+              <div className="border rounded p-2" style={{ maxHeight: "250px", overflowY: "auto" }}>
+                {filteredMenus.length === 0 ? (
+                  <div className="text-muted small px-1">No menus match your search.</div>
+                ) : (
+                  filteredMenus.map((m) => (
+                    <div key={m.menuId} className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id={`menu-${m.menuId}`}
+                        checked={selectedMenus.includes(m.menuId)}
+                        onChange={() => handleMenuChange(m.menuId)}
+                      />
+                      <label className="form-check-label" htmlFor={`menu-${m.menuId}`}>
+                        {m.menuName}
+                      </label>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

@@ -52,6 +52,9 @@ function Login() {
           case "Admin":
             navigate("/admin-dashboard");
             break;
+          case "Business_Executive":
+            navigate("/business-executive-dashboard");
+            break;
           case "Faculty":
             navigate("/instructor-dashboard");
             break;

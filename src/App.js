@@ -156,6 +156,7 @@ import PracticeExam from "./pages/PracticeExam";
 import CaseStudy from "./pages/CaseStudy";
 import Recordedclasses from "./components/courses/Recordedclasses";
  import API_BASE_URL from "./config";
+import BusinessExecutiveDashboard from "./pages/BusinessExecutiveDashboard";
 
 function App() {
   const loggedInStudentId = 1;
@@ -284,6 +285,7 @@ function App() {
         {/* <Route path="/" element={<IndexPage />} /> */}
         <Route path="/student-dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/business-executive-dashboard" element={<ProtectedRoute><BusinessExecutiveDashboard /></ProtectedRoute>} />
         <Route path="/assignments" element={<ProtectedRoute><StudentAssignments /></ProtectedRoute>} />
         <Route path="/admin-users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
         <Route path="/users-dashboard" element={<ProtectedRoute><UsersDashboard /></ProtectedRoute>} />
