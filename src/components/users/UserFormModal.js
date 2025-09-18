@@ -5,6 +5,7 @@ import API_BASE_URL from "../../config";
 
 function UserFormModal({ isOpen, onClose, user, onSave }) {
   const [formData, setFormData] = useState({
+    // username/password kept in state but NOT shown in UI
     username: "",
     password: "",
     role: "Admin",
@@ -49,109 +50,107 @@ function UserFormModal({ isOpen, onClose, user, onSave }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // optional: keep phone numeric only
+    if (name === "phoneNumber") {
+      const digits = value.replace(/\D/g, "").slice(0, 15);
+      setFormData((prev) => ({ ...prev, [name]: digits }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-const handleSubmit = async () => {
-  console.log("🚀 Submitting user form...");
-  console.log("📋 Form data before validation:", formData);
+  const handleSubmit = async () => {
+    const isCreate = !user;
 
-  if (!formData.username || (!user && !formData.password)) {
-    console.warn("⚠️ Validation failed: missing username or password.");
-    alert("Username and Password are required.");
-    return;
-  }
-
-  const endpoint = user
-    ? `${API_BASE_URL}/User/${user.userId}`
-    : `${API_BASE_URL}/User`;
-
-  const method = user ? "PUT" : "POST";
-
-  const payload = {
-    username: formData.username,
-    password: formData.password,
-    role: formData.role,
-    email: formData.email,
-    firstName: formData.firstName,
-    lastName: formData.lastName,
-    phoneNumber: formData.phoneNumber,
-    dateOfBirth: formData.dateOfBirth,
-    gender: formData.gender,
-    address: formData.address
-  };
-
-  console.log(`📦 Sending ${method} request to ${endpoint}`);
-  console.log("📦 Payload:", payload);
-
-  try {
-    const token = localStorage.getItem("jwt");
-    const response = await fetch(endpoint, {
-      method,
-      headers: { "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ API Error (${response.status}):`, errorText);
-      toast.error("❌ Failed to save user. See console for details.");
+    // Basic client-side checks (no username/password checks anymore)
+    if (!formData.email?.trim()) {
+      toast.error("Email is required.");
       return;
     }
 
-    console.log("✅ API request successful");
-    toast.success(user ? "✅ User updated!" : "✅ User created!");
-    onClose();
-    onSave();
-  } catch (err) {
-    console.error("🔥 Request failed:", err);
-    toast.error("❌ Network or server error. See console.");
-  }
-};
+    // Build safe endpoint (avoid '/api/api' duplicates)
+    const base = String(API_BASE_URL || "").replace(/\/+$/, "");
+    const endpoint = isCreate
+      ? (/\/api$/i.test(base) ? `${base}/User` : `${base}/api/User`)
+      : (/\/api$/i.test(base) ? `${base}/User/${user.userId}` : `${base}/api/User/${user.userId}`);
 
+    const method = isCreate ? "POST" : "PUT";
+
+    // Build payload without username/password by default
+    const payloadBase = {
+      role: formData.role,
+      email: formData.email,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
+      dateOfBirth: formData.dateOfBirth,
+      gender: formData.gender,
+      address: formData.address
+    };
+
+    // For create: include placeholders to satisfy backend [Required] (server will auto-generate anyway)
+    const payload = isCreate
+      ? {
+          ...payloadBase,
+          username: "TEMPUSER",
+          password: "TempP@ssw0rd!"
+        }
+      : payloadBase;
+
+    console.group("📦 Sending User request");
+    console.log("➤ Method:", method);
+    console.log("➤ URL:", endpoint);
+    console.table(payload);
+    console.groupEnd();
+
+    try {
+      const token = localStorage.getItem("jwt");
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await response.text();
+      if (!response.ok) {
+        console.error(`❌ API Error (${response.status}):`, text);
+        toast.error("❌ Failed to save user. See console for details.");
+        return;
+        }
+
+      // Optionally parse
+      try {
+        if (text) JSON.parse(text);
+      } catch {
+        /* non-JSON OK */
+      }
+
+      toast.success(isCreate ? "✅ User created!" : "✅ User updated!");
+      onClose();
+      onSave && onSave();
+    } catch (err) {
+      console.error("🔥 Request failed:", err);
+      toast.error("❌ Network or server error. See console.");
+    }
+  };
 
   return (
-    <Modal show={isOpen} onHide={onClose} size="lg" >
-      <Modal.Header >
+    <Modal show={isOpen} onHide={onClose} size="lg">
+      <Modal.Header>
         <Modal.Title>{user ? "Edit User" : "Add New User"}</Modal.Title>
-       <button
-                    type="button"
-                    className="close"
-                    onClick={onClose}
-                  >
-                    <span>&times;</span>
-                  </button>
+        <button type="button" className="close" onClick={onClose}>
+          <span>&times;</span>
+        </button>
       </Modal.Header>
+
       <Modal.Body>
         <Form>
           <Row>
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label>Username</Form.Label>
-                <Form.Control
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
-            {!user && (
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Password</Form.Label>
-                  <Form.Control
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-            )}
+            {/* Username & Password are intentionally HIDDEN (auto-generated server-side). */}
+
             <Col md={6}>
               <Form.Group>
                 <Form.Label>Role</Form.Label>
@@ -163,6 +162,7 @@ const handleSubmit = async () => {
                 >
                   <option>Admin</option>
                   <option>SRO</option>
+                  <option>Business Executive</option>
                 </Form.Control>
               </Form.Group>
             </Col>
@@ -175,6 +175,7 @@ const handleSubmit = async () => {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                 />
               </Form.Group>
             </Col>
@@ -253,6 +254,7 @@ const handleSubmit = async () => {
           </Row>
         </Form>
       </Modal.Body>
+
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>
           Cancel
