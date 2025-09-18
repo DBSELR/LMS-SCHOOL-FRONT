@@ -196,10 +196,10 @@ function ProfessorsPage() {
             <div className="p-4 mb-4 welcome-card animate-welcome">
               <div>
                 <h2 className="page-title text-primary">
-                  <FaChalkboardTeacher /> Manage Professors
+                  <FaChalkboardTeacher /> Manage Faculty
                 </h2>
                 <p className="text-muted mb-0">
-                  View, add, and manage all professors in the system.
+                  View, add, and manage all Faculty in the system.
                 </p>
               </div>
             </div>
@@ -228,7 +228,7 @@ function ProfessorsPage() {
             <div className="welcome-card animate-welcome">
               <div className="card-header bg-primary text-white d-flex align-items-center">
                 <FaChalkboardTeacher className="mr-2 mt-2" />
-                <h6 className="mb-0">Professors Management</h6>
+                <h6 className="mb-0">Faculty Management</h6>
               </div>
 
               <div className="card-body">
@@ -242,12 +242,12 @@ function ProfessorsPage() {
                   />
 
                   <button className="btn btn-primary" onClick={handleAddNew}>
-                    ➕ Add Professor
+                    ➕ Add Faculty
                   </button>
                 </div>
 
                 {loading ? (
-                  <div className="text-center p-5">Loading professors...</div>
+                  <div className="text-center p-5">Loading faculty...</div>
                 ) : (
                   <ProfessorsTable
                     professors={filteredProfessors}
@@ -274,10 +274,10 @@ function ProfessorsPage() {
                 <div className="modal-header">
                   <h5 className="modal-title">
                     {mode === "edit"
-                      ? "Edit Professor"
+                      ? "Edit Faculty"
                       : mode === "view"
-                        ? "View Professor"
-                        : "Add Professor"}
+                        ? "View Faculty"
+                        : "Add Faculty"}
                   </h5>
                   <button
                     type="button"

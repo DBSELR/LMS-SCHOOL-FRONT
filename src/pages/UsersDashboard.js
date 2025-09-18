@@ -103,7 +103,7 @@ function UsersDashboard() {
 
                  { label: "Students", value: summary.students, icon: "fa-user", link: "/students" },
 
-                { label: "Professors", value: summary.professors, icon: "fa-user-tie", link: "/professors" },
+                { label: "Faculty", value: summary.professors, icon: "fa-user-tie", link: "/professors" },
                 
                  { label: "Others", value: summary.users, icon: "fa-users", link: "/admin-users" },
                 

@@ -92,7 +92,7 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
     try {
       if (onSubmit) {
         await onSubmit(payload);
-        toast.success(`✅ Professor ${editMode ? "updated" : "added"} successfully`, {
+        toast.success(`✅ Faculty ${editMode ? "updated" : "added"} successfully`, {
           autoClose: 3000,
           toastId: "professor-submit-toast",
         });
@@ -147,7 +147,7 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
   return (
     <form onSubmit={handleSubmit} className="container-fluid">
       <h4 className="mb-3">
-        {mode === "edit" ? "Edit Professor" : mode === "view" ? "Professor Details" : "Add New Professor"}
+        {mode === "edit" ? "Edit Faculty" : mode === "view" ? "Faculty Details" : "Add New Faculty"}
       </h4>
 
       <div className="row">
@@ -215,7 +215,7 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
             onChange={handleInputChange}
             disabled={readOnly}
           >
-            <option value="Instructor">Instructor</option>
+            <option value="Instructor">Faculty</option>
           </select>
         </div>
       </div>
@@ -223,7 +223,7 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
       <div className="d-flex gap-2 mt-3">
         {!readOnly && (
           <button type="submit" className="btn btn-primary">
-            {mode === "edit" ? "Update" : "Add"} Professor
+            {mode === "edit" ? "Update" : "Add"} Faculty
           </button>
         )}
         <button type="button" className="btn btn-secondary" onClick={onCancel}>
