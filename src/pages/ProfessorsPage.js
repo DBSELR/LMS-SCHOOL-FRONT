@@ -144,28 +144,36 @@ function ProfessorsPage() {
       console.error("Error:", error);
     }
   };
+// ProfessorsPage.js (or wherever you define onSubmit)
+const handleAdd = async (payload) => {
+  const token = localStorage.getItem("jwt");
 
-  const handleAdd = async (newProfessor) => {
-    try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(`${API_BASE_URL}/professor`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify(newProfessor),
-      });
+  // normalize base (no trailing slash)
+  const base = String(API_BASE_URL || "").replace(/\/+$/, "");
 
-      if (!res.ok) {
-        const errText = await res.text();
-        return { ok: false, error: errText || "Save failed" };
-      }
+  // if base already ends with /api, use it; otherwise add /api
+  const url = /\/api$/i.test(base)
+    ? `${base}/Professor`        // e.g., https://localhost:7099/api/Professor
+    : `${base}/api/Professor`;   // e.g., https://localhost:7099/api/Professor
 
-      refreshProfessors();
-      closeAddEditModal();
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, error: err.message || "Unexpected error" };
-    }
-  };
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const bodyText = await res.text(); // read body for details in case of error
+  if (!res.ok) {
+    console.error("❌ POST /Professor failed:", res.status, bodyText);
+    throw new Error(bodyText || `HTTP ${res.status}`);
+  }
+  return bodyText ? JSON.parse(bodyText) : null;
+};
+
+
 
   const handleCloseModal = () => {
     setSelectedProfessor(null);

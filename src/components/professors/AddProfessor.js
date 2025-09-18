@@ -12,35 +12,42 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
   const [progError, setProgError] = useState(null);
 
   const [formData, setFormData] = useState({
-    username: "",            // hidden, not sent
-    password: "",            // hidden, not sent
+    username: "",            // hidden
+    password: "",            // hidden
     email: "",
     firstName: "",
     lastName: "",
     phoneNumber: "",
-    department: "",          // ← this is the only field the POST needs (formatted as (CODE)-NAME)
+    department: "",          // CODE only (e.g., "CBSE")
     bio: "",
     profilePictureUrl: "",
     officeLocation: "",
     officeHours: "",
     employeeStatus: "Active",
-    role: "Faculty",         // align option value & default (adjust if your API expects 'Instructor')
+    role: "Instructor",
     socialMediaLinks: [],
     educationalBackground: "",
     researchInterests: "",
-    teachingRating: "",
+    teachingRating: "",      // string; coerced on submit
     assignedCourses: [],
-    // Local-only helpers for UX (NOT posted)
+    // local-only helpers (NOT posted)
     programmeCode: "",
     programmeName: "",
   });
 
-  // Try to parse "(CODE)-NAME" into { code, name }
+  // Parse department from existing value: supports "(CODE)-NAME" or plain "CODE"
   const parseDepartment = (dep) => {
     if (!dep || typeof dep !== "string") return { code: "", name: "" };
-    const m = dep.match(/^\(([^)]+)\)-\s*(.+)$/);
-    if (m) return { code: m[1]?.trim() || "", name: m[2]?.trim() || "" };
-    return { code: "", name: "" };
+    const trimmed = dep.trim();
+    const mParen = trimmed.match(/^\(([^)]+)\)\s*-\s*(.+)$/);
+    if (mParen) return { code: mParen[1].trim(), name: mParen[2].trim() };
+    if (trimmed.startsWith("(") && trimmed.includes(")")) {
+      const inner = trimmed.slice(1, trimmed.indexOf(")")).trim();
+      return { code: inner, name: "" };
+    }
+    const hyphenIdx = trimmed.indexOf("-");
+    if (hyphenIdx > -1) return { code: trimmed.slice(0, hyphenIdx).trim(), name: trimmed.slice(hyphenIdx + 1).trim() };
+    return { code: trimmed, name: "" };
   };
 
   // Prefill from professor
@@ -56,133 +63,79 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
           ? professor.socialMediaLinks
           : professor.socialMediaLinks?.split(",").map((link) => link.trim()) || [],
         assignedCourses: professor.assignedCourses || [],
-        department: professor.department || "",
+        department: (professor.department || "").trim(), // may be CODE or (CODE)-NAME
+        teachingRating: professor.teachingRating?.toString?.() ?? "",
       };
-      // derive local programmeCode/name from department string, if present
       const { code, name } = parseDepartment(next.department);
-      next.programmeCode = code;
-      next.programmeName = name;
+      next.programmeCode = code;       // dropdown value
+      next.department = code || "";    // keep only CODE
+      next.programmeName = name || "";
       setFormData((prev) => ({ ...prev, ...next }));
     }
   }, [professor]);
 
-  // Fetch Programmes (robust)
+  // Fetch Programmes — locked to /api/Programme/All
   useEffect(() => {
     const fetchProgrammes = async () => {
       const token = localStorage.getItem("jwt");
-
       const base = String(API_BASE_URL || "").replace(/\/+$/, "");
-      const hasApi = /\/api$/i.test(base);
-      const roots = hasApi ? [base] : [`${base}/api`, base];
+      const url = /\/api$/i.test(base) ? `${base}/Programme/All` : `${base}/api/Programme/All`;
 
-      const paths = [
-        "Programmes/All",
-        "Programmes/GetAll",
-        "Programmes",
-        "Programme/All",
-        "Programs/All",
-        "Programs/GetAll",
-        "Programs",
-      ];
+      try {
+        setProgLoading(true);
+        setProgError(null);
+        console.log("📡 Fetching Programmes (locked route):", url);
 
-      const candidates = [];
-      roots.forEach((r) => paths.forEach((p) => candidates.push(`${r}/${p}`)));
+        const res = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
 
-      console.groupCollapsed("📡 Programmes: trying candidate URLs");
-      candidates.forEach((u, i) => console.log(`[${i + 1}] ${u}`));
-      console.groupEnd();
-
-      let success = null;
-      let lastError = null;
-
-      for (const url of candidates) {
-        try {
-          console.log("➡️ Trying:", url);
-          const res = await fetch(url, {
-            headers: {
-              Accept: "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          });
-
-          const ct = res.headers.get("content-type") || "";
-          console.log("   Status:", res.status, res.statusText, "| type:", ct);
-
-          if (!res.ok) {
-            const snippet = await res.text().catch(() => "");
-            console.warn("   Non-OK body (first 300 chars):", snippet.slice(0, 300));
-            lastError = new Error(`HTTP ${res.status} ${res.statusText}`);
-            continue;
-          }
-
-          let raw;
-          if (ct.includes("application/json")) {
-            raw = await res.json();
-          } else {
-            const text = await res.text();
-            if (!text) throw new Error("Empty body, expected JSON");
-            try {
-              raw = JSON.parse(text);
-            } catch {
-              console.warn("   Response was not JSON. First 300 chars:", text.slice(0, 300));
-              throw new Error("Response is not valid JSON");
-            }
-          }
-
-          console.log("✅ Success with:", url, "| raw length:", Array.isArray(raw) ? raw.length : "n/a");
-
-          const normalized = Array.isArray(raw)
-            ? raw.map((item) => {
-                if (item && typeof item === "object") {
-                  return {
-                    code:
-                      item.ProgrammeCode ??
-                      item.programmeCode ??
-                      item.ProgramCode ??
-                      item.programCode ??
-                      item.CODE ??
-                      item.code ??
-                      "",
-                    name:
-                      item.ProgrammeName ??
-                      item.programmeName ??
-                      item.ProgramName ??
-                      item.programmeName ??
-                      item.NAME ??
-                      item.name ??
-                      "",
-                  };
-                }
-                if (Array.isArray(item)) return { code: item[0] ?? "", name: item[1] ?? "" };
-                return { code: "", name: "" };
-              })
-            : [];
-
-          const filtered = normalized.filter((p) => p.code && p.name);
-          setProgrammes(filtered);
-          if (!filtered.length) console.warn("⚠️ No usable Programmes found from response.");
-
-          success = url;
-          break;
-        } catch (err) {
-          console.error("   ❌ Candidate failed:", url, "|", err?.message || err);
-          lastError = err;
+        if (!res.ok) {
+          const snippet = await res.text().catch(() => "");
+          console.warn("   Non-OK body (first 300 chars):", snippet.slice(0, 300));
+          throw new Error(`HTTP ${res.status} ${res.statusText}`);
         }
-      }
 
-      if (success) {
-        console.log("🎯 Programmes loaded from:", success);
-      } else {
-        console.error("🚨 All candidates failed for Programmes.");
-        console.info("👉 Verify the exact backend route in your controller (and Swagger).");
-        setProgError(lastError?.message || "Failed to load programmes");
+        const ct = res.headers.get("content-type") || "";
+        const raw = ct.includes("application/json") ? await res.json() : JSON.parse(await res.text());
+
+        const normalized = Array.isArray(raw)
+          ? raw.map((item) => ({
+              code:
+                item?.ProgrammeCode ??
+                item?.programmeCode ??
+                item?.ProgramCode ??
+                item?.programCode ??
+                item?.CODE ??
+                item?.code ??
+                "",
+              name:
+                item?.ProgrammeName ??
+                item?.programmeName ??
+                item?.ProgramName ??
+                item?.programName ??
+                item?.NAME ??
+                item?.name ??
+                "",
+            }))
+          : [];
+
+        const filtered = normalized.filter((p) => p.code && p.name);
+        setProgrammes(filtered);
+        console.log(`✅ Programmes loaded: ${filtered.length}`);
+      } catch (err) {
+        console.error("❌ Error fetching programmes:", err);
+        setProgError(err?.message || "Failed to load programmes");
         toast.error("Failed to load programmes");
+      } finally {
+        setProgLoading(false);
       }
     };
 
-    setProgLoading(true);
-    setProgError(null);
-    fetchProgrammes().finally(() => setProgLoading(false));
+    fetchProgrammes();
   }, []);
 
   const handleInputChange = (e) => {
@@ -198,21 +151,20 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
     }
   };
 
-  // When programme changes, update local code/name and the POST field `department`
+  // Programme change → store CODE only in department
   const handleProgrammeChange = (e) => {
     const code = e.target.value;
     const match = programmes.find((p) => String(p.code) === String(code));
     const name = match?.name || "";
-    const departmentFormatted = code && name ? `(${code})-${name}` : "";
 
     setFormData((prev) => ({
       ...prev,
-      programmeCode: code,      // local only (not posted)
-      programmeName: name,      // local only (not posted)
-      department: departmentFormatted, // ← actual field your API needs
+      programmeCode: code,     // UI
+      programmeName: name,     // UI
+      department: code || "",  // POST only CODE
     }));
 
-    console.log("➡️ Selected Programme -> department:", departmentFormatted);
+    console.log("➡️ Selected Programme -> department (CODE only):", code || "");
   };
 
   const handleCourseChange = (e) => {
@@ -223,23 +175,46 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Build payload: omit username/password/local programme fields
-    // Keep ONLY department (formatted as (CODE)-NAME) for the board selection
+    if (!formData.department) {
+      toast.error("Please select a Board (Programme) before saving.");
+      console.warn("⛔ Blocked submit: department (code) is empty.");
+      return;
+    }
+
+    // Build payload (coerce types)
     const {
-      username,
-      password,
+      username,         // not used by server, but…
+      password,         // …server validation still requires them
       programmeCode,
       programmeName,
+      teachingRating,
       ...rest
     } = formData;
 
-    const payload = { ...rest, userId: professor?.userId };
+    // ✅ Add placeholders to satisfy [Required] in InstructorRegisterRequest
+    const finalPayload = {
+      ...rest,
+      username: "TEMPUSER",          // placeholder; server will overwrite
+      password: "TempP@ssw0rd!",     // placeholder; server will overwrite
+      teachingRating:
+        teachingRating === "" || teachingRating === null || teachingRating === undefined
+          ? null
+          : Number(teachingRating),
+      userId: professor?.userId, // undefined is fine on create
+    };
 
-    console.log("📦 Submitting Faculty payload:", payload);
+    try {
+      console.group("📦 Submitting Faculty payload");
+      console.table(finalPayload);
+      console.log("JSON:", JSON.stringify(finalPayload));
+      console.groupEnd();
+    } catch {
+      console.log("📦 Submitting Faculty payload (fallback log):", finalPayload);
+    }
 
     try {
       if (onSubmit) {
-        await onSubmit(payload);
+        await onSubmit(finalPayload);
         toast.success(`✅ Faculty ${editMode ? "updated" : "added"} successfully`, {
           autoClose: 3000,
           toastId: "professor-submit-toast",
@@ -251,7 +226,6 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
         err?.response?.data ||
         err?.message ||
         "Save failed";
-
       console.error("🚨 Submit error:", errorMessage);
       toast.error(`❌ ${errorMessage}`, {
         autoClose: 3000,
@@ -312,9 +286,11 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
               Couldn’t load Boards: {progError}
             </small>
           )}
-          {formData.department && (
+          {formData.programmeCode && (
             <small className="text-muted d-block mt-1">
-              Selected (will post as department): {formData.department}
+              Selected: ({formData.programmeCode})-{formData.programmeName || "—"}
+              {" • Sent as department: "}
+              <strong>{formData.department}</strong>
             </small>
           )}
         </div>
@@ -356,7 +332,7 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
             onChange={handleInputChange}
             disabled={readOnly}
           >
-            <option value="Faculty">Faculty</option>
+            <option value="Instructor">Instructor</option>
           </select>
         </div>
       </div>
