@@ -376,7 +376,8 @@ function StudentsPage() {
                       onClick={() => setOpenBatch((prev) => ({ ...prev, [bsIndex]: !prev[bsIndex] }))}
                       style={{ cursor: "pointer" }}
                     >
-                      <div><strong>Batch & Semester:</strong> {batchSemester}</div>
+                      <div><strong>Batch:</strong> {batchSemester.split(" / ")[0]}</div>
+
                       <i className={`fa ml-2 ${openBatch[bsIndex] ? "fa-chevron-up" : "fa-chevron-down"}`}></i>
                     </div>
                     <Collapse in={!!openBatch[bsIndex]}>
@@ -401,7 +402,7 @@ function StudentsPage() {
                                 style={{ cursor: "pointer" }}
                               >
                                 <div>
-                                  <strong>Programme:</strong> {programmeName}
+                                  <strong>Board:</strong> {programmeName}
                                 </div>
                                 <i
                                   className={`fa ml-2 ${openProgramme[programmeKey] ? "fa-chevron-up" : "fa-chevron-down"
@@ -442,10 +443,10 @@ function StudentsPage() {
                                                 <strong>Username:</strong> {student.username || "N/A"}
                                               </p>
                                               <p className="text-muted small mb-1">
-                                                <strong>Programme:</strong> {student.programme || "N/A"}
+                                                <strong>Board:</strong> {student.programme || "N/A"}
                                               </p>
                                               <p className="text-muted small mb-1">
-                                                <strong>Group:</strong> {student.group || "N/A"}
+                                                <strong>Class:</strong> {student.group || "N/A"}
                                               </p>
                                               <p className="text-muted small mb-1">
                                                 <strong>Semester:</strong> {student.semester || "N/A"}
