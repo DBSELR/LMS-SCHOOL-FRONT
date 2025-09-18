@@ -31,7 +31,7 @@ const AddStudent = ({
     batch: "",
     programmeId: "",
     groupId: "",
-    semester: "",
+    semester: "1",
   });
 
   useEffect(() => {
@@ -233,7 +233,7 @@ const AddStudent = ({
 
         {/* Programme */}
         <div className="form-group">
-          <label>Programme</label>
+          <label>Board</label>
           <select
             className="form-control"
             name="programmeId"
@@ -241,7 +241,7 @@ const AddStudent = ({
             onChange={handleInputChange}
             disabled={readOnly}
           >
-            <option value="">-- Select Programme --</option>
+            <option value="">-- Select Board --</option>
             {filteredProgrammes.map((p) => (
               <option key={p.programmeId} value={p.programmeId}>
                 {p.programmeName} ({p.programmeCode})
@@ -252,7 +252,7 @@ const AddStudent = ({
 
         {/* Group */}
         <div className="form-group">
-          <label>Group</label>
+          <label>Class</label>
           <select
             className="form-control"
             name="groupId"
@@ -260,7 +260,7 @@ const AddStudent = ({
             onChange={handleInputChange}
             disabled={readOnly}
           >
-            <option value="">-- Select Group --</option>
+            <option value="">-- Select Class --</option>
             {filteredGroups.map((g) => (
               <option key={g.groupId} value={g.groupId}>
                 {g.groupCode} - {g.groupName}
@@ -270,7 +270,7 @@ const AddStudent = ({
         </div>
 
         {/* Semester */}
-        <div className="form-group">
+        {/* <div className="form-group">
           <label>Semester</label>
           <select
             className="form-control"
@@ -286,7 +286,7 @@ const AddStudent = ({
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
       </div>
 
       {!readOnly && (
