@@ -162,7 +162,7 @@ function UserFormModal({ isOpen, onClose, user, onSave }) {
                 >
                   <option>Admin</option>
                   <option>SRO</option>
-                  <option>Business Executive</option>
+                  <option>Business_Executive</option>
                 </Form.Control>
               </Form.Group>
             </Col>

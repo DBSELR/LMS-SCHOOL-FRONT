@@ -113,9 +113,9 @@ function AdminDashboard() {
             {/* Dashboard Cards */}
             <div className="row ">
               {[
-                { label: "Professors", value: summary.professors, icon: "fa-male", link: "/professors" },
-                 { label: "Students", value: summary.students, icon: "fa-plane", link: "/students" },
-                { label: "Programmes", value: summary.programmes, icon: "fa-list-alt", link: "/AdminDashboardTabs" },
+                { label: "Faculty", value: summary.professors, icon: "fa-male", link: "/professors" },
+                 { label: "Students", value: summary.students, icon: "fa-user-graduate", link: "/students" },
+                { label: "Board", value: summary.programmes, icon: "fa-list-alt", link: "/AdminDashboardTabs" },
                { label: "Discussions", value: summary.programmes, icon: "fa-list", link: "/adddiscussions" },
                 { label: "Library Books", value: summary.books, icon: "fa-book", link: "/library" },
                 { label: "Examinations", value: summary.exams, icon: "fa-pencil-square-o", link: "/admin-exams" },
