@@ -564,7 +564,7 @@ function StudentsPage() {
                                                           <strong>Programme:</strong> {student.programme || "N/A"}
                                                         </p>
                                                         <p className="text-muted small mb-1">
-                                                          <strong>Group:</strong> {student.group || "N/A"}
+                                                          <strong>Class:</strong> {student.group || "N/A"}
                                                         </p>
                                                         <p className="text-muted small mb-1">
                                                           <strong>Semester:</strong> {student.semester || "N/A"}
