@@ -319,6 +319,31 @@ const CoursesTab = ({ isActive }) => {
         <h5 className="mb-4 text-primary">Add / Edit Boards</h5>
         <Form>
           <div className="row gy-3">
+          
+           <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>Board Code</Form.Label>
+                {/* use text to preserve leading zeros/alphanumeric codes */}
+                <Form.Control
+                  type="text"
+                  name="courseCode"
+                  value={form.courseCode}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </div>
+
+                        <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>Board Name</Form.Label>
+                <Form.Control
+                  name="courseName"
+                  value={form.courseName}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </div>
+
             {/* Batch dropdown */}
             <div className="form-group col-md-6">
               <label>
@@ -350,29 +375,9 @@ const CoursesTab = ({ isActive }) => {
               )}
             </div>
 
-            <div className="col-md-6">
-              <Form.Group>
-                <Form.Label>Board Code</Form.Label>
-                {/* use text to preserve leading zeros/alphanumeric codes */}
-                <Form.Control
-                  type="text"
-                  name="courseCode"
-                  value={form.courseCode}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
+           
 
-            <div className="col-md-6">
-              <Form.Group>
-                <Form.Label>Board Name</Form.Label>
-                <Form.Control
-                  name="courseName"
-                  value={form.courseName}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
+
 
             <div className="col-md-6">
               <Form.Group>
