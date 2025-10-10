@@ -881,19 +881,22 @@ const handleSubmit = async (e) => {
     <div id="main_content" className="font-muli theme-blush">
       <HeaderTop />
       <RightSidebar />
-      <LeftSidebar role="Instructor" />
+      <LeftSidebar role="Faculty" />
 
-      <div className="page">
-        <div className="section-body container-fluid mt-4">
-         <div className="p-4 mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
+        <div className="container-fluid">
+         <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <i class="fa-solid fa-pen"></i> Create Exam
               </h2>
-              <p className="text-muted mb-0">
+              <p className="text-muted mb-0 dashboard-hero-sub">
                 Fill in the details below to set up a new exam for your
                 students.
               </p>
             </div>
+          </div>
             <div className="container-fluid mb-3">
           <div className="d-flex justify-content-end">
            <button
@@ -1093,6 +1096,7 @@ const handleSubmit = async (e) => {
         </div>
 
         <Footer />
+      </div>
       </div>
 
       <ConfirmationPopup

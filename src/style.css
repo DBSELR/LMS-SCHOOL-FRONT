@@ -17,13 +17,20 @@ thead.dark-header th {
   z-index: 99999;
 }
 
+/* AdminDashboard – lock the canvas to white (no grey) */
+.page.admin-dashboard,
+.page.admin-dashboard .section-body,
+.page.admin-dashboard .container-fluid {
+  background: #fff !important;
+}
+
 
 
 @media (max-width: 992px) {
  
  .section-body .row {
   flex-direction: row !important;
-  gap:5px;
+  /* gap:5px; */
  }
 
  .page-header-tab .nav-item:nth-child(2),.page-header-tab .nav-item:nth-child(3),.page-header-tab .nav-item:nth-child(5) {
@@ -33,7 +40,14 @@ thead.dark-header th {
  
 }
 
-@media (max-width:767px) {
+@media (min-width : 767px){
+  #header_top .hright{
+    margin-bottom: 20px !important;
+  }
+}
+
+
+ @media (max-width:767px) {
  #header_top {
     padding: 0.25rem;
     position: sticky !important;
@@ -51,7 +65,13 @@ thead.dark-header th {
    #header_top .nav-link {
    margin-top: 0 !important;
   }
+
+  .modal{
+    top:4rem !important; 
+  }
 }
+
+
 
 @media (max-width: 576px) {
   #header_top {
@@ -127,6 +147,67 @@ body:not(.sidebar-open) .page {
   margin-left: 0 !important;
   width: 100% !important;
 }
+
+/* AdminDashboardTabs css start */
+.nav-link, .nav-item {
+  padding: 0 3rem;
+}
+
+/* AdminDashboardTabs css end */
+
+/* SubjectBank CSS Start */
+
+/* responsive-card replaces fixed 500px height */
+/* Card containers: flexible heights, scroll inside */
+.card-subject {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 160px); /* leaves room for header/footer */
+  overflow: hidden;
+  padding: 0;
+}
+.subject-body {
+  padding: 12px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Table wrapper & modal table */
+.table-wrapper { width: 100%; }
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Modal table wrapper */
+.modal-table-wrap {
+  max-height: 50vh; /* vertical scroll inside modal */
+  overflow-y: auto;
+}
+
+/* Search input responsive */
+.search-input { max-width: 170px; width: 100%; }
+
+/* Actions cell spacing */
+.actions-cell .btn { margin-right: 4px; }
+
+/* Small-screen adjustments */
+@media (max-width: 425px) {
+  .subject-body { padding: 10px; }
+  .search-input { max-width: 100%; }
+  .actions-cell .btn { display: block; width: 100%; margin-bottom: 6px; }
+  .card-subject { max-height: calc(100vh - 120px); }
+  .modal-table-wrap { max-height: 55vh; }
+}
+
+/* Very small screens (320/375) */
+@media (max-width: 375px) {
+  h5 { font-size: 16px; }
+  .subject-body input.form-control, .subject-body .react-select__control { font-size: 14px; padding: 6px; }
+  .actions-cell .btn { font-size: 13px; padding: .35rem .5rem; }
+}
+
+/* SubjectBank CSS End */
+
+
 
 /* Mobile responsive adjustments */
 @media (max-width: 767px) {
@@ -764,12 +845,29 @@ table td, table th {
 
 /* InstructorLiveClassManage.css end */
 
+/* AdminDashboard New CSS Start */
+
+/* AdminDashboard New CSS End */
+
+/* Section-wrapper css start */
+
+.section-wrapper{
+  margin-left: 30px;
+}
+
+/* Section-wrapper css end */
+
+/* Global Dashboard CSS Start */
+
+/* Global Dashboard CSS End */
+
+
 
 /* WelcomeCard.css Start*/
 
 /* Card container */
+/* ===== Existing base (kept) ===== */
 .welcome-card {
-  /* background: linear-gradient(135deg, #fff7f0, #ffffff); orange */
   background: linear-gradient(135deg, #f0f0ff, #ffffff);
   border-radius: 18px;
   padding: 10px 5px;
@@ -777,44 +875,114 @@ table td, table th {
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   min-height: 120px;
-  /* display: flex; */
   align-items: center;
   justify-content: center;
+  /* margin-left: 30px; */
 }
-
-/* Hover animation */
 .welcome-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
 }
 
-/* Text styles */
-.welcome-greet {
+/* ===== Compact tweaks for THIS page only ===== */
+.admin-dashboard .dashboard-hero {
+  /* margin-left: 30px; */
+  padding: 10px 12px;             /* was ~p-3/p-4 */
+  min-height: unset;
+}
+.admin-dashboard .dashboard-hero-title {
+  font-size: 1.1rem;               /* smaller heading */
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+.admin-dashboard .dashboard-hero-sub {
   font-size: 0.9rem;
-  color: #6c757d;
-  margin-bottom: 4px;
-  font-weight: 500;
-  animation: fadeSlideIn 0.4s ease-out forwards;
-  text-align: center;
+  line-height: 1.25;
 }
 
-.welcome-name {
-  /* color: #5a67d8; */
-   font-size: 0.9rem;
-  color: #5a67d8;
-  margin-bottom: 4px;
-  font-weight: 500;
-  animation: fadeSlideIn 0.4s ease-out forwards;
+/* Compact cards */
+.admin-dashboard .dashboard-card {
+  padding: 10px 8px;               /* tighter padding */
+  min-height: 90px;                /* was 120px via .welcome-card */
+  display: grid;
+  grid-auto-rows: min-content;
+  gap: 4px;
 }
 
-.welcome-role {
-  font-size: 0.9rem;
-  color: #555;
-  font-weight: 500;
-  animation: fadeSlideIn 0.8s ease-out forwards;
-  animation-delay: 0.2s;
-  opacity: 0;
+/* Reduce icon + text sizes */
+.admin-dashboard .dashboard-icon {
+  font-size: 1.35rem;              /* smaller than fa-2x */
+  margin-bottom: 2px;
 }
+.admin-dashboard .dashboard-label {
+  font-size: 0.85rem;
+}
+.admin-dashboard .dashboard-count {
+  font-size: 1.35rem;              /* smaller count */
+  line-height: 1.15;
+}
+
+/* Optional: slightly tighter columns spacing */
+@media (min-width: 992px) {
+  .admin-dashboard .col-lg-3.mb-3 { margin-bottom: 0.9rem !important; }
+}
+
+/* (Your existing text animation helpers kept as-is) */
+.welcome-greet { font-size: 0.9rem; color: #6c757d; margin-bottom: 4px; font-weight: 500; animation: fadeSlideIn 0.4s ease-out forwards; text-align: center; }
+.welcome-name  { font-size: 0.9rem; color: #5a67d8; margin-bottom: 4px; font-weight: 500; animation: fadeSlideIn 0.4s ease-out forwards; }
+.welcome-role  { font-size: 0.9rem; color: #555; font-weight: 500; animation: fadeSlideIn 0.8s ease-out forwards; animation-delay: 0.2s; opacity: 0; }
+
+/* DepartmentJS CSS Start */
+
+/* Departments.css — compact like AdminDashboard, NO color changes */
+.departments-page{
+background-color: #fff !important;
+}
+
+/* Scope to this page only */
+.departments-page .jumbotron {
+  /* compact header like AdminDashboard */
+  padding: 10px 12px !important;
+  min-height: unset;
+}
+.departments-page .jumbotron .page-title {
+  font-size: 1.1rem;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+.departments-page .jumbotron .text-muted {
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+/* Cards — spacing only */
+.departments-page .card-header {
+  padding: 10px 12px;
+  /* no color/border/shadow changes */
+}
+.departments-page .card-body {
+  padding: 12px;
+}
+.departments-page .card-footer {
+  padding: 10px 12px;
+}
+
+/* Tighter grid spacing like compact dashboard */
+@media (min-width: 992px) {
+  .departments-page .col-lg-4.mb-4 {
+    margin-bottom: 0.9rem !important;
+  }
+}
+
+/* Lists inside cards: tidy spacing only */
+.departments-page .list-unstyled li {
+  margin-bottom: 4px;
+}
+
+/* Buttons: keep existing colors; shape unchanged */
+
+
+/* DepartmentJS CSS End */
 
 /* Keyframe animation */
 @keyframes fadeSlideIn {
@@ -923,9 +1091,134 @@ body {
 
 /* InstructorCourseViewPage.css end */
 
+/* AdminDashboardTabs.css start */
+
+
+/* Prevent page width jump when scrollbars appear */
+/* :root { scrollbar-gutter: stable; } */
+/* html { overflow-y: scroll; } */
+
+/* Inner scroll ONLY for the tab content under "LMS Board Configuration" */
+.board-tabs-body {
+  max-height: min(62vh, 680px);   /* tweak if you want a taller/shorter pane */
+  overflow-y: auto;
+  overscroll-behavior: contain;    /* stops scroll chaining to the page */
+  scrollbar-gutter: stable both-edges;
+  padding-right: .25rem;           /* tiny gutter so text doesn’t touch scrollbar */
+}
+
+/* Optional: tighter cap on small screens */
+@media (max-width: 576px) {
+  .board-tabs-body { max-height: 58vh; }
+}
+
+
+
+/* AdminDashboardTabs.css end */
+
+/* AdminReportsDashboard.css start */
+/* Inner scroll ONLY for Reports tab content */
+.reports-tabs-body {
+  max-height: min(62vh, 680px);  /* adjust if you want taller/shorter */
+  overflow-y: auto;
+  overscroll-behavior: contain;   /* no scroll chaining to the page */
+  scrollbar-gutter: stable both-edges;
+  padding-right: .25rem;          /* small gutter so text doesn't hug scrollbar */
+}
+
+/* Optional: slightly shorter on small screens */
+@media (max-width: 576px) {
+  .reports-tabs-body { max-height: 58vh; }
+}
+
+/* AdminReportsDashboard.css end */
+
+/* Input Label Animation  CSS Start*/
+
+.form-item{
+  position: relative;
+  margin-bottom: 15px
+}
+.form-item input{
+  display: block;
+  /* width: unset; */
+  height: 40px;
+  background: #fff;
+  /* border: solid 0px #ccc; */
+  transition: all .3s ease;
+  padding: 0 15px
+}
+.form-item input:focus{
+  border-color: #ccc;
+}
+.form-item label{
+  border-radius: 15px;
+  position: absolute;
+  cursor: text;
+  z-index: 2;
+  top: 10px;
+  left: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  background: #fff;
+  padding: 0 8px;
+  color: #999;
+  transition: all .3s ease
+}
+.form-item input:focus + label,
+.form-item input:valid + label{
+  font-size: 11px;
+  top: -8px
+  
+}
+.form-item input:focus + label{
+  border-radius: 20px;
+  color: #5a67d8;
+}
+/* Input Label Animation  CSS End*/
+
+/* InnerScroll For AdminDashboardTabs CSS Start */
+/* The list card itself shouldn't scroll; only its inner area should */
+.batch-list-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+
+/* Inner scrolling region for the table.
+   Tweak the calc(...) if your header/footer sizes differ. */
+.batch-table-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 320px); /* adjust this value to fit your layout */
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+}
+
+/* Sticky header while the inner area scrolls */
+.batch-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8f9fa; /* matches .bg-light */
+}
+
+/* (Optional) slightly smaller on tiny screens */
+@media (max-width: 576px) {
+  .batch-table-scroll {
+    max-height: calc(100vh - 260px);
+  }
+}
+
+/* InnerScroll For AdminDashboardTabs CSS Start */
+
+
+
+
 /* === AdminStudentOverview Styles === */
 .page {
-  padding: 1rem;
+  /* padding: 1rem; */
   background-color: #f9f9fb;
 }
 
@@ -959,6 +1252,9 @@ body {
 }
 
 button.btn-sm {
+  margin-right: 5px;
+  margin-bottom: 10px;
+  margin-left: 8px;
   font-size: 0.8rem;
   padding: 0.25rem 0.75rem;
 }
@@ -1173,6 +1469,7 @@ button.btn-sm {
 /* LeftSidebar.css end */
 
 .page .section-body{
+  padding: 0px;
   background-color: transparent !important;
 }
 
@@ -1189,6 +1486,7 @@ button.btn-sm {
 }
 
 .form-control {
+  margin-bottom: 7px;
   border-radius: 20px;
   border: 1px solid #5a67d8;
   color: #5a67d8;
@@ -1313,6 +1611,26 @@ button.btn-sm {
 
 /* === InstructorCourses.css start === */
 
+/* InnerScroll Start */
+/* inner scroll area for each semester panel */
+.semester-panel-body {
+  max-height: min(60vh, 520px);   /* tweak to your taste */
+  overflow-y: auto; 
+  overflow-x: hidden;               /* inner vertical scroll only */
+  overscroll-behavior: contain;    /* prevent page scroll chaining */
+  scrollbar-gutter: stable;        /* keeps layout from shifting as scrollbar appears */
+  padding-right: .25rem;           /* tiny breathing room for scrollbar */
+}
+
+/* optional: tighter on small screens */
+@media (max-width: 576px) {
+  .semester-panel-body {
+    max-height: 55vh;
+  }
+}
+/* InnerScroll End */
+
+
 /* Course section toggle button */
 .semester-toggle-btn {
   background-color: transparent;
@@ -1399,6 +1717,7 @@ button.btn-sm {
 
 /* Button group */
 .course-btn-group {
+  margin-top: 10px;
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
@@ -1443,7 +1762,7 @@ button.btn-sm {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 5px;
+  gap: 3px;
 }
 
 .course-stat-item {
@@ -1493,6 +1812,7 @@ button.btn-sm {
 }
 
 /* Tablet Responsive */
+
 @media (max-width: 992px) {
   .course-stat-item {
     flex: 0 0 24%;
@@ -1804,6 +2124,7 @@ button.btn-sm {
 
 /* InstructorTickets start */
 .modal-content{
+  top: 40px;
   border-radius: 20px !important;
   background: #fff !important;
 }

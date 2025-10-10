@@ -1,5 +1,3 @@
-
-
 // File: src/pages/BusinessExecutiveDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -18,10 +16,10 @@ function BusinessExecutiveDashboard() {
     programmes: 0,
     books: 0,
     exams: 0,
-    assignments:0,
+    assignments: 0,
     liveClasses: 0,
     tasks: 0,
-    leaves: 0
+    leaves: 0,
   });
   const [businessName, setBusinessName] = useState("Business Executive");
   const [loading, setLoading] = useState(true);
@@ -35,7 +33,8 @@ function BusinessExecutiveDashboard() {
 
     try {
       const decoded = jwtDecode(token);
-      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      const role =
+        decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
       const name = decoded["Username"] || decoded.name || "Business_Executive";
       setBusinessName(name);
 
@@ -49,9 +48,8 @@ function BusinessExecutiveDashboard() {
         try {
           const token = localStorage.getItem("jwt");
           const res = await fetch(`${API_BASE_URL}/AdminSummary/dashboard`, {
-            
             headers: {
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           });
           const data = await res.json();
@@ -64,7 +62,7 @@ function BusinessExecutiveDashboard() {
             assignments: data.assignments || 0,
             liveClasses: data.liveClasses || 0,
             tasks: data.tasks || 0,
-            leaves: data.leaves || 0
+            leaves: data.leaves || 0,
           });
           console.log(data);
         } catch (err) {
@@ -81,11 +79,9 @@ function BusinessExecutiveDashboard() {
     }
   }, []);
 
-
   // useEffect(() => {
   //   if (summary) fetchSummary();
   // }, [summary]);
-
 
   return (
     <div id="main_content" className="font-muli theme-blush">
@@ -98,63 +94,108 @@ function BusinessExecutiveDashboard() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Admin" />
-
-      <div className="page">
-        <div className="section-body mt-3">
+      
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-
             {/* Welcome Header */}
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-                          <h2 className="page-title text-primary">
-                            Welcome back, <strong>{businessName}</strong> 👋
-                          </h2>
-                          <p className="text-muted mb-0">
-                            Here’s a quick snapshot of your Business Executive LMS dashboard.
-                          </p>
-                        </div>
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
+                Welcome back, <strong>{businessName}</strong> 👋
+              </h2>
+              <p className="text-muted mb-0 dashboard-hero-sub">
+                Here’s a quick snapshot of your Business Executive LMS
+                dashboard.
+              </p>
+            </div>
             {/* Dashboard Cards */}
             <div className="row ">
               {[
-                { label: "Faculty", value: summary.professors, icon: "fa-male", link: "/professors" },
-                 { label: "Students", value: summary.students, icon: "fa-user-graduate", link: "/students" },
-                { label: "Board", value: summary.programmes, icon: "fa-list-alt", link: "/AdminDashboardTabs" },
-               { label: "Discussions", value: summary.programmes, icon: "fa-list", link: "/adddiscussions" },
-                { label: "Library Books", value: summary.books, icon: "fa-book", link: "/library" },
-                { label: "Examinations", value: summary.exams, icon: "fa-pencil-square-o", link: "/admin-exams" },
-                 { label: "Assignments", value: summary.assignments, icon: "fa-pencil-square-o", link: "/admin-manage-assignments" },
-                { label: "Live Classes", value: summary.liveClasses, icon: "fa-video-camera", link: "instructor/live-classes" },
-                { label: "Tasks", value: summary.tasks, icon: "fa-tasks", link: "/taskboard" },
-                
+                {
+                  label: "Faculty",
+                  value: summary.professors,
+                  icon: "fa-male",
+                  link: "/professors",
+                },
+                {
+                  label: "Students",
+                  value: summary.students,
+                  icon: "fa-user-graduate",
+                  link: "/students",
+                },
+                {
+                  label: "Board",
+                  value: summary.programmes,
+                  icon: "fa-list-alt",
+                  link: "/AdminDashboardTabs",
+                },
+                {
+                  label: "Discussions",
+                  value: summary.programmes,
+                  icon: "fa-list",
+                  link: "/adddiscussions",
+                },
+                {
+                  label: "Library Books",
+                  value: summary.books,
+                  icon: "fa-book",
+                  link: "/library",
+                },
+                {
+                  label: "Examinations",
+                  value: summary.exams,
+                  icon: "fa-pencil-square-o",
+                  link: "/admin-exams",
+                },
+                {
+                  label: "Assignments",
+                  value: summary.assignments,
+                  icon: "fa-pencil-square-o",
+                  link: "/admin-manage-assignments",
+                },
+                {
+                  label: "Live Classes",
+                  value: summary.liveClasses,
+                  icon: "fa-video-camera",
+                  link: "instructor/live-classes",
+                },
+                {
+                  label: "Tasks",
+                  value: summary.tasks,
+                  icon: "fa-tasks",
+                  link: "/taskboard",
+                },
               ].map((item, idx) => (
                 <div className="col-12 col-sm-6 col-lg-3 mb-4" key={idx}>
-                  {/* <div className="card h-100 border-0 shadow-sm rounded"> */}
-                    <div className="card-body text-center welcome-card animate-welcome">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => navigate(item.link)}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && navigate(item.link)}
+        className="welcome-card dashboard-card animate-welcome text-center"
+        title={`Go to ${item.label}`}
+        aria-label={`Open ${item.label}`}
+        // style={{ cursor: "pointer" }}
+      >
+        
+          <i className={`fa ${item.icon}  dashboard-icon text-primary`} aria-hidden="true" />
+      
 
-                      {/* Icon */}
-                      <div className="card-body text-center">
-                        <i className={`fa ${item.icon} fa-2x mb-2 text-primary`} />
-                      </div>
+        {/* Label & Count */}
+        <div className="dashboard-label text-muted">{item.label}</div>
+        <div className="dashboard-count text-dark fw-bold">{item.value}</div>
 
-                      {/* Label & Count */}
-                      <h6 className="text-muted mb-1">{item.label}</h6>
-                      <h2 className="text-dark fw-bold">{item.value}</h2>
-
-                      {/* Manage Link */}
-                      <a
-                        href={item.link}
-                        className="badge text-primary px-3 py-2 rounded-pill mt-2 text-decoration-none"
-                      >
-                        Manage {item.label} <i className="fa fa-arrow-right mr-1"></i>
-                      </a>
-                    </div>
-                  </div>
+        {/* NOTE: Manage link removed to match AdminDashboard compact look */}
+      </div>
+    </div>
                 // </div>
               ))}
             </div>
-
           </div>
         </div>
         <Footer />
+      </div>
       </div>
     </div>
   );

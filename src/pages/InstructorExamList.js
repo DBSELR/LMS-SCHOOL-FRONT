@@ -120,15 +120,17 @@ function InstructorExamList() {
     <div id="main_content" className="font-muli theme-blush">
       <HeaderTop />
       <RightSidebar />
-      <LeftSidebar role="Instructor" />
-      <div className="page">
-        <div className="section-body mt-3">
+      <LeftSidebar role="Faculty" />
+
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="p-4 mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
-                <i class="fa-solid fa-file-pen"></i> Manage Exams
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
+                <i className="fa-solid fa-file-pen"></i> Manage Exams
               </h2>
-              <p className="text-muted mb-0">Manage exams efficiently</p>
+              <p className="text-muted mb-0 dashboard-hero-sub">Manage exams efficiently</p>
             </div>
             <div className="container-fluid mb-3">
               {/* <div className="d-flex justify-content-end">
@@ -331,7 +333,7 @@ function InstructorExamList() {
         </div>
         <Footer />
       </div>
-
+      </div>
       <ConfirmationPopup
         show={showConfirm}
         message="Are you sure you want to delete this exam?"
