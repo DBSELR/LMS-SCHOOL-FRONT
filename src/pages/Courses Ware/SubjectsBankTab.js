@@ -336,8 +336,8 @@ const SubjectsBankTab = ({ isActive }) => {
                     <option value="">Select Batch</option>
                     {(batches || []).map((b, i) => (
                       /* support primitive or object batch */
-                      <option key={i} value={typeof b === "object" ? (b.id ?? b.value ?? b.name) : b}>
-                        {typeof b === "object" ? (b.name ?? b.value ?? JSON.stringify(b)) : b}
+                      <option key={i} value={b && typeof b === "object" ? (b.id ?? b.value ?? b.name) : b}>
+                        {b && typeof b === "object" ? (b.name ?? b.value ?? JSON.stringify(b)) : b}
                       </option>
                     ))}
                   </Form.Control>
@@ -423,26 +423,28 @@ const SubjectsBankTab = ({ isActive }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(filteredSubjects || []).map((exam) => (
-                    <tr key={exam.examinationId ?? `${exam.paperCode}-${exam.batchName}`}>
-                      <td>{exam.batchName}</td>
-                      <td>{exam.paperCode}</td>
-                      <td className="text-start">{exam.paperName}</td>
-                      <td>
-                        <Button size="sm" variant="link" onClick={() => fetchUnitsByExamId(exam)}>
-                          ➕ {exam.unitCount != null ? `(${exam.unitCount})` : ""}
-                        </Button>
-                      </td>
-                      <td className="actions-cell">
-                        <Button size="sm" variant="outline-primary" onClick={() => handleEdit(exam)} className="me-1 mb-2 mb-sm-0">
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="outline-danger" onClick={() => handleDelete(exam.examinationId)} className="mt-1">
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {(filteredSubjects || [])
+                    .filter((exam) => exam) // Filter out null or undefined values
+                    .map((exam) => (
+                      <tr key={exam.examinationId ?? `${exam.paperCode}-${exam.batchName}`}>
+                        <td>{exam.batchName}</td>
+                        <td>{exam.paperCode}</td>
+                        <td className="text-start">{exam.paperName}</td>
+                        <td>
+                          <Button size="sm" variant="link" onClick={() => fetchUnitsByExamId(exam)}>
+                            ➕ {exam.unitCount != null ? `(${exam.unitCount})` : ""}
+                          </Button>
+                        </td>
+                        <td className="actions-cell">
+                          <Button size="sm" variant="outline-primary" onClick={() => handleEdit(exam)} className="me-1 mb-2 mb-sm-0">
+                            Edit
+                          </Button>
+                          <Button size="sm" variant="outline-danger" onClick={() => handleDelete(exam.examinationId)} className="mt-1">
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </Table>
             </div>
