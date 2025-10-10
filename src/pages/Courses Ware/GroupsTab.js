@@ -288,9 +288,9 @@ const GroupsTab = ({ isActive }) => {
   };
 
   return (
-    <div className="container py-4">
-      <div className="mb-4 bg-glass p-4 border">
-        <h5 className="mb-4 text-primary">Add / Edit Class</h5>
+    <div className="container py-0 pt-0 welcome-card animate-welcome">
+      <div className="mb-0 bg-glass p-0 border">
+        <h5 className="mb-0 mt-0 text-primary">Add / Edit Class</h5>
         <Form>
           <div className="row gy-3">
             {/* Batch Name */}
@@ -395,6 +395,7 @@ const GroupsTab = ({ isActive }) => {
       </div>
 
       <h5 className="mb-3">Classes List</h5>
+      <div className="semester-panel-body">
       {groups.length === 0 ? (
         <p>No classes found.</p>
       ) : (
@@ -412,6 +413,7 @@ const GroupsTab = ({ isActive }) => {
           </div>
         ))
       )}
+    </div>
     </div>
   );
 };

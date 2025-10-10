@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { Form, Button, Row, Col, Table, Spinner, Alert } from "react-bootstrap";
 import { toast } from "react-toastify";
 import API_BASE_URL from "../../config";
-
 const DEBUG = true;
 
 /* ===================== Logging helpers ===================== */
@@ -335,101 +334,123 @@ const BatchTab = () => {
   };
 
   return (
-    <div className="container py-4 welcome-card animate-welcome">
-      {/* Form Card */}
-      <div className="mb-4 bg-glass p-4" >
-        <h5 className="mb-4 text-primary">{isEditMode ? "Edit Batch" : "Add / Edit Batch"}</h5>
-        <Form onSubmit={(e) => e.preventDefault()} >
-          <Row className="g-3">
-            <Col xs={12} md={4} >
-              <Form.Group >
-                <Form.Label>Batch</Form.Label>
-                <Form.Control
-                  name="batchName"
-                  placeholder="e.g., August 2025 - Evening"
-                  value={form.batchName}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-            <Col xs={12} md={4}>
-              <Form.Group>
-                <Form.Label>Start Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="startDate"
-                  value={form.startDate}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-            <Col xs={12} md={4}>
-              <Form.Group>
-                <Form.Label>End Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="endDate"
-                  value={form.endDate}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-
-            <Col xs={12} className="mt-2 d-flex gap-2 align-items-center">
-              <Button
-                variant={isEditMode ? "warning" : "success"}
-                className="rounded-pill px-4"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? (isEditMode ? "Updating..." : "Saving...") : (isEditMode ? "Update" : "Save")}
-              </Button>
-
-              {isEditMode && (
-                <Button
-                  variant="outline-secondary"
-                  className="rounded-pill px-4"
-                  onClick={handleCancelEdit}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-              )}
-            </Col>
-          </Row>
-        </Form>
-      </div>
-
-      {/* List Card */}
-      <div className="p-4 rounded bg-white border shadow-sm">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="mb-0">📋 Batches</h5>
-          <Button variant="outline-primary" size="sm" onClick={refreshList} disabled={loadingList}>
-            {loadingList ? "Refreshing..." : "Refresh"}
-          </Button>
+    <div className="container py-0 pt-0 welcome-card animate-welcome">
+  {/* Form Card */}
+  <div className="mb-0 bg-glass p-3 rounded">
+    <h5 className="mb-3 text-primary">Add / Edit Batch</h5>
+    <Form onSubmit={(e) => e.preventDefault()}>
+      <div className="row gy-3">
+        <div className="col-md-6">
+          <Form.Group>
+            <Form.Label>Batch</Form.Label>
+            <Form.Control
+              name="batchName"
+              placeholder="e.g., August 2025 - Evening"
+              value={form.batchName}
+              onChange={handleChange}
+            />
+          </Form.Group>
         </div>
 
-        {listError && (
-          <Alert variant="warning" className="mb-3">
-            Couldn’t load from server: {listError}
-          </Alert>
-        )}
+        <div className="col-md-6">
+          <Form.Group>
+            <Form.Label>Start Date</Form.Label>
+            <Form.Control
+              type="date"
+              name="startDate"
+              value={form.startDate}
+              onChange={handleChange}
+            />
+          </Form.Group>
+        </div>
 
-        {loadingList ? (
-          <div className="py-4 text-center">
-            <Spinner animation="border" role="status" />
-          </div>
-        ) : batches.length === 0 ? (
-          <p className="mb-0">No batches found.</p>
-        ) : (
-          <Table bordered hover responsive size="sm" className="mb-0">
+        <div className="col-md-6">
+          <Form.Group>
+            <Form.Label>End Date</Form.Label>
+            <Form.Control
+              type="date"
+              name="endDate"
+              value={form.endDate}
+              onChange={handleChange}
+            />
+          </Form.Group>
+        </div>
+
+        <div className="col-12 mt-2 d-flex gap-2 align-items-center">
+          <Button
+            variant={isEditMode ? "warning" : "success"}
+            className="rounded-pill px-4"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving
+              ? isEditMode
+                ? "Updating..."
+                : "Saving..."
+              : isEditMode
+              ? "Update"
+              : "Save"}
+          </Button>
+
+          {isEditMode && (
+            <Button
+              variant="outline-secondary"
+              className="rounded-pill px-4"
+              onClick={handleCancelEdit}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      </div>
+    </Form>
+  </div>
+
+  {/* List Card */}
+  <div className="p-4 mt-3 rounded bg-white border shadow-sm">
+    <div className="d-flex justify-content-between align-items-center mb-3">
+      <h5 className="mb-0">📋 Batches</h5>
+      <Button
+        variant="outline-primary"
+        size="sm"
+        onClick={refreshList}
+        disabled={loadingList}
+      >
+        {loadingList ? "Refreshing..." : "Refresh"}
+      </Button>
+    </div>
+
+    {listError && (
+      <Alert variant="warning" className="mb-3">
+        Couldn’t load from server: {listError}
+      </Alert>
+    )}
+
+    <div className="p-0 overflow-auto custom-scrollbar flex-grow-1">
+      {loadingList ? (
+        <div className="py-3 text-center">
+          <Spinner animation="border" role="status" />
+        </div>
+      ) : batches.length === 0 ? (
+        <p className="mb-0">No batches found.</p>
+      ) : (
+        <div className="batch-table-scroll">
+          <Table
+            bordered
+            hover
+            responsive
+            size="sm"
+            className="mb-0"
+            table-stacked
+          >
             <thead>
               <tr className="bg-light">
-                <th style={{ width: 80 }}>Bid</th>
-                <th>Batch</th>
-                <th style={{ width: 160 }}>Start Date</th>
-                <th style={{ width: 160 }}>End Date</th>
-                <th style={{ width: 170 }}>Actions</th>
+                <th style={{ width: 110 }}>Bid</th>
+                <th style={{ width: 130 }}>Batch</th>
+                <th style={{ width: 200 }}>Start Date</th>
+                <th style={{ width: 200 }}>End Date</th>
+                <th style={{ width: 200 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -438,15 +459,27 @@ const BatchTab = () => {
                 const end = toInputDate(b.endDate);
                 return (
                   <tr key={b.bid || idx}>
-                    <td>{b.bid}</td>
-                    <td className="text-start">{b.batchName || <em>(no name)</em>}</td>
-                    <td>{start}</td>
-                    <td>{end}</td>
-                    <td className="d-flex gap-2">
-                      <Button size="sm" variant="outline-info" onClick={() => handleEdit(b)}>
+                    <td data-label="Bid">{b.bid}</td>
+                    <td data-label="Batch" className="text-start">
+                      {b.batchName || <em>(no name)</em>}
+                    </td>
+                    <td data-label="Start Date">{start}</td>
+                    <td data-label="End Date">{end}</td>
+                    <td data-label="Actions" className="d-flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline-info"
+                        onClick={() => handleEdit(b)}
+                        type="button"
+                      >
                         Edit
                       </Button>
-                      <Button size="sm" variant="outline-danger" onClick={() => handleDelete(b)}>
+                      <Button
+                        size="sm"
+                        variant="outline-danger"
+                        onClick={() => handleDelete(b)}
+                        type="button"
+                      >
                         Delete
                       </Button>
                     </td>
@@ -455,9 +488,12 @@ const BatchTab = () => {
               })}
             </tbody>
           </Table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
+  </div>
+</div>
+
   );
 };
 

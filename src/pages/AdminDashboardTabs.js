@@ -36,14 +36,15 @@ const tabs = [
       <LeftSidebar role="Admin" />
 
 
-      <div className="page">
-        <div className="section-body mt-3">
+      <div className="section-wrapper">
+          <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid ">
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <i class="fa-solid fa-book"></i> Subject Master – Courseware Module
               </h2>
-              <p className="text-muted mb-0">
+              <p className="text-muted mb-0 dashboard-hero-sub">
                 Manage Boards, Classes, Subjects, and Assignments with streamlined workflow.
               </p>
             </div>
@@ -89,8 +90,8 @@ const tabs = [
                   ))}
                 </ul>
 
-
-                <div className="tab-content mt-4">
+                  
+                    <div className="tab-content mt-2">
                   {tabs.map((tab) => (
                     <div
                       key={tab.key}
@@ -100,6 +101,9 @@ const tabs = [
                     </div>
                   ))}
                 </div>
+                
+                  
+                
               </div>
             </div>
           </div>
@@ -108,11 +112,10 @@ const tabs = [
 
         <Footer />
       </div>
+      </div>
     </div>
   );
 }
 
 
 export default AdminDashboardTabs;
-
-

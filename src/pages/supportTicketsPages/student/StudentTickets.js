@@ -142,15 +142,21 @@ const StudentTickets = () => {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Student" />
-      <div className="page mt-4">
-        <div className="p-4 mb-4 welcome-card animate-welcome">
-          <h2 className="page-title text-primary">
+      
+      <div className="section-wrapper">
+           <div className="page admin-dashboard">
+           <div className="section-body mt-3 pt-0">
+            <div className="container-fluid">
+              <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+          <h2 className="page-title text-primary pt-0 dashboard-hero-title">
             <i className="fa fa-headset"></i> Support Tickets
           </h2>
-          <p className="text-muted mb-0">
+          <p className="text-muted mb-0 dashboard-hero-sub">
             View and manage your Support Tickets
           </p>
         </div>
+            </div>
+           </div>
 
         <div className="d-flex flex-row justify-content-end mb-3">
           <button
@@ -213,6 +219,7 @@ const StudentTickets = () => {
           )}
         </div>
         <Footer />
+      </div>
       </div>
 
       {/* View Ticket Modal */}

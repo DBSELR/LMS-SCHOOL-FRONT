@@ -1,7 +1,7 @@
 // File: src/pages/Courses Ware/CourseGroupAssignmentTab.jsx
 
 import React, { useEffect, useState } from "react";
-import { Form, Button } from "react-bootstrap";
+import { Form, Button,Table } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import ConfirmationPopup from "../../components/ConfirmationPopup";
@@ -202,12 +202,12 @@ const CourseGroupAssignmentTab = () => {
   };
 
   return (
-    <div className="container py-4">
-      <div className="mb-4 p-4 rounded">
-        <h5 className="mb-3 text-primary">Assign Subjects to Board + Class</h5>
+    <div className="container py-0 pt-0 welcome-card animate-welcome">
+      <div className="mb-0 p-0 rounded">
+        <h5 className="mb-0 mt-0 text-primary">Assign Subjects to Board + Class</h5>
         <Form>
           <div className="row mb-3">
-            <div className="col-md-4" style={{ minWidth: "200px", width: "100%" }}>
+            <div className="col-md-6" >
               <Form.Label>Batch</Form.Label>
               <Form.Control
                 as="select"
@@ -221,7 +221,7 @@ const CourseGroupAssignmentTab = () => {
               </Form.Control>
             </div>
 
-            <div className="col-md-4" style={{ minWidth: "200px", width: "100%" }}>
+            <div className="col-md-6" >
               <Form.Label>Board</Form.Label>
               <Form.Control
                 as="select"
@@ -239,7 +239,7 @@ const CourseGroupAssignmentTab = () => {
               </Form.Control>
             </div>
 
-            <div className="col-md-4" style={{ minWidth: "200px", width: "100%" }}>
+            <div className="col-md-6" >
               <Form.Label>Class</Form.Label>
               <Form.Control
                 as="select"
@@ -259,69 +259,149 @@ const CourseGroupAssignmentTab = () => {
           </div>
         </Form>
       </div>
-
-      <div className="row">
-        <div className="col-md-6">
-          <h5 className="text-dark mb-2">📚 Subject Bank</h5>
-          <ul className="list-group" style={{ maxHeight: "300px", overflowY: "auto" }}>
+      
+      <div className="p-4 mt-2 rounded bg-white border shadow-sm batch-list-card">
+  <div className="row">
+    {/* Subject Bank (left) */}
+    <div className="col-md-6">
+      <h5 className="text-dark mb-2">📚 Subject Bank</h5>
+      <div className="table-responsive" style={{ maxHeight: "400px", overflowY: "auto" }}>
+        <Table bordered hover size="sm" className="mb-0">
+          <thead>
+            <tr className="bg-light">
+              <th style={{ width: 40 }}></th>
+              <th style={{ width: 130 }}>Paper Code</th>
+              <th>Paper Name</th>
+            </tr>
+          </thead>
+          <tbody>
             {subjectBank.map((s) => (
-              <li key={s.examinationId} className="list-group-item d-flex align-items-center">
-                <input
-                  type="checkbox"
-                  className="form-check-input me-2"
-                  checked={selectedSubjects.some((sub) => sub.examinationId === s.examinationId)}
-                  onChange={() => handleSubjectSelect(s)}
-                />
-                {s.paperCode} | {s.paperName}
-              </li>
-            ))}
-          </ul>
-        </div>
+              <tr key={s.examinationId}>
+                {/* <td className="text-center">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={selectedSubjects.some(
+                      (sub) => sub.examinationId === s.examinationId
+                    )}
+                    onChange={() => handleSubjectSelect(s)}
+                  />
+                </td> */}
 
-        <div className="col-md-6">
-          <h5 className="text-dark mb-2">📦 Selected Subjects</h5>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="selectedSubjects">
-              {(provided) => (
-                <ul className="list-group" {...provided.droppableProps} ref={provided.innerRef}>
+                <td className="text-center align-middle" style={{ width: 42 }}>
+  <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "1.75rem" }}>
+    <input
+      type="checkbox"
+      className="form-check-input m-0"
+      checked={selectedSubjects.some(
+        (sub) => sub.examinationId === s.examinationId
+      )}
+      onChange={() => handleSubjectSelect(s)}
+    />
+  </div>
+</td>
+
+
+
+                <td>{s.paperCode}</td>
+                <td className="text-start">{s.paperName}</td>
+              </tr>
+            ))}
+            {subjectBank.length === 0 && (
+              <tr>
+                <td colSpan={3} className="text-center text-muted">
+                  No subjects available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </div>
+    </div>
+
+    {/* Selected (right) — preserves drag & drop */}
+    <div className="col-md-6">
+      <h5 className="text-dark mb-2">📦 Selected Subjects</h5>
+
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="selectedSubjects">
+          {(provided) => (
+            <div
+              className="table-responsive"
+              style={{ maxHeight: "400px", overflowY: "auto" }}
+            >
+              <Table bordered hover size="sm" className="mb-0">
+                <thead>
+                  <tr className="bg-light">
+                    <th style={{ width: 42 }} title="Drag to reorder">⇅</th>
+                    <th style={{ width: 100 }}>#</th>
+                    <th style={{ width: 130 }}>Paper Code</th>
+                    <th style={{ width: 200 }}>Paper Name</th>
+                    <th style={{ width: 92 }}>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody ref={provided.innerRef} {...provided.droppableProps}>
                   {selectedSubjects.map((s, index) => (
-                    <Draggable key={s.examinationId} draggableId={String(s.examinationId)} index={index}>
-                      {(provided) => (
-                        <li
-                          className="list-group-item d-flex justify-content-between align-items-center"
+                    <Draggable
+                      key={s.examinationId}
+                      draggableId={String(s.examinationId)}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <tr
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          {...provided.dragHandleProps}
+                          className={snapshot.isDragging ? "table-active" : ""}
                         >
-                          <span style={{ cursor: "grab" }}>≡</span>
-                          <span style={{ textAlign: "left" }}>
-                            {index + 1}. {s.paperCode} | {s.paperName}
-                          </span>
-                          <div>
+                          {/* drag handle cell */}
+                          <td
+                            {...provided.dragHandleProps}
+                            className="text-center"
+                            style={{ cursor: "grab" }}
+                          >
+                            ≡
+                          </td>
+                          <td>{index + 1}</td>
+                          <td>{s.paperCode}</td>
+                          <td className="text-start">{s.paperName}</td>
+                          <td className="text-center">
                             <button
-                              className="btn btn-sm btn-danger"
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
                               onClick={() => handleSubjectSelect(s)}
                             >
                               ❌
                             </button>
-                          </div>
-                        </li>
+                          </td>
+                        </tr>
                       )}
                     </Draggable>
                   ))}
                   {provided.placeholder}
-                </ul>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </div>
-      </div>
+                  {selectedSubjects.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center text-muted">
+                        Nothing selected
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </div>
+  </div>
+</div>
+
 
       <div className="text-center mt-4">
         <Button
           type="button"
           variant="success"
-          className="rounded-pill px-5 py-2 shadow"
+          className="rounded-pill px-5 py-2 shadow mb-2"
           style={{
             fontSize: "1.1rem",
             minWidth: "220px",

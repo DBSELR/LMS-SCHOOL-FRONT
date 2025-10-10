@@ -1,5 +1,3 @@
-
-
 // File: src/pages/UsersDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -8,6 +6,7 @@ import RightSidebar from "../components/RightSidebar";
 import LeftSidebar from "../components/LeftSidebar";
 import Footer from "../components/Footer";
 import API_BASE_URL from "../config";
+import { useNavigate } from "react-router-dom";
 
 function UsersDashboard() {
   const [summary, setSummary] = useState({
@@ -17,6 +16,7 @@ function UsersDashboard() {
   }); 
   const [adminName, setAdminName] = useState("Admin");
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("jwt");
@@ -83,19 +83,20 @@ function UsersDashboard() {
       <RightSidebar />
       <LeftSidebar role="Admin" />
 
-      <div className="page">
-        <div className="section-body mt-3">
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
 
             {/* Welcome Header */}
-             <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-                          <h2 className="page-title text-primary">
-                           <i class="fa-solid fa-user-secret"></i> Manage Users
-                          </h2>
-                          <p className="text-muted mb-0">
-                            View and Manage all Users in LMS
-                          </p>
-                        </div>
+             <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+                <h2 className="page-title text-primary pt-0 dashboard-hero-title">
+                <i class="fa-solid fa-user-secret"></i> Manage Users
+                </h2>
+                <p className="text-muted mb-0 dashboard-hero-sub">
+                 View and Manage all Users in LMS
+                </p>
+              </div>
 
             {/* Dashboard Cards */}
             <div className="row d-flex justify-content-center">
@@ -111,7 +112,8 @@ function UsersDashboard() {
               ].map((item, idx) => (
                 <div className="col-12 col-sm-6 col-lg-3 mb-4" key={idx}>
                   {/* <div className="card h-100 border-0 shadow-sm rounded"> */}
-                    <div className="card-body text-center welcome-card animate-welcome">
+                    <div className="card-body text-center welcome-card animate-welcome" 
+                    onClick={() => navigate(item.link)}>
 
                       {/* Icon */}
                       <div className="card-body text-center">
@@ -119,7 +121,7 @@ function UsersDashboard() {
                       </div>
 
                       {/* Label & Count */}
-                      {/* <h6 className="text-muted mb-1">{item.label}</h6> */}
+                      <h6 className="text-muted mb-1">{item.label}</h6>
                       <h3 className="text-dark fw-bold">{item.value}</h3>
 
                       {/* Manage Link */}
@@ -127,7 +129,7 @@ function UsersDashboard() {
                         href={item.link}
                         className="badge text-primary px-3 py-2 rounded-pill mt-2 text-decoration-none"
                       >
-                        <h6>{item.label} <i className="fa fa-caret-right mr-1"></i></h6>
+                        {/* <h6>{item.label} <i className="fa fa-caret-right mr-1"></i></h6> */}
                       </a>
                     </div>
                   </div>
@@ -138,6 +140,7 @@ function UsersDashboard() {
           </div>
         </div>
         <Footer />
+      </div>
       </div>
     </div>
   );

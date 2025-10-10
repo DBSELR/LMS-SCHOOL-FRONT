@@ -106,14 +106,16 @@ function InstructorCourses() {
       <RightSidebar />
       <LeftSidebar role="Instructor" />
 
-      <div className="page section-body mt-3">
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
+        <div className="section-body mt-2 pt-0">
         <div className="container-fluid">
           <div className="card-body">
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <i className="fa-solid fa-book-open"></i> My Courseware
               </h2>
-              <p className="text-muted mb-0">
+              <p className="text-muted mb-0 dashboard-hero-sub">
                 View and Manage your Subjects below
               </p>
             </div>
@@ -124,7 +126,7 @@ function InstructorCourses() {
                   className="btn btn-sm btn-outline-primary"
                   onClick={toggleAll}
                 >
-                  {allOpen ? "Close All" : "Open All"}
+                  {allOpen ? "Collapse" : "Expand"}
                 </button>
 
                 <input
@@ -145,36 +147,41 @@ function InstructorCourses() {
 
               return (
                 <div key={key} className="mb-4">
-                  <button
-                    className="semester-toggle-btn w-100 text-left d-flex justify-content-between align-items-center"
-                    onClick={() => toggleSemester(key)}
-                    aria-controls={`collapse-${key}`}
-                    aria-expanded={!!openSemesters[key]}
-                  >
-                    <span>
-                      <FaBookOpen className="me-2" /> {key} ({filtered.length}{" "}
-                      Subjects)
-                    </span>
-                    {openSemesters[key] ? <FaChevronUp /> : <FaChevronDown />}
-                  </button>
-                  <Collapse in={openSemesters[key]}>
-                    <div id={`collapse-${key}`} className="p-3 mt-2">
-                      {filtered.map((course) => (
-                        <CourseCard
-                          key={course.courseId}
-                          course={course}
-                          navigate={navigate}
-                          role={userRole}
-                        />
-                      ))}
-                    </div>
-                  </Collapse>
-                </div>
+  <button
+    className="semester-toggle-btn w-100 text-left d-flex justify-content-between align-items-center"
+    onClick={() => toggleSemester(key)}
+    aria-controls={`collapse-${key}`}
+    aria-expanded={!!openSemesters[key]}
+  >
+    <span>
+      <FaBookOpen className="me-2" /> {key} ({filtered.length} Subjects)
+    </span>
+    {openSemesters[key] ? <FaChevronUp /> : <FaChevronDown />}
+  </button>
+
+  <Collapse in={openSemesters[key]}>
+    {/* 👇 give the opened panel its own scroll */}
+    <div id={`collapse-${key}`} className="p-3 mt-2 semester-panel-body" tabIndex={-1}>
+      {filtered.map((course) => (
+        <CourseCard
+          key={course.courseId}
+          course={course}
+          navigate={navigate}
+          role={userRole}
+        />
+      ))}
+    </div>
+  </Collapse>
+</div>
+
               );
             })}
           </div>
         </div>
+        </div>
         <Footer />
+      </div>
+
       </div>
     </div>
   );

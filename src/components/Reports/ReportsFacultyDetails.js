@@ -95,9 +95,9 @@ function ReportsFacultyDetails() {
     
         <div className="section-body mt-3">
           <div className="container-fluid">
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4">
-              <h2 className="text-primary mb-2">Faculty Details Report</h2>
-              <p className="text-muted mb-0">Search and export faculty profiles and assigned courses.</p>
+            <div className="jumbotron bg-light p-1 rounded shadow-sm mb-2 welcome-card dashboard-hero">
+              <h2 className="text-primary mb-1 dashboard-hero-title">Faculty Details Report</h2>
+              <p className="text-muted mb-0 dashboard-hero-sub">Search and export faculty profiles and assigned courses.</p>
             </div>
 
             {/* Filters */}

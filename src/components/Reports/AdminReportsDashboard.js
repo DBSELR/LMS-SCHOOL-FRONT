@@ -20,15 +20,16 @@ function AdminReportsDashboard() {
       <RightSidebar />
       <LeftSidebar role="Admin" />
 
-      <div className="page">
-        <div className="section-body mt-3">
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="p-4 welcome-card animate-welcome mb-4">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
               <div>
-                <h2 className="page-title text-primary">
+                <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                   <i class="fa-solid fa-file"></i> Reports Dashboard
                 </h2>
-                <p className="text-muted mb-0">
+                <p className="text-muted mb-0 dashboard-hero-sub">
                   Analyze student, faculty, and fee information here.
                 </p>
               </div>
@@ -75,7 +76,8 @@ function AdminReportsDashboard() {
                   </li>
                 </ul>
 
-                <div className="tab-content mt-3">
+                <div className="reports-tabs-body">
+                <div className="tab-content mt-0">
                   <div className={`tab-pane fade ${activeTab === "admission" ? "show active" : ""}`}>
                     <ReportsAdmission />
                   </div>
@@ -86,12 +88,14 @@ function AdminReportsDashboard() {
                     <ReportsFacultyDetails />
                   </div>
                 </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <Footer />
+      </div>
       </div>
     </div>
   );

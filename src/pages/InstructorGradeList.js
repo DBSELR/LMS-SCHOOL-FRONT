@@ -29,13 +29,14 @@ function InstructorGradeList() {
       <RightSidebar />
       <LeftSidebar role="Instructor" />
 
-      <div className="page">
-        <div className="section-body mt-3">
+      <div className="section-wrapper">
+          <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="welcome-card animate-welcome mb-4">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
               <div>
-                <h2 className="text-primary mb-2">Grade Exams</h2>
-                <p className="text-muted mb-0">Review and grade pending exam submissions.</p>
+                <h2 className="text-primary pt-0 dashboard-hero-title">Grade Exams</h2>
+                <p className="text-muted mb-0 dashboard-hero-sub">Review and grade pending exam submissions.</p>
               </div>
             </div>
 
@@ -78,6 +79,7 @@ function InstructorGradeList() {
         </div>
 
         <Footer />
+      </div>
       </div>
     </div>
   );

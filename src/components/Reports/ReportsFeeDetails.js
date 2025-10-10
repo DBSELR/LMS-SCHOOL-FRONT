@@ -94,9 +94,9 @@ function ReportsFeeDetails() {
 
         <div className="section-body mt-3">
           <div className="container-fluid">
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4">
-              <h2 className="text-primary mb-2">Fee Details Report</h2>
-              <p className="text-muted mb-0">Filter and export fee records by programme, semester, status, or date range.</p>
+            <div className="jumbotron bg-light p-1 rounded shadow-sm mb-2 welcome-card dashboard-hero">
+              <h2 className="text-primary mb-1 dashboard-hero-title">Fee Details Report</h2>
+              <p className="text-muted mb-0 dashboard-hero-sub">Filter and export fee records by programme, semester, status, or date range.</p>
             </div>
 
             {/* Filters */}

@@ -43,15 +43,17 @@ function DiscussionForum() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar />
-
-      <div className="page section-body mt-3 instructor-course-page">
+      
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
         <div className="container-fluid">
 
           {/* Header */}
-          <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <div style={{ width: "150px" }}></div>
-              <h2 className="page-title text-primary text-center mb-0 flex-grow-1">
+          <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+            <div className="d-flex justify-content-between align-items-center mb-0">
+              <div style={{ width: "100px" }}></div>
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 Discussions
               </h2>
               <button
@@ -61,7 +63,7 @@ function DiscussionForum() {
                 <i className="fa fa-arrow-left mr-1"></i> Back
               </button>
             </div>
-            <p className="text-muted ml-5 mb-0">
+            <p className="text-muted mb-0 dashboard-hero-sub">
               View discussion threads for this course.
             </p>
           </div>
@@ -144,9 +146,12 @@ function DiscussionForum() {
             </div>
           )}
         </div>
+        </div>
+        <Footer />
+      </div>
       </div>
 
-      <Footer />
+      
     </div>
   );
 }

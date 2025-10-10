@@ -136,15 +136,20 @@ function AddDiscussions() {
       <RightSidebar />
       <LeftSidebar />
 
-      <div className="page">
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
         {/* Welcome Header */}
-        <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-          <h2 className="page-title text-primary">
+        <div className="section-body mt-3 pt-0">
+          <div className="container-fluid">
+              <div className="jumbotron bg-light rounded shadow-sm mb-3  welcome-card dashboard-hero">
+          <h2 className="page-title text-primary pt-0 dashboard-hero-title">
             <i className="fa-solid fa-comment"></i> Add Discussion
           </h2>
-          <p className="text-muted mb-0">
+          <p className="text-muted mb-0 dashboard-hero-sub">
             Fill in the details below to create a discussion
           </p>
+        </div>
+          </div>
         </div>
 
         <div className="section-body mt-2">
@@ -266,6 +271,7 @@ function AddDiscussions() {
         </div>
 
         <Footer />
+      </div>
       </div>
 
       {/* Toasts */}

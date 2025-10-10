@@ -529,15 +529,21 @@ const renderClassCard = (cls) => {
 
       <HeaderTop />
       <LeftSidebar role="Instructor" />
-      <div className="page">
-        <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-                          <h2 className="page-title text-primary">
+      
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
+          <div className="container-fluid">
+              <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+                          <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                            <i class="fa-solid fa-video-camera"></i> Manage Live Classes
                           </h2>
-                          <p className="text-muted mb-0">
+                          <p className="text-muted mb-0 dashboard-hero-sub">
                             View, manage, and schedule live classes
                           </p>
-                        </div>
+        </div>
+          </div>
+        </div>
 
         {loading ? (
           <div className="text-center py-4">Loading...</div>
@@ -713,6 +719,8 @@ const renderClassCard = (cls) => {
                       )}
         </div>
         <Footer />
+      </div>
+         
       </div>
 
       <Modal

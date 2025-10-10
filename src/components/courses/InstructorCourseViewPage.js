@@ -8,10 +8,145 @@ import { useParams, useLocation, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { Document, Page, pdfjs } from "react-pdf";
 import API_BASE_URL from "../../config";
+import { useMemo } from "react";
+// If you later want to switch to your watermark component inside the modal, it's ready.
+// import VimeoWithWatermark from "../VimeoWithWatermark";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
+/* =========================
+   Debug helpers (toggleable)
+   ========================= */
+const DEBUG = true; // set false to silence all logs
+const tag = "ICVP"; // InstructorCourseViewPage
+const mask = (str) =>
+  typeof str === "string" && str.length > 12
+    ? `${str.slice(0, 4)}…${str.slice(-4)}`
+    : str;
 
+const log = (...args) => DEBUG && console.log(`[${tag}]`, ...args);
+const info = (...args) => DEBUG && console.info(`[${tag}]`, ...args);
+const warn = (...args) => DEBUG && console.warn(`[${tag}]`, ...args);
+const error = (...args) => DEBUG && console.error(`[${tag}]`, ...args);
+const group = (title, obj) => {
+  if (!DEBUG) return;
+  console.groupCollapsed(`[${tag}] ${title}`);
+  if (obj !== undefined) console.log(obj);
+  console.groupEnd();
+};
+
+/* =========================
+   URL helpers
+   ========================= */
+function normalizeUrl(raw) {
+  if (!raw) return "";
+  let u = String(raw).trim();
+  if ((u.startsWith('"') && u.endsWith('"')) || (u.startsWith("'") && u.endsWith("'"))) {
+    u = u.slice(1, -1);
+  }
+  u = u.replace(/&amp;/g, "&");
+  u = u.replace(/%22$/i, "");
+  return u;
+}
+
+/* =========================
+   Watermark helpers
+   ========================= */
+function getDisplayTextFromToken(storageKey = "jwt") {
+  try {
+    const token = localStorage.getItem(storageKey) || (storageKey !== "jwt" ? localStorage.getItem("jwt") : null);
+    if (!token) return "User-NA";
+    const claims = jwtDecode(token) || {};
+    const role =
+      claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+      claims.role ||
+      (Array.isArray(claims.roles) && claims.roles[0]) ||
+      "User";
+    const userId =
+      claims.UserId ||
+      claims["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+      claims.sub ||
+      claims.nameid ||
+      "NA";
+    const loginDateTime =
+      claims.loginDateTime ||
+      (claims.iat ? new Date(claims.iat * 1000).toLocaleString() : new Date().toLocaleString());
+    return `${role}-${userId} | ${loginDateTime}`;
+  } catch {
+    return "User-NA";
+  }
+}
+
+function getApiOrigin() {
+  // Accepts values like "https://host/api" or "https://host" or "https://host:port/api/"
+  try {
+    const u = new URL(API_BASE_URL);
+    const path = u.pathname.replace(/\/+$/, "");
+    if (path.toLowerCase().endsWith("/api")) {
+      const stripped = path.replace(/\/api$/i, "");
+      return `${u.origin}${stripped || ""}`;
+    }
+    return u.origin;
+  } catch {
+    // Fallback: if API_BASE_URL is a bare origin or something unexpected
+    try {
+      const u = new URL(window.location.origin);
+      return u.origin;
+    } catch {
+      return "";
+    }
+  }
+}
+
+function isHttpUrl(u) {
+  return /^https?:\/\//i.test(u || "");
+}
+function isVimeo(u) {
+  return /vimeo\.com/i.test(u || "");
+}
+function isYouTube(u) {
+  return /youtu\.be|youtube\.com/i.test(u || "");
+}
+function toAbsoluteLocal(origin, pathOrUrl) {
+  if (!pathOrUrl) return "";
+  if (isHttpUrl(pathOrUrl)) return pathOrUrl; // already absolute
+  if (!origin) return pathOrUrl; // last resort
+  if (pathOrUrl.startsWith("/")) return `${origin}${pathOrUrl}`;
+  return `${origin}/${pathOrUrl}`;
+}
+
+/* =========================
+   Robust fetch helper
+   ========================= */
+async function safeFetchJson(url, options = {}, { label = "", retries = 0, signal } = {}) {
+  const attempt = async () => {
+    const res = await fetch(url, { ...options, signal });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.warn(`[${tag}] Fetch failed${label ? " - " + label : ""}`, {
+        url,
+        status: res.status,
+        body: text,
+      });
+      throw new Error(`HTTP ${res.status} ${label || ""}`.trim());
+    }
+    return res.json();
+  };
+  let lastErr;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await attempt();
+    } catch (e) {
+      lastErr = e;
+      if (i < retries) await new Promise((r) => setTimeout(r, 250 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
+/* =========================
+   Component
+   ========================= */
 function InstructorCourseViewPage() {
   const { courseId } = useParams();
   const location = useLocation();
@@ -32,11 +167,13 @@ function InstructorCourseViewPage() {
   const [studyguide, setstudyguide] = useState([]);
   const [videos, setVideos] = useState([]);
   const [assignments, setAssignments] = useState([]);
-  const [exams, setExams] = useState([]);
+  const [exams, setExams] = useState([]); // kept in case you map exams later
   const [liveClasses, setLiveClasses] = useState([]);
 
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  const [isVimeoUrl, setIsVimeoUrl] = useState(false);
+  const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
   const [currentVideoProgress, setCurrentVideoProgress] = useState(0);
 
   const [showFileModal, setShowFileModal] = useState(false);
@@ -45,7 +182,6 @@ function InstructorCourseViewPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [numPages, setNumPages] = useState(null);
   const [visitedPages, setVisitedPages] = useState(new Set());
-
 
   const [activeUnit, setActiveUnit] = useState("");
   const [allUnits, setAllUnits] = useState([]);
@@ -60,59 +196,301 @@ function InstructorCourseViewPage() {
     webresources: useRef(null),
   };
 
-  const handleWatchVideo = (url) => {
-    const fullUrl = `http://localhost:5129${url}`;
-    setVideoUrl(fullUrl);
+  const lastLoggedVideoPct = useRef(-1);
+  
+  // Watermark refs and displayText
+  const displayText = useMemo(() => getDisplayTextFromToken("jwt"), []);
+  const wmVideoRef = useRef(null);
+  const wmPdfRef = useRef(null);
+  
+  // Animation state for watermarks
+  const videoWmStateRef = useRef({
+    x: 20,
+    y: 20,
+    vx: 40 * 0.7, // speed * 0.7
+    vy: 40 * 0.3, // speed * 0.3
+    lastT: 0,
+    nextJitterAt: 0,
+  });
+  
+  const pdfWmStateRef = useRef({
+    x: 50,
+    y: 50,
+    vx: 35 * 0.8,
+    vy: 35 * 0.4,
+    lastT: 0,
+    nextJitterAt: 0,
+  });
+  
+  const apiOrigin = getApiOrigin();
+
+  // Enhanced right-click and developer tools blocking
+  useEffect(() => {
+    const root = document.getElementById("main_content");
+    if (!root) return;
+    
+    // Prevent right-click context menu
+    const preventCtx = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+    
+    // Prevent common developer shortcuts
+    const preventDevTools = (e) => {
+      // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+Shift+C
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U')
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+    
+    // Prevent text selection
+    const preventSelection = (e) => {
+      if (e.ctrlKey && e.key === 'a') {
+        e.preventDefault();
+        return false;
+      }
+    };
+    
+    // Add event listeners
+    root.addEventListener("contextmenu", preventCtx);
+    document.addEventListener("keydown", preventDevTools);
+    document.addEventListener("keydown", preventSelection);
+    
+    // Disable drag and drop
+    root.addEventListener("dragstart", preventCtx);
+    root.addEventListener("drop", preventCtx);
+    
+    return () => {
+      root.removeEventListener("contextmenu", preventCtx);
+      document.removeEventListener("keydown", preventDevTools);
+      document.removeEventListener("keydown", preventSelection);
+      root.removeEventListener("dragstart", preventCtx);
+      root.removeEventListener("drop", preventCtx);
+    };
+  }, []);
+
+  // Watermark animation effect
+  useEffect(() => {
+    let rafId = null;
+    
+    const animateWatermark = (wmRef, stateRef, containerId) => {
+      const wm = wmRef.current;
+      const container = document.querySelector(containerId);
+      if (!wm || !container) return;
+
+      const getBounds = () => {
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        const ww = wm.offsetWidth;
+        const wh = wm.offsetHeight;
+        return { cw, ch, ww, wh };
+      };
+
+      const clampInside = (v, min, max) => Math.max(min, Math.min(v, max));
+
+      const pickJitter = (speed = 40) => {
+        const now = performance.now();
+        stateRef.current.nextJitterAt = now + 1500 + Math.random() * 2000;
+        const angle = Math.random() * 0.9 - 0.45; // ~±26°
+        const { vx, vy } = stateRef.current;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        let nvx = vx * cos - vy * sin;
+        let nvy = vx * sin + vy * cos;
+        const mag = Math.hypot(nvx, nvy) || 1;
+        stateRef.current.vx = (nvx / mag) * speed;
+        stateRef.current.vy = (nvy / mag) * speed;
+      };
+
+      const step = (t) => {
+        const s = stateRef.current;
+        if (!s.lastT) s.lastT = t;
+        const dt = Math.min(0.05, (t - s.lastT) / 1000);
+        s.lastT = t;
+
+        if (t >= s.nextJitterAt) pickJitter();
+
+        let { x, y, vx, vy } = s;
+        x += vx * dt;
+        y += vy * dt;
+
+        const { cw, ch, ww, wh } = getBounds();
+
+        if (x <= 0) { x = 0; vx = Math.abs(vx); }
+        else if (x + ww >= cw) { x = cw - ww; vx = -Math.abs(vx); }
+
+        if (y <= 0) { y = 0; vy = Math.abs(vy); }
+        else if (y + wh >= ch) { y = ch - wh; vy = -Math.abs(vy); }
+
+        s.x = x; s.y = y; s.vx = vx; s.vy = vy;
+        if (wm) {
+          wm.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        }
+
+        rafId = requestAnimationFrame(step);
+      };
+
+      stateRef.current.nextJitterAt = performance.now() + 1500;
+      return step;
+    };
+
+    // Start animation when modals are open
+    if (showVideoModal) {
+      const step = animateWatermark(wmVideoRef, videoWmStateRef, '.video-wrapper');
+      rafId = requestAnimationFrame(step);
+    } else if (showFileModal) {
+      const step = animateWatermark(wmPdfRef, pdfWmStateRef, '.relative-wrap');
+      rafId = requestAnimationFrame(step);
+    }
+
+    return () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [showVideoModal, showFileModal]);
+
+  // Enhanced modal security - Block right-click when modals are open
+  useEffect(() => {
+    if (!showVideoModal && !showFileModal) return;
+
+    const preventAll = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const preventDevToolsStrict = (e) => {
+      // Block all developer shortcuts when modal is open
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U') ||
+        (e.ctrlKey && e.key === 'S') || // Block Ctrl+S (Save As)
+        (e.ctrlKey && e.shiftKey && e.key === 'S') || // Block Ctrl+Shift+S
+        (e.ctrlKey && e.key === 'P') // Block Ctrl+P (Print)
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
+    // Add strict event listeners when modal is open
+    document.addEventListener("contextmenu", preventAll, true);
+    document.addEventListener("selectstart", preventAll, true);
+    document.addEventListener("dragstart", preventAll, true);
+    document.addEventListener("keydown", preventDevToolsStrict, true);
+    
+    // Disable print screen
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "PrintScreen") {
+        e.preventDefault();
+        return false;
+      }
+    }, true);
+
+    return () => {
+      document.removeEventListener("contextmenu", preventAll, true);
+      document.removeEventListener("selectstart", preventAll, true);
+      document.removeEventListener("dragstart", preventAll, true);
+      document.removeEventListener("keydown", preventDevToolsStrict, true);
+    };
+  }, [showVideoModal, showFileModal]);
+
+  useEffect(() => {
+    info("Component mounted", {
+      courseId,
+      examId,
+      courseName,
+      courseCode,
+      batchName,
+      semester,
+      courseDisplayName,
+      apiOrigin,
+      API_BASE_URL,
+    });
+    if (!apiOrigin) {
+      warn("apiOrigin is empty. Check API_BASE_URL:", API_BASE_URL);
+    }
+    return () => info("Component unmounted");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* =========================
+     Video open/close
+     ========================= */
+  function getPlayableVideoUrl(item) {
+    // Prefer local fileUrl if present; else use vurl
+    const vurlClean = normalizeUrl(item.vurl || "");
+    const chosen = item.fileUrl ? toAbsoluteLocal(apiOrigin, item.fileUrl) : vurlClean;
+    return chosen;
+  }
+
+  const handleWatchVideo = (item) => {
+    const chosen = getPlayableVideoUrl(item);
+    const vimeo = isVimeo(chosen);
+    const ytb = isYouTube(chosen);
+
+    group("Open Video – Payload", {
+      item,
+      normalized: {
+        fileUrl: item.fileUrl,
+        vurl: normalizeUrl(item.vurl || ""),
+      },
+      chosenUrl: chosen,
+      classification: { vimeo, youTube: ytb, absolute: isHttpUrl(chosen) },
+      apiOrigin,
+      progressKey: `video-progress-${chosen}`,
+    });
+
+    if (!chosen) {
+      error("No playable URL found for video item");
+      return;
+    }
+
+    setIsVimeoUrl(vimeo);
+    setIsYouTubeUrl(ytb);
+    setVideoUrl(chosen);
     setShowVideoModal(true);
-    // Load progress from localStorage
-    const progress = parseInt(localStorage.getItem(`video-progress-${fullUrl}`)) || 0;
+
+    const progress = parseInt(localStorage.getItem(`video-progress-${chosen}`)) || 0;
+    log("Loaded stored video progress", { progress, key: `video-progress-${chosen}` });
     setCurrentVideoProgress(progress);
   };
 
-  const submitSubjectivePracticeExam = async (examId, studentId, file) => {
-    const token = localStorage.getItem("jwt");
-    const url = `${API_BASE_URL}/ExamSubmissions/PracticeExamSubjective?ExamId=${examId}&studentId=${studentId}`;
-    const headers = {
-      "Authorization": `Bearer ${token}`,
-    };
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await res.text();
-
-      if (!res.ok) throw new Error(result);
-
-      alert("✅ Subjective practice exam submitted successfully!");
-    } catch (err) {
-      alert("❌ Failed to submit subjective practice exam.");
-    }
-  };
-
   const handleCloseVideo = () => {
+    log("Closing video modal");
     setShowVideoModal(false);
     setVideoUrl("");
     setCurrentVideoProgress(0);
+    lastLoggedVideoPct.current = -1;
+    setIsVimeoUrl(false);
+    setIsYouTubeUrl(false);
   };
 
-  
-
-  const handleViewFile = (url) => {
-  const fullUrl = `http://localhost:5129${url}`;
-  setFileUrl(fullUrl);
-  setShowFileModal(true);
-
-  // Load progress from localStorage
-  const progress = parseInt(localStorage.getItem(`ebook-progress-${fullUrl}`)) || 0;
-  setFileProgress(progress);
+  /* =========================
+     File open/close (PDF etc.)
+     ========================= */
+  const handleViewFile = (urlOrPath) => {
+    const fullUrl = toAbsoluteLocal(apiOrigin, urlOrPath);
+    group("Open File – Payload", { raw: urlOrPath, fullUrl, apiOrigin, progressKey: `ebook-progress-${fullUrl}` });
+    setFileUrl(fullUrl);
+    setShowFileModal(true);
+    const progress = parseInt(localStorage.getItem(`ebook-progress-${fullUrl}`)) || 0;
+    log("Loaded stored file progress", { progress, key: `ebook-progress-${fullUrl}` });
+    setFileProgress(progress);
   };
 
   const handleCloseFile = () => {
+    log("Closing file modal");
     setShowFileModal(false);
     setFileUrl("");
     setFileProgress(0);
@@ -122,34 +500,38 @@ function InstructorCourseViewPage() {
   };
 
   const handlePageChange = (newPage) => {
-  setPageNumber(newPage);
+    log("PDF page change", { from: pageNumber, to: newPage, numPages });
+    setPageNumber(newPage);
 
-  setVisitedPages((prev) => {
-    const updated = new Set(prev);
-    updated.add(newPage);
+    setVisitedPages((prev) => {
+      const updated = new Set(prev);
+      updated.add(newPage);
 
-    let percent = Math.round((updated.size / numPages) * 100);
+      let percent = Math.round((updated.size / numPages) * 100);
+      if (newPage === numPages) percent = 100;
 
-    // ✅ If user is on the last page, force 100%
-    if (newPage === numPages) {
-      percent = 100;
-    }
+      const storedProgress = parseInt(localStorage.getItem(`ebook-progress-${fileUrl}`)) || 0;
+      const updatedProgress = Math.max(percent, storedProgress);
 
-    // Keep max progress (in case of revisits)
-    const storedProgress =
-      parseInt(localStorage.getItem(`ebook-progress-${fileUrl}`)) || 0;
+      setFileProgress(updatedProgress);
+      localStorage.setItem(`ebook-progress-${fileUrl}`, updatedProgress);
 
-    const updatedProgress = Math.max(percent, storedProgress);
+      log("PDF progress updated", {
+        visitedPages: Array.from(updated).sort((a, b) => a - b),
+        percent,
+        storedProgress,
+        updatedProgress,
+        key: `ebook-progress-${fileUrl}`,
+      });
 
-    setFileProgress(updatedProgress);
-    localStorage.setItem(`ebook-progress-${fileUrl}`, updatedProgress);
+      return updated;
+    });
+  };
 
-    return updated;
-  });
-};
-
+  /* =========================
+     Auth / data loads
+     ========================= */
   const [practiceExams, setPracticeExams] = useState([]);
-
   const [userId, setUserId] = useState(null);
   const [role, setRole] = useState("");
 
@@ -160,223 +542,235 @@ function InstructorCourseViewPage() {
         const decoded = jwtDecode(token);
         const extractedUserId = parseInt(decoded?.UserId);
         const extractedRole =
-          decoded[
-            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-          ];
-
-        console.log("🧠 Decoded User ID:", extractedUserId);
-        console.log("🧠 Decoded Role:", extractedRole);
-
+          decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        group("JWT decoded", {
+          userId: extractedUserId,
+          role: extractedRole,
+          raw: { ...decoded, token: `Bearer ${mask(token)}` },
+        });
         setUserId(extractedUserId);
         setRole(extractedRole);
       } catch (err) {
-        console.error("❌ Error decoding JWT:", err);
+        error("Error decoding JWT:", err);
       }
+    } else {
+      warn("No JWT found in localStorage");
     }
   }, []);
 
+  // Practice exam submit
+  const submitSubjectivePracticeExam = async (examId, studentId, file) => {
+    const token = localStorage.getItem("jwt");
+    const url = `${API_BASE_URL}/ExamSubmissions/PracticeExamSubjective?ExamId=${examId}&studentId=${studentId}`;
+    const headers = { Authorization: `Bearer ${token}` };
+    const formData = new FormData();
+    formData.append("file", file);
+
+    group("Submitting Subjective Practice Exam – Payload", {
+      url,
+      headers: { ...headers, Authorization: `Bearer ${mask(token)}` },
+      examId,
+      studentId,
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type,
+    });
+
+    try {
+      console.time(`[${tag}] POST PracticeExamSubjective`);
+      const res = await fetch(url, { method: "POST", body: formData, headers });
+      const result = await res.text();
+      console.timeEnd(`[${tag}] POST PracticeExamSubjective`);
+      log("PracticeExamSubjective response", { status: res.status, ok: res.ok, result });
+      if (!res.ok) throw new Error(result);
+      alert("✅ Subjective practice exam submitted successfully!");
+    } catch (err) {
+      error("Failed to submit subjective practice exam", err);
+      alert("❌ Failed to submit subjective practice exam.");
+    }
+  };
+
+  // Fetch practice exams for student
   useEffect(() => {
     const fetchPracticeExams = async () => {
       if (!activeUnit || !userId) {
-        console.warn("⛔ Skipping fetch: activeUnit or userId is missing", {
-          activeUnit,
-          userId,
-        });
+        warn("Skipping fetch: activeUnit or userId is missing", { activeUnit, userId });
         return;
       }
-
       const unitId = Number(activeUnit.split("-")[1]);
       const examinationId = parseInt(examId);
-
       const url = `${API_BASE_URL}/InstructorExam/StudentPracticeExams/?userId=${userId}&UnitId=${unitId}&examinationid=${examinationId}`;
+      const token = localStorage.getItem("jwt");
 
-      // 📦 Log payload before fetch
-      console.log("📤 Fetching Practice Exams With Payload:", {
-        userId,
-        unitId,
-        examinationId,
-        fullUrl: url,
+      group("Fetch Practice Exams – Payload", {
+        url,
+        query: { userId, unitId, examinationId },
+        headers: { Authorization: `Bearer ${mask(token)}` },
       });
 
       try {
-        const token = localStorage.getItem("jwt");
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Check HTTP status
-        console.log("📥 Response Status:", res.status);
-
+        console.time(`[${tag}] GET PracticeExams`);
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        console.timeEnd(`[${tag}] GET PracticeExams`);
+        log("PracticeExams response status", res.status);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-
-        // ✅ Full response logging
-        console.log("✅ Practice Exams Fetched:", data);
-
         if (Array.isArray(data)) {
+          log("PracticeExams array length", data.length);
+          DEBUG && console.table(data);
           setPracticeExams(data);
         } else {
-          console.warn("⚠️ API response is not an array:", data);
+          warn("PracticeExams: API response is not an array", data);
           setPracticeExams([]);
         }
-      } catch (error) {
-        console.error("❌ Error fetching practice exams:", error);
+      } catch (err) {
+        error("Error fetching practice exams:", err);
         setPracticeExams([]);
       }
     };
-
     fetchPracticeExams();
   }, [activeUnit, examId, userId]);
 
+  // Fetch admin practice tests
   const [adminPracticeTests, setAdminPracticeTests] = useState([]);
-
   useEffect(() => {
     const fetchAdminPracticeTests = async () => {
       if (!userId || !activeUnit || !examId) {
-        console.warn("🚫 Missing userId, activeUnit, or examId", {
+        warn("Skipping admin tests fetch; missing userId/activeUnit/examId", {
           userId,
           activeUnit,
           examId,
         });
         return;
       }
-
       const unitId = Number(activeUnit.split("-")[1]);
       const examinationId = parseInt(examId);
-
       const url = `${API_BASE_URL}/AssignmentSubmission/GetPracticeExamsSubmissionsById/?instructorId=${userId}&UnitId=${unitId}&examinationid=${examinationId}`;
+      const token = localStorage.getItem("jwt");
 
-      console.log("📤 Fetching Admin Practice Tests", {
-        instructorId: userId,
-        unitId,
-        examinationId,
+      group("Fetch Admin Practice Tests – Payload", {
         url,
+        query: { instructorId: userId, unitId, examinationId },
+        headers: { Authorization: `Bearer ${mask(token)}` },
       });
 
       try {
-        const token = localStorage.getItem("jwt");
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        console.log("📥 Response Status:", res.status);
+        console.time(`[${tag}] GET AdminPracticeTests`);
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        console.timeEnd(`[${tag}] GET AdminPracticeTests`);
+        log("AdminPracticeTests response status", res.status);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-
-        console.log("✅ Admin Practice Tests Fetched:", data);
-
         if (Array.isArray(data)) {
+          log("AdminPracticeTests array length", data.length);
+          DEBUG && console.table(data);
           setAdminPracticeTests(data);
         } else {
-          console.warn("⚠️ Expected an array. Got:", data);
+          warn("AdminPracticeTests: expected array, got", data);
           setAdminPracticeTests([]);
         }
-      } catch (error) {
-        console.error("❌ Error fetching Admin Practice Tests:", error);
+      } catch (err) {
+        error("Error fetching Admin Practice Tests:", err);
         setAdminPracticeTests([]);
       }
     };
-
     fetchAdminPracticeTests();
   }, [userId, activeUnit, examId]);
 
+  // Fetch content bundle (stable, with abort + retries)
   useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        const token = localStorage.getItem("jwt");
-        const [contentRes, assignmentRes, liveClassRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/Content/Course/${courseId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-          fetch(`${API_BASE_URL}/Assignment/GetAllAssignments`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-          fetch(`${API_BASE_URL}/LiveClass/All`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-        ]);
+    if (!courseId) return;
+    const token = localStorage.getItem("jwt");
+    const headers = { Authorization: `Bearer ${token}` };
+    const ac = new AbortController();
 
+    (async () => {
+      try {
+        console.time("[ICVP] GET Content bundle");
         const [content, allAssignments, allLiveClasses] = await Promise.all([
-          contentRes.json(),
-          assignmentRes.json(),
-          liveClassRes.json(),
+          safeFetchJson(
+            `${API_BASE_URL}/Content/Course/${courseId}`,
+            { headers, signal: ac.signal },
+            { label: "Content/Course", retries: 1 }
+          ),
+          safeFetchJson(
+            `${API_BASE_URL}/Assignment/GetAllAssignments`,
+            { headers, signal: ac.signal },
+            { label: "Assignments", retries: 1 }
+          ),
+          safeFetchJson(
+            `${API_BASE_URL}/LiveClass/All`,
+            { headers, signal: ac.signal },
+            { label: "LiveClass", retries: 1 }
+          ),
         ]);
+        console.timeEnd("[ICVP] GET Content bundle");
+
+        // ---- case-insensitive contentType filter
+        const ci = (v) => String(v || "").toLowerCase();
+        setEBOOKS(content.filter((c) => ci(c.contentType) === "ebook"));
+        setVideos(content.filter((c) => ci(c.contentType) === "video"));
+        setwebresources(content.filter((c) => ci(c.contentType) === "webresources"));
+        setfaq(content.filter((c) => ci(c.contentType) === "faq"));
+        setmisconceptions(content.filter((c) => ci(c.contentType) === "misconceptions"));
+        setpracticeassignment(content.filter((c) => ci(c.contentType) === "practiceassignment"));
+        setstudyguide(content.filter((c) => ci(c.contentType) === "studyguide"));
+        setMaterials(content.filter((c) => ci(c.contentType) === "pdf"));
 
         const cid = parseInt(courseId);
+        setAssignments((allAssignments || []).filter((a) => a.examinationid === cid));
+        setLiveClasses((allLiveClasses || []).filter((lc) => lc.examinationID === cid));
+      } catch (err) {
+        console.error("[ICVP] Content bundle load failed", err);
+        // Optional: show a toast or set an error state
+      }
+    })();
 
-        setMaterials(content.filter((c) => c.contentType === "PDF"));
-        setEBOOKS(content.filter((c) => c.contentType === "EBOOK"));
-        setVideos(content.filter((c) => c.contentType === "Video"));
-        setwebresources(
-          content.filter((c) => c.contentType === "WebResources")
-        );
-        setfaq(content.filter((c) => c.contentType === "FAQ"));
-        setmisconceptions(
-          content.filter((c) => c.contentType === "Misconceptions")
-        );
-        setpracticeassignment(
-          content.filter((c) => c.contentType === "PracticeAssignment")
-        );
-        setstudyguide(content.filter((c) => c.contentType === "StudyGuide"));
-
-        setAssignments(allAssignments.filter((a) => a.examinationid === cid));
-        setLiveClasses(allLiveClasses.filter((lc) => lc.examinationID === cid));
-      } catch (err) {}
-    };
-
-    if (courseId) fetchContent();
+    return () => ac.abort();
   }, [courseId]);
 
+  // Scroll to section when loaded
   useEffect(() => {
     const scrollTo = location.state?.scrollTo;
     if (scrollTo && sectionRefs[scrollTo]?.current) {
+      log("Scrolling to section", scrollTo);
       setTimeout(() => {
-        sectionRefs[scrollTo].current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        sectionRefs[scrollTo].current.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 500);
     }
-  }, [
-    ebooks,
-    videos,
-    faq,
-    misconceptions,
-    practiceassignment,
-    studyguide,
-    webresources,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ebooks, videos, faq, misconceptions, practiceassignment, studyguide, webresources]);
 
+  // Compute units (from any content type, not only ebooks)
   useEffect(() => {
-    const cleanedUnits = ebooks
-      .map((item) => item.unit?.trim())
-      .filter(Boolean);
-
-    const uniqueUnits = Array.from(new Set(cleanedUnits)).sort((a, b) => {
+    const gatherUnits = (arr) => arr.map((item) => item.unit?.trim()).filter(Boolean);
+    const all = [
+      ...gatherUnits(ebooks),
+      ...gatherUnits(videos),
+      ...gatherUnits(webresources),
+      ...gatherUnits(faq),
+      ...gatherUnits(misconceptions),
+      ...gatherUnits(practiceassignment),
+      ...gatherUnits(studyguide),
+    ];
+    const uniqueUnits = Array.from(new Set(all)).sort((a, b) => {
       const getUnitNumber = (u) => parseInt(u?.split("-")[1]) || 0;
       return getUnitNumber(a) - getUnitNumber(b);
     });
 
+    log("Units computed", { uniqueUnits });
     setAllUnits(uniqueUnits);
-    if (uniqueUnits.length > 0) {
+    if (uniqueUnits.length > 0 && !activeUnit) {
+      log("Setting initial activeUnit", uniqueUnits[0]);
       setActiveUnit(uniqueUnits[0]);
     }
-  }, [ebooks]);
+  }, [ebooks, videos, webresources, faq, misconceptions, practiceassignment, studyguide]); // include videos etc.
 
   const renderEmptyMessage = (label) => (
     <div className="text-muted text-center py-3">No {label} available.</div>
   );
 
-  const filteredByUnit = (data) =>
-    data.filter((item) => item.unit?.trim() === activeUnit);
+  const filteredByUnit = (data) => data.filter((item) => item.unit?.trim() === activeUnit);
 
   const filteredEbooks = filteredByUnit(ebooks);
   const filteredVideos = filteredByUnit(videos);
@@ -387,40 +781,139 @@ function InstructorCourseViewPage() {
   const filteredStudyGuide = filteredByUnit(studyguide);
 
   return (
-    <div id="main_content" className="font-muli theme-blush">
+    <div 
+      id="main_content" 
+      className="font-muli theme-blush"
+      onContextMenu={(e) => e.preventDefault()}
+      onSelectStart={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+      style={{userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'}}
+    >
+      {/* Lightweight CSS fix for video modal (works on BS4/BS5) */}
+      <style>{`
+        .video-wrapper {
+          position: relative;
+          width: 100%;
+          padding-bottom: 56.25%; /* 16:9 */
+          height: 0;
+          background: #000;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .video-wrapper iframe,
+        .video-wrapper video {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
+          border-radius: 8px;
+        }
+        .modal-lg .modal-body { padding: 0.75rem 1rem; }
+      `}</style>
+
+      <style>{`
+        .wm-overlay {
+          position: absolute;
+          inset: 0;
+          z-index: 999999;
+          pointer-events: none;
+          overflow: hidden;
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+        }
+        .wm-chip {
+          position: absolute;
+          top: 0px; 
+          left: 0px;
+          max-width: 40%;
+          padding: 6px 12px;
+          border-radius: 8px;
+          background: rgba(0,0,0,0.15);
+          backdrop-filter: blur(2px);
+          color: #fff;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          font-size: min(2vw, 12px);
+          line-height: 1;
+          opacity: 1;
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          text-transform: uppercase;
+          pointer-events: none;
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+          transform: translate3d(0px, 0px, 0px);
+          will-change: transform;
+        }
+        .relative-wrap { 
+          position: relative; 
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+        }
+        
+        /* Enhanced security for video and PDF containers */
+        .video-wrapper, .pdf-container {
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Prevent highlighting and selection */
+        * {
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+      `}</style>
+
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Instructor" />
-      <div className="page section-body mt-3 instructor-course-page">
-        <div className="container-fluid">
-          <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
+      
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
+          <div className="container-fluid">
+          <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <div style={{ width: "150px" }}></div>
-              <h2 className="page-title text-primary">View Course Content</h2>
-              <a
-                href="/my-courseware"
-                className="btn btn-outline-primary mt-3 mt-md-0"
-              >
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">View Course Content</h2>
+              <a href="/my-courseware" className="btn btn-outline-primary mt-3 mt-md-0">
                 <i className="fa fa-arrow-left mr-1"></i> Back to Courseware
               </a>
             </div>
-            <h5 className="course-subtitle text-muted mb-0">
+            <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
               <strong>{`${batchName} - ${semester} - ${courseCode} - ${courseName} - Exam Id ${examId}`}</strong>
             </h5>
+          </div>
           </div>
 
           {/* Unit Tabs */}
           <div className="unit-tabs mb-4">
             {allUnits.map((unit) => {
               const titleForUnit =
-                ebooks.find((ebook) => ebook.unit?.trim() === unit)?.title ||
+                (ebooks.find((ebook) => ebook.unit?.trim() === unit)?.title) ||
+                (videos.find((v) => v.unit?.trim() === unit)?.title) ||
                 "No title found";
 
               return (
                 <button
                   key={unit}
                   className={`unit-tab ${activeUnit === unit ? "active" : ""}`}
-                  onClick={() => setActiveUnit(unit)}
+                  onClick={() => {
+                    log("Unit tab clicked", { from: activeUnit, to: unit });
+                    setActiveUnit(unit);
+                  }}
                   title={`${titleForUnit}`}
                 >
                   {unit}
@@ -428,17 +921,16 @@ function InstructorCourseViewPage() {
               );
             })}
 
-            {/* ---- THIS IS THE CHANGE: Pass both examinationId and unitId ---- */}
+            {/* Pass both examinationId and unitId */}
             <Link
               to="/discussionforum"
               state={{
                 examinationId: parseInt(courseId),
-                unitId: activeUnit ? Number(activeUnit.split("-")[1]) : null, // <-- just the number, e.g. 1 from "UNIT-1"
+                unitId: activeUnit ? Number(activeUnit.split("-")[1]) : null,
               }}
             >
               <button className="unit-tab">Discussion Forum</button>
             </Link>
-            {/* ------------ */}
 
             <Link to="/casestudy">
               <button className="unit-tab">Case Study</button>
@@ -447,14 +939,13 @@ function InstructorCourseViewPage() {
             <Link to="/recorded-classes">
               <button className="unit-tab">Recorded classes</button>
             </Link>
-
           </div>
 
           {activeUnit && (
             <div className="d-flex justify-content-between align-items-center mb-3 px-1">
               <h5 className="mb-0">
                 <i className="fa fa-book text-primary me-2 mr-2"></i> Unit Title:{" "}
-                {filteredEbooks[0]?.title || "No title found"}
+                {filteredEbooks[0]?.title || filteredVideos[0]?.title || "No title found"}
               </h5>
               {role !== "Student" && (
                 <Link
@@ -476,70 +967,20 @@ function InstructorCourseViewPage() {
             </div>
           )}
 
+          {/* If you want an always-mounted watermark layer, keep your component here */}
+          {/* <VimeoWithWatermark tokenStorageKey="jwt" opacity={0.16} speed={35} /> */}
+
           {/* Section Mapping */}
           {[
-            {
-              title: "Videos",
-              key: "videos",
-              data: filteredVideos,
-              ref: sectionRefs.videos,
-              color: "info",
-              icon: "fas fa-video",
-            },
-            {
-              title: "EBOOK Materials",
-              key: "ebooks",
-              data: filteredEbooks,
-              ref: sectionRefs.ebooks,
-              color: "primary",
-              icon: "fas fa-file-pdf",
-            },
-            {
-              title: "Web Resources Materials",
-              key: "webresources",
-              data: filteredWebResources,
-              ref: sectionRefs.webresources,
-              color: "primary",
-              icon: "fas fa-file-pdf",
-            },
-            {
-              title: "Pre-Learning : FAQ",
-              key: "faq",
-              data: filteredFAQ,
-              ref: sectionRefs.faq,
-              color: "primary",
-              icon: "fas fa-file-pdf",
-            },
-            {
-              title: "Pre-Learning : Misconceptions",
-              key: "misconceptions",
-              data: filteredMisconceptions,
-              ref: sectionRefs.misconceptions,
-              color: "primary",
-              icon: "fas fa-file-pdf",
-            },
-            {
-              title: "Practice Assignment",
-              key: "practiceassignment",
-              data: filteredPracticeAssignment,
-              ref: sectionRefs.practiceassignment,
-              color: "primary",
-              icon: "fas fa-file-pdf",
-            },
-            {
-              title: "Study Guide",
-              key: "studyguide",
-              data: filteredStudyGuide,
-              ref: sectionRefs.studyguide,
-              color: "primary",
-              icon: "fas fa-file-pdf",
-            },
+            { title: "Videos", key: "videos", data: filteredVideos, ref: sectionRefs.videos, color: "info", icon: "fas fa-video" },
+            { title: "EBOOK Materials", key: "ebooks", data: filteredEbooks, ref: sectionRefs.ebooks, color: "primary", icon: "fas fa-file-pdf" },
+            { title: "Web Resources Materials", key: "webresources", data: filteredWebResources, ref: sectionRefs.webresources, color: "primary", icon: "fas fa-file-pdf" },
+            { title: "Pre-Learning : FAQ", key: "faq", data: filteredFAQ, ref: sectionRefs.faq, color: "primary", icon: "fas fa-file-pdf" },
+            { title: "Pre-Learning : Misconceptions", key: "misconceptions", data: filteredMisconceptions, ref: sectionRefs.misconceptions, color: "primary", icon: "fas fa-file-pdf" },
+            { title: "Practice Assignment", key: "practiceassignment", data: filteredPracticeAssignment, ref: sectionRefs.practiceassignment, color: "primary", icon: "fas fa-file-pdf" },
+            { title: "Study Guide", key: "studyguide", data: filteredStudyGuide, ref: sectionRefs.studyguide, color: "primary", icon: "fas fa-file-pdf" },
           ].map((section, idx) => (
-            <div
-              key={idx}
-              ref={section.ref}
-              className={`card shadow-sm mb-4 section-card animate-section border-${section.color}`}
-            >
+            <div key={section.key} ref={section.ref} className={`card shadow-sm mb-4 section-card animate-section border-${section.color}`}>
               <div className={`card-header bg-${section.color} text-white`}>
                 <h6 className="mb-0">
                   <i className={`${section.icon} me-2 mr-2`}></i>
@@ -552,51 +993,46 @@ function InstructorCourseViewPage() {
                 ) : (
                   <div className="row">
                     {section.data.map((item, idx2) => {
-                      // Progress key per section
-                      let progressKey = '';
-                      if (section.key === "videos") {
-                        progressKey = `video-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "ebooks") {
-                        progressKey = `ebook-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "webresources") {
-                        progressKey = `webresource-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "faq") {
-                        progressKey = `faq-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "misconceptions") {
-                        progressKey = `misconception-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "practiceassignment") {
-                        progressKey = `practiceassignment-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "studyguide") {
-                        progressKey = `studyguide-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "liveclass") {
-                        progressKey = `liveclass-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "assignments") {
-                        progressKey = `assignment-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "exams") {
-                        progressKey = `exam-progress-http://localhost:5129${item.fileUrl}`;
-                      } else if (section.key === "discussionforum") {
-                        progressKey = `discussion-progress-http://localhost:5129${item.fileUrl}`;
-                      }
-                      let progress = parseInt(localStorage.getItem(progressKey)) || 0;
-                      let progressColor = progress < 30 ? "#e74c3c" : progress < 70 ? "#f39c12" : "#27ae60";
+                      // Decide a storage key based on final absolute URL (for consistent progress)
+                      const playableUrl =
+                        section.key === "videos"
+                          ? getPlayableVideoUrl(item)
+                          : toAbsoluteLocal(apiOrigin, item.fileUrl);
+
+                      const idKey =
+                        item.id ?? item.contentId ?? item.examid ?? playableUrl ?? idx2;
+
+                      let progressKey = "";
+                      if (section.key === "videos") progressKey = `video-progress-${playableUrl}`;
+                      else if (section.key === "ebooks") progressKey = `ebook-progress-${playableUrl}`;
+                      else if (section.key === "webresources") progressKey = `webresource-progress-${playableUrl}`;
+                      else if (section.key === "faq") progressKey = `faq-progress-${playableUrl}`;
+                      else if (section.key === "misconceptions") progressKey = `misconception-progress-${playableUrl}`;
+                      else if (section.key === "practiceassignment") progressKey = `practiceassignment-progress-${playableUrl}`;
+                      else if (section.key === "studyguide") progressKey = `studyguide-progress-${playableUrl}`;
+                      else if (section.key === "liveclass") progressKey = `liveclass-progress-${playableUrl}`;
+                      else if (section.key === "assignments") progressKey = `assignment-progress-${playableUrl}`;
+                      else if (section.key === "exams") progressKey = `exam-progress-${playableUrl}`;
+                      else if (section.key === "discussionforum") progressKey = `discussion-progress-${playableUrl}`;
+
+                      const progress = parseInt(localStorage.getItem(progressKey)) || 0;
+                      const progressColor =
+                        progress < 30 ? "#e74c3c" : progress < 70 ? "#f39c12" : "#27ae60";
+
                       return (
-                        <div className="col-md-6 col-lg-4 mb-3" key={idx2}>
+                        <div className="col-md-6 col-lg-4 mb-3" key={idKey}>
                           <div className="resource-card welcome-card animate-welcome h-100">
                             <div className="card-body d-flex flex-column">
                               <h6 className="fw-bold">{item.title}</h6>
-                              <p className="text-muted flex-grow-1">
-                                {item.description}
-                              </p>
-                              {/* Progress bar for all resource types */}
+                              <p className="text-muted flex-grow-1">{item.description}</p>
+
                               {section.key === "videos" ? (
-                                <>
-                                  <button
-                                    className="btn btn-sm btn-outline-info mt-auto"
-                                    onClick={() => handleWatchVideo(item.fileUrl)}
-                                  >
-                                    Watch Video
-                                  </button>
-                                </>
+                                <button
+                                  className="btn btn-sm btn-outline-info mt-auto"
+                                  onClick={() => handleWatchVideo(item)}
+                                >
+                                  Watch Video
+                                </button>
                               ) : (
                                 <button
                                   className="btn btn-sm btn-outline-primary mt-auto"
@@ -605,24 +1041,31 @@ function InstructorCourseViewPage() {
                                   View File
                                 </button>
                               )}
+
                               <div style={{ marginTop: "12px" }}>
                                 <div style={{ fontSize: "0.95rem", marginBottom: "2px" }}>
                                   <span>{section.title} Progress: </span>
-                                  <span style={{ color: progressColor, fontWeight: 600 }}>{progress}%</span>
+                                  <span style={{ color: progressColor, fontWeight: 600 }}>
+                                    {progress}%
+                                  </span>
                                 </div>
-                                <div style={{
-                                  width: "100%",
-                                  height: "8px",
-                                  background: "#eee",
-                                  borderRadius: "6px",
-                                  overflow: "hidden"
-                                }}>
-                                  <div style={{
-                                    width: `${progress}%`,
-                                    height: "100%",
-                                    background: progressColor,
-                                    transition: "width 0.5s"
-                                  }}></div>
+                                <div
+                                  style={{
+                                    width: "100%",
+                                    height: "8px",
+                                    background: "#eee",
+                                    borderRadius: "6px",
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: `${progress}%`,
+                                      height: "100%",
+                                      background: progressColor,
+                                      transition: "width 0.5s",
+                                    }}
+                                  ></div>
                                 </div>
                               </div>
                             </div>
@@ -638,116 +1081,98 @@ function InstructorCourseViewPage() {
         </div>
 
         {role === "Student" ? (
-         <div className="container-fluid">
-  <div className="card shadow-sm mb-5 section-card animate-section border-info">
-    <div className="card-header bg-info text-white">
-      <h6 className="mb-0">
-        <i className="fa fa-tools me-2 mr-2"></i> Student Practice Exams
-      </h6>
-    </div>
-
-    <div className="card-body">
-      {practiceExams.length === 0 ? (
-        <div className="text-muted text-center py-3">
-          No practice exams available.
-        </div>
-      ) : (
-        <div className="row">
-          {practiceExams.map((exam, idx) => {
-            const isSubjective = exam.examType?.toUpperCase() === "DP";
-            const isAttendStatus =
-              exam.examStatus?.toLowerCase() === "attendexam";
-            const isMCQ = exam.examType === "MP";
-
-            return (
-              <div className="col-md-6 col-lg-4 mb-3" key={exam.examid}>
-                <div className="resource-card welcome-card animate-welcome h-100">
-                  <div
-                    className="card-body d-flex flex-column"
-                    style={{ textAlign: "left", gap: "6px" }}
-                  >
-                    <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                      <i className="fa fa-book text-primary mr-2"></i>
-                      {exam.title}
-                    </h6>
-
-                    <p className="mb-2">
-                      <i className="fa fa-calendar-plus me-2 mr-2 text-success"></i>
-                      <strong>Created At:</strong>{" "}
-                      {new Date(exam.createdAt).toLocaleString()}
-                    </p>
-
-                    <p className="mb-2">
-                      <i className="fa fa-clock me-2 mr-2 text-primary"></i>
-                      <strong>Duration:</strong> {exam.durationMinutes} min
-                    </p>
-
-                    <p className="mb-2">
-                      <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                      <strong>Marks:</strong> {exam.totmrk} |{" "}
-                      <strong>Pass:</strong> {exam.passmrk}
-                    </p>
-
-                    <p className="mb-2">
-                      <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
-                      <strong>Unit:</strong> {exam.unitId}
-                    </p>
-
-                    {exam.fileurl ? (
-                      <a
-                        href={`http://localhost:5129${exam.fileurl}`}
-                        className="btn btn-sm btn-outline-primary"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        📄 View Attachment
-                      </a>
-                    ) : !isMCQ ? (
-                      <button
-                        className="btn btn-sm btn-outline-secondary"
-                        disabled
-                      >
-                        🚫 No Attachment
-                      </button>
-                    ) : null}
-
-                    {isMCQ && isAttendStatus && (
-                      <Link
-                        to={`/practice-exam/${exam.examid}`}
-                        state={{ exam }}
-                        className="mt-2"
-                      >
-                        <button className="btn btn-sm btn-success w-100">
-                          📝 Attend Practice Exam
-                        </button>
-                      </Link>
-                    )}
-
-                    {isSubjective && isAttendStatus && userId && (
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) =>
-                          submitSubjectivePracticeExam(
-                            exam.examid,
-                            userId,
-                            e.target.files[0]
-                          )
-                        }
-                        className="form-control mt-2"
-                      />
-                    )}
-                  </div>
-                </div>
+          <div className="container-fluid">
+            <div className="card shadow-sm mb-5 section-card animate-section border-info">
+              <div className="card-header bg-info text-white">
+                <h6 className="mb-0">
+                  <i className="fa fa-tools me-2 mr-2"></i> Student Practice Exams
+                </h6>
               </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  </div>
-</div>
 
+              <div className="card-body">
+                {practiceExams.length === 0 ? (
+                  <div className="text-muted text-center py-3">No practice exams available.</div>
+                ) : (
+                  <div className="row">
+                    {practiceExams.map((exam) => {
+                      const isSubjective = exam.examType?.toUpperCase() === "DP";
+                      const isAttendStatus = exam.examStatus?.toLowerCase() === "attendexam";
+                      const isMCQ = exam.examType === "MP";
+
+                      return (
+                        <div className="col-md-6 col-lg-4 mb-3" key={exam.examid}>
+                          <div className="resource-card welcome-card animate-welcome h-100">
+                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
+                              <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                                <i className="fa fa-book text-primary mr-2"></i>
+                                {exam.title}
+                              </h6>
+
+                              <p className="mb-2">
+                                <i className="fa fa-calendar-plus me-2 mr-2 text-success"></i>
+                                <strong>Created At:</strong> {new Date(exam.createdAt).toLocaleString()}
+                              </p>
+
+                              <p className="mb-2">
+                                <i className="fa fa-clock me-2 mr-2 text-primary"></i>
+                                <strong>Duration:</strong> {exam.durationMinutes} min
+                              </p>
+
+                              <p className="mb-2">
+                                <i className="fa fa-star me-2 mr-2 text-warning"></i>
+                                <strong>Marks:</strong> {exam.totmrk} | <strong>Pass:</strong> {exam.passmrk}
+                              </p>
+
+                              <p className="mb-2">
+                                <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
+                                <strong>Unit:</strong> {exam.unitId}
+                              </p>
+
+                              {exam.fileurl ? (
+                                <a
+                                  href={toAbsoluteLocal(apiOrigin, exam.fileurl)}
+                                  className="btn btn-sm btn-outline-primary"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={() =>
+                                    log("Opening exam attachment", { url: toAbsoluteLocal(apiOrigin, exam.fileurl) })
+                                  }
+                                >
+                                  📄 View Attachment
+                                </a>
+                              ) : !isMCQ ? (
+                                <button className="btn btn-sm btn-outline-secondary" disabled>
+                                  🚫 No Attachment
+                                </button>
+                              ) : null}
+
+                              {isMCQ && isAttendStatus && (
+                                <Link to={`/practice-exam/${exam.examid}`} state={{ exam }} className="mt-2">
+                                  <button className="btn btn-sm btn-success w-100">📝 Attend Practice Exam</button>
+                                </Link>
+                              )}
+
+                              {isSubjective && isAttendStatus && (
+                                <input
+                                  type="file"
+                                  accept=".pdf"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f && userId) submitSubjectivePracticeExam(exam.examid, userId, f);
+                                  }}
+                                  className="form-control mt-2"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="container-fluid">
             <div className="card shadow-sm mb-5 section-card animate-section border-info">
@@ -759,18 +1184,12 @@ function InstructorCourseViewPage() {
 
               <div className="card-body">
                 {adminPracticeTests.length === 0 ? (
-                  <div className="text-muted text-center py-3">
-                    No practice test records found.
-                  </div>
+                  <div className="text-muted text-center py-3">No practice test records found.</div>
                 ) : (
                   <div className="row">
-                    {adminPracticeTests.map((test, idx) => {
-                      const isObjective =
-                        (test.PracticeExamType || "").toLowerCase() ===
-                        "objective";
-                      const isSubjective =
-                        (test.PracticeExamType || "").toLowerCase() ===
-                        "subjective";
+                    {adminPracticeTests.map((test) => {
+                      const isObjective = (test.PracticeExamType || "").toLowerCase() === "objective";
+                      const isSubjective = (test.PracticeExamType || "").toLowerCase() === "subjective";
 
                       const typeBadge = isObjective ? (
                         <span className="badge bg-primary text-white px-2 py-1 rounded-pill">
@@ -787,15 +1206,9 @@ function InstructorCourseViewPage() {
                       );
 
                       return (
-                        <div
-                          className="col-md-6 col-lg-4 mb-3"
-                          key={test.examid}
-                        >
+                        <div className="col-md-6 col-lg-4 mb-3" key={test.examid}>
                           <div className="resource-card welcome-card animate-welcome h-100">
-                            <div
-                              className="card-body d-flex flex-column"
-                              style={{ textAlign: "left", gap: "6px" }}
-                            >
+                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
                               <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
                                 <i className="fa fa-book text-primary"></i>
                                 {test.AssignmentTitle}
@@ -818,26 +1231,21 @@ function InstructorCourseViewPage() {
 
                               <p className="mb-2">
                                 <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                                <strong>Marks:</strong> {test.totmrk} |{" "}
-                                <strong>Pass:</strong> {test.passmrk}
+                                <strong>Marks:</strong> {test.totmrk} | <strong>Pass:</strong> {test.passmrk}
                               </p>
 
                               <p className="mb-2">
                                 <i className="fa fa-check-circle me-2 mr-2 text-success"></i>
-                                <strong>Attempted:</strong>{" "}
-                                {test.attempted ? "Yes" : "No"}
+                                <strong>Attempted:</strong> {test.attempted ? "Yes" : "No"}
                               </p>
 
                               <p className="mb-2">
                                 <i className="fa fa-calendar-alt me-2 mr-2 text-danger"></i>
-                                <strong>From:</strong>{" "}
-                                {new Date(test.StartDate).toLocaleDateString()}{" "}
-                                - {new Date(test.EndDate).toLocaleDateString()}
+                                <strong>From:</strong> {new Date(test.StartDate).toLocaleDateString()} -{" "}
+                                {new Date(test.EndDate).toLocaleDateString()}
                               </p>
 
-                              <div className="mt-auto text-end">
-                                {typeBadge}
-                              </div>
+                              <div className="mt-auto text-end">{typeBadge}</div>
                             </div>
                           </div>
                         </div>
@@ -849,83 +1257,173 @@ function InstructorCourseViewPage() {
             </div>
           </div>
         )}
+      <Footer />
+      </div>
       </div>
 
-      <Footer />
+      
 
-      <Modal show={showVideoModal} onHide={handleCloseVideo} centered size="lg">
-        <Modal.Header closeButton>
+      {/* VIDEO MODAL */}
+      <Modal 
+        show={showVideoModal} 
+        onHide={handleCloseVideo} 
+        centered 
+        size="lg"
+        onContextMenu={(e) => e.preventDefault()}
+        onSelectStart={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+      >
+        <Modal.Header closeButton onContextMenu={(e) => e.preventDefault()}>
           <Modal.Title>Video Playback</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <video
-            controls
-            controlsList="nodownload"
-            disablePictureInPicture
-            onContextMenu={(e) => e.preventDefault()}
-            width="100%"
-              onTimeUpdate={e => {
-                const video = e.target;
-                if (video.duration > 0) {
-                  const percent = Math.round((video.currentTime / video.duration) * 100);
+        <Modal.Body 
+          onContextMenu={(e) => e.preventDefault()}
+          onSelectStart={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
+          style={{userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'}}
+        >
+          <div className="relative-wrap">
+            {/* If Vimeo/YouTube URL -> iframe; else HTML5 video */}
+            {isVimeoUrl || isYouTubeUrl ? (
+              <>
+                <div className="video-wrapper">
+                  <iframe
+                    src={videoUrl}
+                    title="Video player"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    sandbox="allow-scripts allow-same-origin"
+                    onLoad={() => log("Iframe loaded for external video", { videoUrl })}
+                  />
+                </div>
 
-                // Get stored progress
-                const storedProgress = parseInt(localStorage.getItem(`video-progress-${videoUrl}`)) || 0;
+                {/* Watermark overlay */}
+                <div className="wm-overlay" aria-hidden="true" onContextMenu={(e) => e.preventDefault()}>
+                  {/* Animated main watermark */}
+                  <div ref={wmVideoRef} className="wm-chip" onContextMenu={(e) => e.preventDefault()}>
+                    {displayText}
+                  </div>
+                </div>
 
-                // keep the max value
-                const updatedProgress = Math.max(percent, storedProgress);
+                <div className="text-muted mt-2" style={{ fontSize: "0.9rem" }}>
+                  Playing external video via iframe. Progress tracking is not available for iframes here.
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="video-wrapper">
+                  <video
+                    controls
+                    controlsList="nodownload"
+                    disablePictureInPicture
+                    onContextMenu={(e) => e.preventDefault()}
+                    onTimeUpdate={(e) => {
+                      const video = e.target;
+                      if (video.duration > 0) {
+                        const percent = Math.round((video.currentTime / video.duration) * 100);
+                        const storedProgress = parseInt(localStorage.getItem(`video-progress-${videoUrl}`)) || 0;
+                        const updatedProgress = Math.max(percent, storedProgress);
+                        setCurrentVideoProgress(updatedProgress);
+                        localStorage.setItem(`video-progress-${videoUrl}`, updatedProgress);
+                        const bucket = Math.floor(updatedProgress / 10) * 10;
+                        if (bucket !== lastLoggedVideoPct.current) {
+                          lastLoggedVideoPct.current = bucket;
+                          log("Video progress updated", { percent, storedProgress, updatedProgress, key: `video-progress-${videoUrl}` });
+                        }
+                      }
+                    }}
+                    onLoadedMetadata={(e) => {
+                      const video = e.target;
+                      const percent = parseInt(localStorage.getItem(`video-progress-${videoUrl}`)) || 0;
+                      if (video.duration > 0 && percent > 0) {
+                        video.currentTime = (percent / 100) * video.duration;
+                        log("Seek video to stored position", { percent, seekTo: video.currentTime });
+                      } else {
+                        log("No stored position; start from 0");
+                      }
+                    }}
+                  >
+                    <source src={videoUrl} type="video/mp4" />
+                    Your browser does not support HTML5 video.
+                  </video>
 
-                setCurrentVideoProgress(updatedProgress);
-                localStorage.setItem(`video-progress-${videoUrl}`, updatedProgress);
-                }
-              }}
-              onLoadedMetadata={e => {
-                // Seek to last watched position
-                const video = e.target;
-                const percent = parseInt(localStorage.getItem(`video-progress-${videoUrl}`)) || 0;
-                if (video.duration > 0 && percent > 0) {
-                  video.currentTime = (percent / 100) * video.duration;
-                }
-              }}
-          >
-            <source src={videoUrl} type="video/mp4" />
-            Your browser does not support HTML5 video.
-          </video>
-            {/* Video progress bar below video */}
-            <div style={{ marginTop: "16px" }}>
-              <div style={{ fontSize: "0.95rem", marginBottom: "2px" }}>
-                <span>Video Progress: </span>
-                <span style={{ color: currentVideoProgress < 30 ? "#e74c3c" : currentVideoProgress < 70 ? "#f39c12" : "#27ae60", fontWeight: 600 }}>{currentVideoProgress}%</span>
-              </div>
-              <div style={{
-                width: "100%",
-                height: "8px",
-                background: "#eee",
-                borderRadius: "6px",
-                overflow: "hidden"
-              }}>
-                <div style={{
-                  width: `${currentVideoProgress}%`,
-                  height: "100%",
-                  background: currentVideoProgress < 30 ? "#e74c3c" : currentVideoProgress < 70 ? "#f39c12" : "#27ae60",
-                  transition: "width 0.5s"
-                }}></div>
-              </div>
-            </div>
+                  {/* Watermark overlay */}
+                  <div className="wm-overlay" aria-hidden="true" onContextMenu={(e) => e.preventDefault()}>
+                    {/* Animated main watermark */}
+                    <div ref={wmVideoRef} className="wm-chip" onContextMenu={(e) => e.preventDefault()}>
+                      {displayText}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "16px" }}>
+                  <div style={{ fontSize: "0.95rem", marginBottom: "2px" }}>
+                    <span>Video Progress: </span>
+                    <span
+                      style={{
+                        color: currentVideoProgress < 30 ? "#e74c3c" : currentVideoProgress < 70 ? "#f39c12" : "#27ae60",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {currentVideoProgress}%
+                    </span>
+                  </div>
+                  <div style={{ width: "100%", height: "8px", background: "#eee", borderRadius: "6px", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        width: `${currentVideoProgress}%`,
+                        height: "100%",
+                        background: currentVideoProgress < 30 ? "#e74c3c" : currentVideoProgress < 70 ? "#f39c12" : "#27ae60",
+                        transition: "width 0.5s",
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </Modal.Body>
       </Modal>
 
-      <Modal show={showFileModal} onHide={handleCloseFile} centered size="lg">
-        <Modal.Header closeButton>
+      {/* FILE MODAL */}
+      <Modal 
+        show={showFileModal} 
+        onHide={handleCloseFile} 
+        centered 
+        size="lg"
+        onContextMenu={(e) => e.preventDefault()}
+        onSelectStart={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+      >
+        <Modal.Header closeButton onContextMenu={(e) => e.preventDefault()}>
           <Modal.Title>View PDF</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <Document
-            file={fileUrl}
-            onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-          >
-            <Page pageNumber={pageNumber} width={600} />
-          </Document>
+        <Modal.Body 
+          onContextMenu={(e) => e.preventDefault()}
+          onSelectStart={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
+          style={{userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'}}
+        >
+          <div className="relative-wrap">
+            <Document
+              file={fileUrl}
+              onLoadSuccess={({ numPages }) => {
+                setNumPages(numPages);
+                log("PDF loaded", { numPages, fileUrl });
+              }}
+              onLoadError={(err) => error("PDF load error", err)}
+            >
+              <Page pageNumber={pageNumber} width={600} onContextMenu={(e) => e.preventDefault()} />
+            </Document>
+
+            {/* Watermark overlay */}
+            <div className="wm-overlay" aria-hidden="true" onContextMenu={(e) => e.preventDefault()}>
+              {/* Animated main watermark */}
+              <div ref={wmPdfRef} className="wm-chip" onContextMenu={(e) => e.preventDefault()}>
+                {displayText}
+              </div>
+            </div>
+          </div>
 
           {numPages && (
             <div className="d-flex justify-content-between mt-3">
@@ -949,34 +1447,36 @@ function InstructorCourseViewPage() {
             </div>
           )}
 
-          {/* File progress */}
-          <div style={{ marginTop: "16px" }}>
+          {/* <div style={{ marginTop: "16px" }}>
             <div style={{ fontSize: "0.95rem", marginBottom: "2px" }}>
               <span>File Progress: </span>
-              <span style={{ color: fileProgress < 30 ? "#e74c3c" : fileProgress < 70 ? "#f39c12" : "#27ae60", fontWeight: 600 }}>
+              <span
+                style={{
+                  color: fileProgress < 30 ? "#e74c3c" : fileProgress < 70 ? "#f39c12" : "#27ae60",
+                  fontWeight: 600,
+                }}
+              >
                 {fileProgress}%
               </span>
             </div>
-            <div style={{
-              width: "100%",
-              height: "8px",
-              background: "#eee",
-              borderRadius: "6px",
-              overflow: "hidden"
-            }}>
-              <div style={{
-                width: `${fileProgress}%`,
-                height: "100%",
-                background: fileProgress < 30 ? "#e74c3c" : fileProgress < 70 ? "#f39c12" : "#27ae60",
-                transition: "width 0.5s"
-              }}></div>
+            <div style={{ width: "100%", height: "8px", background: "#eee", borderRadius: "6px", overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${fileProgress}%`,
+                  height: "100%",
+                  background: fileProgress < 30 ? "#e74c3c" : fileProgress < 70 ? "#f39c12" : "#27ae60",
+                  transition: "width 0.5s",
+                }}
+              />
             </div>
-          </div>
+          </div> */}
         </Modal.Body>
       </Modal>
-
+      
     </div>
   );
 }
+
+
 
 export default InstructorCourseViewPage;

@@ -73,14 +73,15 @@ function StudentSubmissionHistory() {
       <RightSidebar />
       <LeftSidebar role="Student" />
 
-      <div className="page">
-        <div className="section-body mt-3">
+      <div className="section-wrapper">
+          <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="p-4 mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <i class="fa-solid fa-bar-chart"></i> My Submissions
               </h2>
-              <p className="text-muted mb-0">
+              <p className="text-muted mb-0 dashboard-hero-sub">
                 View your assignment and exam submissions
               </p>
             </div>
@@ -214,6 +215,7 @@ function StudentSubmissionHistory() {
         </div>
 
         <Footer />
+      </div>
       </div>
     </div>
   );

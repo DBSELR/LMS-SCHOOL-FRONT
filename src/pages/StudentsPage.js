@@ -43,7 +43,7 @@ function StudentsPage() {
   }, []);
 
 
-  useEffect(() => {
+  useEffect(() => { 
     if (userId) {
       fetchStudents(userId);
     }
@@ -310,15 +310,16 @@ function StudentsPage() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar />
-      <div className="page">
-        <div className="section-body mt-3">
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           {role === "Admin" && (
             <div className="container-fluid">
-              <div className="p-4 mb-4 welcome-card animate-welcome">
-                <h2 className="page-title text-primary">
+              <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+                <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                   <FaUserGraduate /> Manage Students
                 </h2>
-                <p className="text-muted mb-0">Add, edit, and manage students</p>
+                <p className="text-muted mb-0 dashboard-hero-sub">Add, edit, and manage students</p>
               </div>
               <div className="d-flex flex-row justify-content-end">
                 {/* <a
@@ -361,7 +362,7 @@ function StudentsPage() {
                   />
                   {["Admin", "Faculty"].includes(role) && (
   <button className="btn btn-primary" onClick={handleAddNew}>
-    ➕ Add Student
+    <i className="fa fa-plus mr-1"></i> Add Student
   </button>
 )}
 
@@ -412,6 +413,7 @@ function StudentsPage() {
                               </div>
 
                               <Collapse in={!!openProgramme[programmeKey]}>
+                                 <div className="semester-panel-body">
                                 <div className="mt-2">
                                   {hasOnlyDummyGroup ? (
                                     <div className="row">
@@ -629,6 +631,7 @@ function StudentsPage() {
                                     })
                                   )}
                                 </div>
+                                </div>
                               </Collapse>
                             </div>
                           );
@@ -670,6 +673,7 @@ function StudentsPage() {
           </div>
         )}
         <Footer />
+      </div>
       </div>
     </div>
   );

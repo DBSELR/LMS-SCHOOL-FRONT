@@ -119,13 +119,14 @@ function AdminNoticeboardPage() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Admin" />
-
-      <div className="page">
-        <div className="section-body mt-3">
+      
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4">
-              <h2 className="text-primary mb-2">Manage Noticeboard</h2>
-              <p className="text-muted mb-0">Create and publish notices visible to students.</p>
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">Manage Noticeboard</h2>
+              <p className="text-muted mb-0 dashboard-hero-sub">Create and publish notices visible to students.</p>
             </div>
 
             <div className="card shadow-sm">
@@ -226,6 +227,7 @@ function AdminNoticeboardPage() {
           </div>
         </div>
         <Footer />
+      </div>
       </div>
     </div>
   );

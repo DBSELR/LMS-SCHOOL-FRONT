@@ -140,15 +140,16 @@ function AdminUsers() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Admin" />
-
-      <div className="page">
-        <div className="section-body mt-3">
+      
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="p-4 mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <i class="fa-solid fa-user-secret"></i> Manage Other Roles
               </h2>
-              <p className="text-muted mb-0">
+              <p className="text-muted mb-0 dashboard-hero-sub">
                 View, edit, and manage other Roles
               </p>
             </div>
@@ -207,7 +208,9 @@ function AdminUsers() {
                           <th className="text-center">Actions</th>
                         </tr>
                       </thead>
+                      
                       <tbody>
+                        
                         {currentUsers.map((user) => (
                           <tr key={user.userId}>
                             <td>
@@ -266,6 +269,7 @@ function AdminUsers() {
                             </td>
                           </tr>
                         ))}
+                        
                       </tbody>
                     </table>
                   </div>
@@ -317,6 +321,7 @@ function AdminUsers() {
           onConfirm={confirmDelete}
           onCancel={() => setShowConfirmPopup(false)}
         />
+      </div>
       </div>
     </div>
   );

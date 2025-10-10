@@ -107,11 +107,12 @@ function Departments() {
       <RightSidebar />
       <LeftSidebar role="Admin" />
 
-      <div className="page">
-        <div className="section-body mt-3">
+      <div className="section-wrapper">
+        <div className="page departments-page">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light p-0 rounded shadow-sm mb-3 welcome-card animate-welcome">
+              <h2 className="page-title text-primary pt-0">
                 <FaUniversity className="me-2 mb-1" /> Manage Departments
               </h2>
               <p className="text-muted mb-0">
@@ -223,6 +224,9 @@ function Departments() {
           />
         )}
       </div>
+
+      </div>
+
     </div>
   );
 }

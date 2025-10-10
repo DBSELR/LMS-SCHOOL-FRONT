@@ -236,18 +236,20 @@ function TaskboardPage() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar />
-      <div className="page">
-        <div className="section-body mt-3">
+      
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-                          <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+                          <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                            <i class="fa-solid fa-list-alt"></i> Taskboard
                           </h2>
-                          <p className="text-muted mb-0">
+                          <p className="text-muted mb-0 dashboard-hero-sub">
                             Manage your tasks efficiently with a visual board
                           </p>
                         </div>
-              <div className="d-flex gap-2 align-items-center">
+              <div className="d-flex gap-2 align-items-center" style={{ gap: '0.75rem' }} >
                 <input
                   type="text"
                   className="form-control form-control-sm mb-3"
@@ -269,6 +271,7 @@ function TaskboardPage() {
           </div>
         </div>
         <Footer />
+      </div>
       </div>
 
       {modalOpen && (

@@ -56,14 +56,15 @@ function InboxPage() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar />
-
-      <div className="page">
-        <div className="section-body">
+      
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="d-flex justify-content-between align-items-center">
-              <h1 className="page-title">Inbox</h1>
-              <ol className="breadcrumb page-breadcrumb">
-                <li className="breadcrumb-item">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h1 className="page-title text-primary pt-0 dashboard-hero-title">Inbox</h1>
+              <ol className="breadcrumb page-breadcrumb justify-content-center">
+                <li className="breadcrumb-item mb-0 dashboard-hero-sub">
                   <a href="#">LMS</a>
                 </li>
                 <li className="breadcrumb-item active" aria-current="page">
@@ -144,6 +145,7 @@ function InboxPage() {
         )}
 
         <Footer />
+      </div>
       </div>
     </div>
   );

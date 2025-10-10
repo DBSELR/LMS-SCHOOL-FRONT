@@ -197,16 +197,17 @@ const handleAdd = async (payload) => {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar />
-
-      <div className="page">
-        <div className="section-body mt-3">
+       
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="p-4 mb-4 welcome-card animate-welcome">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
               <div>
-                <h2 className="page-title text-primary">
+                <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                   <FaChalkboardTeacher /> Manage Faculty
                 </h2>
-                <p className="text-muted mb-0">
+                <p className="text-muted mb-0 dashboard-hero-sub">
                   View, add, and manage all Faculty in the system.
                 </p>
               </div>
@@ -238,7 +239,8 @@ const handleAdd = async (payload) => {
                 <FaChalkboardTeacher className="mr-2 mt-2" />
                 <h6 className="mb-0">Faculty Management</h6>
               </div>
-
+              
+              
               <div className="card-body">
                 <div className="d-flex justify-content-between mb-3">
                   <input
@@ -250,10 +252,11 @@ const handleAdd = async (payload) => {
                   />
 
                   <button className="btn btn-primary" onClick={handleAddNew}>
-                    ➕ Add Faculty
+                    <i className="fa fa-plus mr-1"></i> Add Faculty
                   </button>
                 </div>
-
+                
+                <div className="semester-panel-body">
                 {loading ? (
                   <div className="text-center p-5">Loading faculty...</div>
                 ) : (
@@ -265,6 +268,8 @@ const handleAdd = async (payload) => {
                     onAssignCourses={handleAssignCourses}
                   />
                 )}
+                </div>
+
               </div>
             </div>
           </div>
@@ -326,6 +331,7 @@ const handleAdd = async (payload) => {
         )}
 
         <Footer />
+      </div>
       </div>
     </div>
   );

@@ -8,8 +8,10 @@ import RightSidebar from "../RightSidebar";
 import LeftSidebar from "../LeftSidebar";
 import Footer from "../Footer";
 import API_BASE_URL from "../../config";
+import { useNavigate } from "react-router-dom";
 
 const Recordedclasses = () => {
+  const navigate = useNavigate();
 
 
   return (
@@ -17,16 +19,31 @@ const Recordedclasses = () => {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar  />
-      <div className="page mt-4">
 
-        <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-          <h2 className="page-title text-primary">
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
+          <div className="container-fluid">
+        <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+          <div className="d-flex justify-content-between align-items-center mb-0">
+           <div style={{ width: "100px" }}></div>
+          <h2 className="page-title text-primary pt-0 dashboard-hero-title">
             <i className="fa-solid fa-headset"></i> Recorded Classes
           </h2>
-          {/* <p className="text-muted mb-0">View and manage all support tickets</p> */}
+          <button
+                onClick={() => navigate(-1)}
+                className="btn btn-outline-primary mt-3 mt-md-0"
+              >
+                <i className="fa fa-arrow-left mr-1"></i> Back
+              </button>
+              </div>
+          <p className="text-muted mb-0 dashboard-hero-sub">View and manage all support tickets</p>
+          
         </div>
-        
+        </div>
+        </div>
         <Footer />
+      </div>
       </div>
 
     </div>

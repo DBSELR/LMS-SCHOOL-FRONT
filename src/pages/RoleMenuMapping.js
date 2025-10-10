@@ -369,15 +369,16 @@ function RoleMenuMapping() {
       <RightSidebar />
       <LeftSidebar />
 
-      <div className="page">
-        <div className="section-body mt-3">
-          <div className="container-fluid">
+      <div className="section-wrapper">
+        <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
+          <div className="container-fluid" style={{ paddingRight: "0px", paddingLeft: "0px" }}>
             {/* Jumbotron Header */}
-            <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <i className="fa-solid fa-diagram-project"></i> Role Menu Mapping
               </h2>
-              <p className="text-muted mb-0">Assign menus to roles and manage mappings</p>
+              <p className="text-muted mb-0 dashboard-hero-sub">Assign menus to roles and manage mappings</p>
             </div>
 
             {/* Card Section */}
@@ -443,6 +444,8 @@ function RoleMenuMapping() {
           </div>
         </div>
         <Footer />
+      </div>
+
       </div>
 
       {/* Add/Edit Modal */}

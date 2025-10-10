@@ -282,16 +282,22 @@ const InstructorTickets = () => {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Instructor" />
-      <div className="page mt-4">
+      
+      <div className="section-wrapper">
+            <div className="page admin-dashboard">
 
-        <div className="p-4 mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+        <div className="section-body mt-3 pt-0">
+          <div className="container-fluid pl-0 pr-0">
+               <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <i class="fa-solid fa-headset"></i> Assigned Support Tickets
               </h2>
-              <p className="text-muted mb-0">
+              <p className="text-muted mb-0 dashboard-hero-sub">
                 View and respond to tickets assigned to you.
               </p>
             </div>
+          </div>
+        </div>
 
         <div className="mb-3">
           <input
@@ -353,6 +359,7 @@ const InstructorTickets = () => {
         <Footer />
       </div>
 
+      </div>
       {/* View Modal */}
       <Modal
         show={showModal}

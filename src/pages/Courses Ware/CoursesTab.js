@@ -155,11 +155,6 @@ const CoursesTab = ({ isActive }) => {
     courseId: null,
   });
 
-  // New state for board assignment mode
-  const [mode, setMode] = useState("create"); // "create" or "assign"
-  const [selectedBoardId, setSelectedBoardId] = useState("");
-  const [selectedBatches, setSelectedBatches] = useState([]);
-
   // fetch courses when tab becomes active
   useEffect(() => {
     if (isActive) {
@@ -216,31 +211,7 @@ const CoursesTab = ({ isActive }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleBatchSelection = (batchName) => {
-    setSelectedBatches(prev => 
-      prev.includes(batchName) 
-        ? prev.filter(b => b !== batchName)
-        : [...prev, batchName]
-    );
-  };
-
-  const handleModeChange = (newMode) => {
-    setMode(newMode);
-    // Reset form state when changing modes
-    setForm({
-      batchName: "",
-      courseCode: "",
-      courseName: "",
-      fee: "",
-      courseId: null,
-    });
-    setSelectedBoardId("");
-    setSelectedBatches([]);
-  };
-
   const handleEdit = (course) => {
-    // Switch to create mode for editing
-    setMode("create");
     setForm({
       batchName: course.batchName ?? "",
       courseCode: course.programmeCode ?? "",
@@ -248,9 +219,6 @@ const CoursesTab = ({ isActive }) => {
       fee: course.fee ?? "",
       courseId: course.programmeId ?? null,
     });
-    // Reset assignment mode state
-    setSelectedBoardId("");
-    setSelectedBatches([]);
     // If editing shows a batch name that isn't in the dropdown (older data), we handle it below via memo
   };
 
@@ -269,81 +237,6 @@ const CoursesTab = ({ isActive }) => {
       fetchCourses();
     } catch (err) {
       toast.error(`❌ Deletion failed: ${err.message}`, { autoClose: 3000 });
-    }
-  };
-
-  const handleAssignBoardToBatches = async () => {
-    toast.dismiss();
-
-    if (!selectedBoardId || selectedBatches.length === 0) {
-      toast.error("❌ Please select a board and at least one batch", { autoClose: 3000 });
-      return;
-    }
-
-    const selectedBoard = courses.find(c => c.programmeId == selectedBoardId);
-    if (!selectedBoard) {
-      toast.error("❌ Selected board not found", { autoClose: 3000 });
-      return;
-    }
-
-    // Check for existing assignments to avoid duplicates
-    const existingAssignments = selectedBatches.filter(batchName => 
-      courses.some(c => c.programmeCode === selectedBoard.programmeCode && c.batchName === batchName)
-    );
-    
-    if (existingAssignments.length > 0) {
-      const proceed = window.confirm(
-        `This board is already assigned to the following batches: ${existingAssignments.join(", ")}.\n\nDo you want to proceed anyway? This will create duplicate entries.`
-      );
-      if (!proceed) return;
-    }
-
-    try {
-      const token = localStorage.getItem("jwt");
-      const promises = selectedBatches.map(batchName => {
-        const payload = {
-          programmeName: selectedBoard.programmeName,
-          programmeCode: selectedBoard.programmeCode,
-          numberOfSemesters: selectedBoard.numberOfSemesters || 1,
-          fee: selectedBoard.fee,
-          installments: selectedBoard.installments || 1,
-          batchName,
-          isCertCourse: selectedBoard.isCertCourse || false,
-          isNoGrp: selectedBoard.isNoGrp || false,
-        };
-
-        return fetch(`${API_BASE_URL}/Programme`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-      });
-
-      const responses = await Promise.all(promises);
-      const errors = [];
-      
-      for (let i = 0; i < responses.length; i++) {
-        if (!responses[i].ok) {
-          const errorText = await responses[i].text();
-          errors.push(`${selectedBatches[i]}: ${errorText}`);
-        }
-      }
-
-      if (errors.length > 0) {
-        toast.error(`❌ Some assignments failed: ${errors.join(", ")}`, { autoClose: 5000 });
-      } else {
-        toast.success(`✅ Board assigned to ${selectedBatches.length} batch(es) successfully`, { autoClose: 3000 });
-      }
-
-      // Reset form
-      setSelectedBoardId("");
-      setSelectedBatches([]);
-      fetchCourses();
-    } catch (err) {
-      toast.error(`❌ Assignment failed: ${err.message}`, { autoClose: 3000 });
     }
   };
 
@@ -421,60 +314,11 @@ const CoursesTab = ({ isActive }) => {
   }, [batches, form.batchName]);
 
   return (
-    <div className="container py-4 welcome-card animate-welcome">
-      <div className="mb-4 bg-glass p-4">
-        {/* Mode Toggle */}
-        <div className="mb-4">
-          <div className="btn-group w-100" role="group">
-            <button
-              type="button"
-              className={`btn ${mode === "create" ? "btn-primary" : "btn-outline-primary"}`}
-              onClick={() => handleModeChange("create")}
-            >
-              Create New Board
-            </button>
-            <button
-              type="button"
-              className={`btn ${mode === "assign" ? "btn-primary" : "btn-outline-primary"}`}
-              onClick={() => handleModeChange("assign")}
-            >
-              Assign Existing Board
-            </button>
-          </div>
-        </div>
-
-        <h5 className="mb-4 text-primary">
-          {mode === "create" ? "Add / Edit Boards" : "Assign Board to Multiple Batches"}
-        </h5>
-
-        {mode === "create" ? (
-          <Form>
+    <div className="container py-0 pt-0 welcome-card animate-welcome">
+      <div className="mb-0 bg-glass p-0">
+        <h5 className="mb-0 mt-0 text-primary">Add / Edit Boards</h5>
+        <Form>
           <div className="row gy-3">
-          
-           <div className="col-md-6">
-              <Form.Group>
-                <Form.Label>Board Code</Form.Label>
-                {/* use text to preserve leading zeros/alphanumeric codes */}
-                <Form.Control
-                  type="text"
-                  name="courseCode"
-                  value={form.courseCode}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
-
-                        <div className="col-md-6">
-              <Form.Group>
-                <Form.Label>Board Name</Form.Label>
-                <Form.Control
-                  name="courseName"
-                  value={form.courseName}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
-
             {/* Batch dropdown */}
             <div className="form-group col-md-6">
               <label>
@@ -506,9 +350,29 @@ const CoursesTab = ({ isActive }) => {
               )}
             </div>
 
-           
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>Board Code</Form.Label>
+                {/* use text to preserve leading zeros/alphanumeric codes */}
+                <Form.Control
+                  type="text"
+                  name="courseCode"
+                  value={form.courseCode}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </div>
 
-
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>Board Name</Form.Label>
+                <Form.Control
+                  name="courseName"
+                  value={form.courseName}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </div>
 
             <div className="col-md-6">
               <Form.Group>
@@ -534,110 +398,16 @@ const CoursesTab = ({ isActive }) => {
             </div>
           </div>
         </Form>
-        ) : (
-          /* Assignment Mode */
-          <div>
-            <div className="row gy-3">
-              {/* Select Existing Board */}
-              <div className="col-md-6">
-                <Form.Group>
-                  <Form.Label>
-                    <strong>Select Board <span className="text-danger">*</span></strong>
-                  </Form.Label>
-                  <Form.Select
-                    value={selectedBoardId}
-                    onChange={(e) => setSelectedBoardId(e.target.value)}
-                    required
-                  >
-                    <option value="">-- Select Existing Board --</option>
-                    {courses.map((course) => (
-                      <option key={course.programmeId} value={course.programmeId}>
-                        {course.programmeCode} - {course.programmeName} (₹{course.fee})
-                      </option>
-                    ))}
-                  </Form.Select>
-                  {selectedBoardId && (
-                    <small className="text-info d-block mt-1">
-                      {(() => {
-                        const board = courses.find(c => c.programmeId == selectedBoardId);
-                        return board ? `Selected: ${board.programmeCode} - ${board.programmeName} | Fee: ₹${board.fee}` : "";
-                      })()}
-                    </small>
-                  )}
-                </Form.Group>
-              </div>
-
-              {/* Multi-select Batches */}
-              <div className="col-md-6">
-                <Form.Group>
-                  <Form.Label>
-                    <strong>Select Batches <span className="text-danger">*</span></strong>
-                  </Form.Label>
-                  {batches.length > 0 && (
-                    <div className="mb-2">
-                      <Button
-                        size="sm"
-                        variant="outline-secondary"
-                        className="me-2"
-                        onClick={() => setSelectedBatches(batches.map(b => b.batchName))}
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-secondary"
-                        onClick={() => setSelectedBatches([])}
-                      >
-                        Clear All
-                      </Button>
-                    </div>
-                  )}
-                  <div className="border rounded p-2" style={{maxHeight: "150px", overflowY: "auto"}}>
-                    {batchesLoading ? (
-                      <p className="text-muted mb-0">Loading batches...</p>
-                    ) : batches.length === 0 ? (
-                      <p className="text-muted mb-0">No batches available</p>
-                    ) : (
-                      batches.map((batch) => (
-                        <Form.Check
-                          key={batch.bid}
-                          type="checkbox"
-                          id={`batch-${batch.bid}`}
-                          label={batch.batchName}
-                          checked={selectedBatches.includes(batch.batchName)}
-                          onChange={() => handleBatchSelection(batch.batchName)}
-                        />
-                      ))
-                    )}
-                  </div>
-                  {selectedBatches.length > 0 && (
-                    <small className="text-info d-block mt-1">
-                      Selected ({selectedBatches.length}): {selectedBatches.join(", ")}
-                    </small>
-                  )}
-                </Form.Group>
-              </div>
-
-              <div className="col-12 mt-3">
-                <Button
-                  variant="success"
-                  className="w-100 w-md-auto"
-                  onClick={handleAssignBoardToBatches}
-                  disabled={!selectedBoardId || selectedBatches.length === 0}
-                >
-                  Assign Board to Selected Batches
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <h5 className="mb-3">Boards</h5>
+
+      <div className="semester-panel-body">
       {loading ? (
         <p>Loading...</p>
       ) : (
         courses.map((course) => (
+          
           <div key={course.programmeId} style={{ margin: "10px" }}>
             <button
               className="w-100 btn btn-dark text-start"
@@ -687,8 +457,10 @@ const CoursesTab = ({ isActive }) => {
               </div>
             </Collapse>
           </div>
+        
         ))
       )}
+      </div>
     </div>
   );
 };

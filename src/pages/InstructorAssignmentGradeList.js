@@ -92,13 +92,14 @@
         <RightSidebar />
         <LeftSidebar role="Instructor" />
 
-        <div className="page">
-          <div className="section-body mt-3">
+        <div className="section-wrapper">
+          <div className="page admin-dashboard">
+          <div className="section-body mt-3 pt-0">
             <div className="container-fluid">
-              <div className="jumbotron bg-light p-4 rounded shadow-sm d-flex justify-content-between align-items-center mb-4">
+              <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
                 <div>
-                  <h2 className="text-primary mb-2">Students Assignment Submissions</h2>
-                  <p className="text-muted mb-0">Review and grade Assignments below.</p>
+                  <h2 className="text-primary  pt-0 dashboard-hero-title">Students Assignment Submissions</h2>
+                  <p className="text-muted mb-0 dashboard-hero-sub">Review and grade Assignments below.</p>
                 </div>
               </div>
 
@@ -200,6 +201,7 @@
             </div>
           </div>
           <Footer />
+        </div>
         </div>
       </div>
     );

@@ -133,15 +133,16 @@ function AdminManageAssignments() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar />
-
-      <div className="page">
-        <div className="section-body mt-3">
+      
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
           <div className="container-fluid">
-            <div className="p-4 mb-4 welcome-card animate-welcome">
-              <h2 className="page-title text-primary">
+            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
                 <FaUserGraduate /> Manage Assignments
               </h2>
-              <p className="text-muted mb-0">View all submitted assignments</p>
+              <p className="text-muted mb-0 dashboard-hero-sub">View all submitted assignments</p>
             </div>
 
             <div className="container-fluid mb-3">
@@ -317,6 +318,7 @@ function AdminManageAssignments() {
             )}
           </div>
         </div>
+      </div>
       </div>
 
       <Modal
