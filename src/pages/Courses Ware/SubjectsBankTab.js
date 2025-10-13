@@ -43,6 +43,10 @@ const SubjectsBankTab = ({ isActive }) => {
     }
   }, [isActive]);
 
+  useEffect(() => {
+    console.log("SubjectsBankTab component mounted");
+  }, []);
+
   const fetchInitialData = async () => {
     try {
       const token = localStorage.getItem("jwt");
@@ -188,74 +192,84 @@ const SubjectsBankTab = ({ isActive }) => {
   };
 
   const handleSubmit = async () => {
-    const { examinationId, batchName, semester, paperCode, paperName } = form;
+    const { paperCode, paperName } = form;
 
-    if (!batchName || !semester || !paperCode || !paperName) {
+    if (!paperCode || !paperName) {
       toast.error("Please fill all required fields");
-      return;
-    }
-    if (!selectedCG.length) {
-      toast.error("Please choose Board / Class");
-      return;
-    }
-
-    const method = examinationId ? "PUT" : "POST";
-    const endpoint = examinationId
-      ? `${API_BASE_URL}/Examination/Update/${examinationId}`
-      : `${API_BASE_URL}/Examination/Create`;
-
-    let hasError = false;
-
-    // Send one payload per selected Programme/Group, using fixed dummy values for hidden fields
-    for (const cg of selectedCG) {
-      const payload = {
-        batchName,
-        semester: parseInt(semester, 10),
+      console.error("Submission blocked: Missing required fields.", {
         paperCode,
         paperName,
-
-        // fixed/dummy values (hidden from UI)
-        isElective: false,
-        paperType: "Theory",
-        credits: 0,
-        internalMax1: 0,
-        internalPass1: 0,
-        internalMax2: 0,
-        internalPass2: 0,
-        InternalMax: 0,
-        InternalPass: 0,
-        theoryMax: 0,
-        theoryPass: 0,
-        totalMax: 0,
-        totalPass: 0,
-      };
-
-      if (examinationId) payload.examinationId = Number(examinationId);
-
-      try {
-        const token = localStorage.getItem("jwt");
-        const res = await fetch(endpoint, {
-          method,
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          toast.error(`❌ ${cg.label} failed: ${errorText}`);
-          hasError = true;
-        }
-      } catch (err) {
-        toast.error(`❌ ${cg.label} error: ${err.message}`);
-        hasError = true;
-      }
+      });
+      return;
     }
 
-    if (!hasError) {
-      toast.success("✅ Subject saved successfully");
-      resetForm();
-      fetchInitialData();
-      fetchSubBank();
+    const endpoint = `${API_BASE_URL}/Examination/Create`;
+
+    const payload = {
+      paperCode,
+      paperName,
+      isElective: false, // Fixed value
+      paperType: "Theory", // Fixed value
+      credits: 0, // Fixed value
+      internalMax1: 0, // Fixed value
+      internalPass1: 0, // Fixed value
+      internalMax2: 0, // Fixed value
+      internalPass2: 0, // Fixed value
+      InternalMax: 0, // Fixed value
+      InternalPass: 0, // Fixed value
+      theoryMax: 0, // Fixed value
+      theoryPass: 0, // Fixed value
+      totalMax: 0, // Fixed value
+      totalPass: 0, // Fixed value
+      batchName: form.batchName || "", // Ensure batchName is sent correctly
+      semester: form.semester || 1, // Ensure semester is sent correctly
+    };
+
+    try {
+      const token = localStorage.getItem("jwt");
+      if (!token) {
+        console.error("JWT token is missing. User might not be authenticated.");
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
+      console.log("Sending request to server:", {
+        endpoint,
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: payload,
+      });
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Error response from server:", {
+          errorText,
+          payload,
+        });
+        toast.error(`❌ Submission failed: ${errorText}`);
+      } else {
+        const responseData = await res.json();
+        console.log("Success response data:", {
+          responseData,
+          payload,
+        });
+        toast.success("✅ Subject saved successfully");
+        resetForm();
+        fetchInitialData();
+        fetchSubBank();
+      }
+    } catch (err) {
+      console.error("❌ Error during submission:", {
+        error: err,
+        payload,
+      });
+      toast.error(`❌ Submission error: ${err.message}`);
     }
   };
 
@@ -323,49 +337,7 @@ const SubjectsBankTab = ({ isActive }) => {
           <h5 className="mb-2 text-primary">Add / Edit Subject</h5>
 
           <Form>
-            <Row className="g-3">
-              <Col xs={12} md={6}>
-                <Form.Group>
-                  <Form.Label>Batch</Form.Label>
-                  <Form.Control
-                    as="select"
-                    name="batchName"
-                    value={form.batchName}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select Batch</option>
-                    {(batches || []).map((b, i) => (
-                      /* support primitive or object batch */
-                      <option key={i} value={b && typeof b === "object" ? (b.id ?? b.value ?? b.name) : b}>
-                        {b && typeof b === "object" ? (b.name ?? b.value ?? JSON.stringify(b)) : b}
-                      </option>
-                    ))}
-                  </Form.Control>
-                </Form.Group>
-              </Col>
-
-              <Col xs={12} md={6}>
-                <Form.Group>
-                  <Form.Label>Board / Class</Form.Label>
-                  <Select
-                    isMulti
-                    name="courseGroup"
-                    options={filteredCGOptions}
-                    value={selectedCG}
-                    onChange={setSelectedCG}
-                    isDisabled={!form.batchName || !form.semester}
-                    placeholder={
-                      !form.batchName
-                        ? "Select batch first"
-                        : !form.semester
-                        ? "Loading classes…"
-                        : "Select Board / Class"
-                    }
-                    classNamePrefix="react-select"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+           
 
             <hr className="my-3" />
 
@@ -423,28 +395,26 @@ const SubjectsBankTab = ({ isActive }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(filteredSubjects || [])
-                    .filter((exam) => exam) // Filter out null or undefined values
-                    .map((exam) => (
-                      <tr key={exam.examinationId ?? `${exam.paperCode}-${exam.batchName}`}>
-                        <td>{exam.batchName}</td>
-                        <td>{exam.paperCode}</td>
-                        <td className="text-start">{exam.paperName}</td>
-                        <td>
-                          <Button size="sm" variant="link" onClick={() => fetchUnitsByExamId(exam)}>
-                            ➕ {exam.unitCount != null ? `(${exam.unitCount})` : ""}
-                          </Button>
-                        </td>
-                        <td className="actions-cell">
-                          <Button size="sm" variant="outline-primary" onClick={() => handleEdit(exam)} className="me-1 mb-2 mb-sm-0">
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="outline-danger" onClick={() => handleDelete(exam.examinationId)} className="mt-1">
-                            Delete
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                  {(filteredSubjects || []).map((exam) => (
+                    <tr key={exam.examinationId ?? `${exam.paperCode}-${exam.batchName}`}>
+                      <td>{exam.batchName}</td>
+                      <td>{exam.paperCode}</td>
+                      <td className="text-start">{exam.paperName}</td>
+                      <td>
+                        <Button size="sm" variant="link" onClick={() => fetchUnitsByExamId(exam)}>
+                          ➕ {exam.unitCount != null ? `(${exam.unitCount})` : ""}
+                        </Button>
+                      </td>
+                      <td className="actions-cell">
+                        <Button size="sm" variant="outline-primary" onClick={() => handleEdit(exam)} className="me-1 mb-2 mb-sm-0">
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDelete(exam.examinationId)} className="mt-1">
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </Table>
             </div>

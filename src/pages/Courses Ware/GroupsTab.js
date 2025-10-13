@@ -4,7 +4,13 @@ import { toast } from "react-toastify";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import API_BASE_URL from "../../config";
 
-const CLASS_CODE_OPTIONS = ["06", "07", "08", "09", "10"];
+const CLASS_CODE_OPTIONS = [
+    { display: "VI", value: "06" },
+    { display: "VII", value: "07" },
+    { display: "VIII", value: "08" },
+    { display: "IX", value: "09" },
+    { display: "X", value: "10" },
+  ];
 
 const GroupsTab = ({ isActive }) => {
   const [groups, setGroups] = useState([]);
@@ -29,7 +35,7 @@ const GroupsTab = ({ isActive }) => {
 
   useEffect(() => {
     if (isActive) {
-      fetchCourses();
+      fetchCoursesByBatch();
       fetchGroups();
     }
   }, [isActive]);
@@ -63,13 +69,12 @@ const GroupsTab = ({ isActive }) => {
     }
   };
 
-  const fetchCoursesByBatch = async (Batch) => {
+  const fetchCoursesByBatch = async () => {
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch(
-        `${API_BASE_URL}/Group/GetCoursesByBatch?Batch=${encodeURIComponent(Batch)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await fetch("https://localhost:7099/api/Group/GetCoursesByBatch", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       setBatchCourse(data);
     } catch {
@@ -80,24 +85,6 @@ const GroupsTab = ({ isActive }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === "batchName") {
-      setForm((prev) => ({
-        ...prev,
-        batchName: value,
-        courseValue: "",
-        programmeId: "",
-        programmeName: "",
-        numberOfSemesters: 1,
-        fee: "",
-        installments: "",
-        isNoGrp: false,
-        groupCode: "",
-        groupName: "",
-      }));
-      if (value) fetchCoursesByBatch(value);
-      return;
-    }
 
     if (name === "fee") {
       setForm((prev) => ({ ...prev, fee: value }));
@@ -113,45 +100,49 @@ const GroupsTab = ({ isActive }) => {
     setForm((prev) => ({
       ...prev,
       groupCode: code,
-      groupName: prev.isNoGrp ? prev.groupName : (code ? `Class - ${code}` : ""),
+      groupName: prev.isNoGrp ? prev.groupName : code ? `Class - ${CLASS_CODE_OPTIONS.find(opt => opt.value === code)?.display}` : "",
     }));
   };
 
   // When board changes, derive hidden values from selected course
   const handleCourseChange = (e) => {
     const selected = e.target.value;
-    const [programmeId, batchName] = selected.split("||");
-    const course = courses.find(
-      (c) => c.programmeId?.toString() === programmeId && c.batchName === batchName
-    );
 
-    if (course) {
-      const noGrp = !!course.isNoGrp;
-      setForm((prev) => ({
-        ...prev,
-        courseValue: selected,
-        programmeId: course.programmeId,
-        programmeName: course.programmeName,
-        batchName: course.batchName,
-        numberOfSemesters: course.numberOfSemesters ?? 1,
-        fee: course.fee ?? "",
-        installments: course.installments ?? "",
-        isNoGrp: noGrp,
-        // For No-Group keep 00/---; otherwise keep chosen code and mirror name format.
-        groupCode: noGrp ? "00" : prev.groupCode,
-        groupName: noGrp ? "---" : (prev.groupCode ? `class - ${prev.groupCode}` : ""),
-      }));
+    if (selected) {
+      const [programmeId, batchName] = selected.split("||");
+      const course = batchcourse.find(
+        (c) => c.programmeId?.toString() === programmeId && c.batchName === batchName
+      );
+
+      if (course) {
+        const noGrp = !!course.isNoGrp;
+        setForm((prev) => ({
+          ...prev,
+          courseValue: selected,
+          programmeId: course.programmeId,
+          programmeName: course.programmeName,
+          batchName: course.batchName,
+          numberOfSemesters: course.numberOfSemesters ?? 1,
+          fee: course.fee ?? "",
+          installments: course.installments ?? "",
+          isNoGrp: noGrp,
+          groupCode: noGrp ? "00" : prev.groupCode,
+          groupName: noGrp ? "---" : prev.groupName,
+        }));
+      }
     } else {
       setForm((prev) => ({
         ...prev,
         courseValue: "",
         programmeId: "",
         programmeName: "",
+        batchName: "",
         numberOfSemesters: 1,
         fee: "",
         installments: "",
         isNoGrp: false,
-        groupName: prev.groupCode ? `class - ${prev.groupCode}` : "",
+        groupCode: "",
+        groupName: "",
       }));
     }
   };
@@ -162,8 +153,6 @@ const GroupsTab = ({ isActive }) => {
     const {
       groupId,
       groupCode,
-      groupName,
-      batchName,
       programmeId,
       programmeName,
       numberOfSemesters,
@@ -172,8 +161,8 @@ const GroupsTab = ({ isActive }) => {
       isNoGrp,
     } = form;
 
-    if (!batchName || !programmeId) {
-      toast.error("❌ Please select Batch and Board", { autoClose: 3000 });
+    if (!programmeId) {
+      toast.error("❌ Please select Board", { autoClose: 3000 });
       return;
     }
     if (!isNoGrp) {
@@ -181,8 +170,13 @@ const GroupsTab = ({ isActive }) => {
         toast.error("❌ Please select Class Code", { autoClose: 3000 });
         return;
       }
-      if (!groupName) {
-        toast.error("❌ Class Name not generated. Re-select Class Code.", { autoClose: 3000 });
+
+      // Check for duplicate groupCode
+      const isDuplicate = groups.some(
+        (g) => g.groupCode === groupCode && g.groupId !== groupId
+      );
+      if (isDuplicate) {
+        toast.error("❌ Duplicate Group Code not allowed", { autoClose: 3000 });
         return;
       }
     }
@@ -195,16 +189,17 @@ const GroupsTab = ({ isActive }) => {
 
     const payload = {
       groupCode: isNoGrp ? "00" : groupCode,
-      groupName: isNoGrp ? "---" : groupName,
+      groupName: isNoGrp ? "---" : groupCode, // Use numeric value directly
       programmeId,
       programmeName,
-      batchName,
       numberOfSemesters: Number(numberOfSemesters),
       fee: parseFloat(fee),
       installments: parseInt(installments, 10),
       selectedSemesters: Array.from({ length: Number(numberOfSemesters) }, (_, i) => i + 1),
     };
     if (groupId) payload.groupId = groupId;
+
+    console.log("Payload:", payload);
 
     const url = groupId
       ? `${API_BASE_URL}/Group/Update/${groupId}`
@@ -228,7 +223,6 @@ const GroupsTab = ({ isActive }) => {
         groupId: null,
         groupCode: "",
         groupName: "",
-        batchName: "",
         courseValue: "",
         programmeId: "",
         programmeName: "",
@@ -293,25 +287,6 @@ const GroupsTab = ({ isActive }) => {
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Class</h5>
         <Form>
           <div className="row gy-3">
-            {/* Batch Name */}
-            <div className="col-md-6">
-              <Form.Group>
-                <Form.Label>Batch Name</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="batchName"
-                  value={form.batchName}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((b, idx) => (
-                    <option key={idx} value={b}>{b}</option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
-            </div>
-
             {/* Select Board */}
             <div className="col-md-6">
               <Form.Group>
@@ -333,10 +308,10 @@ const GroupsTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            {/* Class Code (dropdown) */}
+            {/* Class (dropdown) */}
             <div className="col-md-4">
               <Form.Group>
-                <Form.Label>Class Code</Form.Label>
+                <Form.Label>Class</Form.Label>
                 <Form.Control
                   as="select"
                   name="groupCode"
@@ -344,15 +319,16 @@ const GroupsTab = ({ isActive }) => {
                   onChange={handleGroupCodeChange}
                   disabled={form.isNoGrp}
                 >
-                  <option value="">Select Class Code</option>
+                  <option value="">Select Class</option>
                   {CLASS_CODE_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt.value} value={opt.value}>{opt.display}</option>
                   ))}
                 </Form.Control>
               </Form.Group>
             </div>
 
             {/* Class Name (derived from Class Code) */}
+            {/*
             <div className="col-md-4">
               <Form.Group>
                 <Form.Label>Class Name</Form.Label>
@@ -364,6 +340,7 @@ const GroupsTab = ({ isActive }) => {
                 />
               </Form.Group>
             </div>
+            */}
 
             {/* Total Fee (visible, same old logic: auto from Board, editable unless No-Group) */}
             <div className="col-md-4">

@@ -245,9 +245,14 @@ const CoursesTab = ({ isActive }) => {
 
     const { batchName, courseCode, courseName, fee, courseId } = form;
 
-    if (!batchName || !courseCode || !courseName || !fee) {
+    if (!courseCode || !courseName || !fee) {
       toast.error("❌ Please fill all fields", { autoClose: 3000 });
       return;
+    }
+
+    if (DEBUG) {
+      // Removed unnecessary debug logs
+      console.log("Loaded Programmes:", courses);
     }
 
     const payload = {
@@ -256,7 +261,6 @@ const CoursesTab = ({ isActive }) => {
       numberOfSemesters: 1,
       fee: parseFloat(fee),
       installments: 1,
-      batchName, // from dropdown
       isCertCourse: false,
       isNoGrp: false,
     };
@@ -319,36 +323,7 @@ const CoursesTab = ({ isActive }) => {
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Boards</h5>
         <Form>
           <div className="row gy-3">
-            {/* Batch dropdown */}
-            <div className="form-group col-md-6">
-              <label>
-                <strong>
-                  Batch <span className="text-danger">*</span>
-                </strong>
-              </label>
-              <select
-                className="form-control"
-                name="batchName"
-                value={form.batchName}
-                onChange={handleChange}
-                required
-                disabled={batchesLoading}
-              >
-                <option value="">
-                  {batchesLoading ? "Loading batches..." : "-- Select Batch --"}
-                </option>
-                {batchOptions.map((item) => (
-                  <option key={item.bid} value={item.batchName}>
-                    {item.batchName}
-                  </option>
-                ))}
-              </select>
-              {batchesErr && (
-                <small className="text-danger d-block mt-1">
-                  Couldn’t load batches: {batchesErr}
-                </small>
-              )}
-            </div>
+          
 
             <div className="col-md-6">
               <Form.Group>

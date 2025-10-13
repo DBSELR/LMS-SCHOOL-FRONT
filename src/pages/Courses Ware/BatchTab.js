@@ -223,10 +223,14 @@ const BatchTab = () => {
     startDate: "",
     endDate: "",
     bid: 0, // 0 = create, >0 = update (same POST endpoint)
+    programmeId: "",
+    classId: "",
   });
   const [saving, setSaving] = useState(false);
 
   const [batches, setBatches] = useState([]);
+  const [boards, setBoards] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
   const [listError, setListError] = useState("");
 
@@ -234,8 +238,57 @@ const BatchTab = () => {
 
   useEffect(() => {
     refreshList();
+    fetchBoards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchBoards = async () => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const res = await fetch("https://localhost:7099/api/Group/GetCoursesByBatch", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setBoards(data);
+    } catch {
+      toast.error("❌ Failed to load boards");
+    }
+  };
+
+  const fetchClasses = async (programmeId) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const res = await fetch(`https://localhost:7099/api/Programme/GetGroupByProgrammes?pid=${encodeURIComponent(programmeId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Error fetching classes for programmeId ${programmeId}:`, errorText);
+        toast.error(`❌ Failed to load classes: ${res.statusText}`);
+        setClasses([]);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (DEBUG) {
+        console.log("Classes API Response:", data);
+      }
+
+      if (Array.isArray(data)) {
+        setClasses(data);
+      } else {
+        console.error("Unexpected response format for classes:", data);
+        toast.error("❌ Invalid response format for classes");
+        setClasses([]);
+      }
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      toast.error("❌ Failed to load classes");
+      setClasses([]);
+    }
+  };
 
   async function refreshList() {
     setLoadingList(true);
@@ -268,18 +321,31 @@ const BatchTab = () => {
     setForm((p) => ({ ...p, [name]: value }));
   };
 
+  const handleBoardChange = (e) => {
+    const programmeId = e.target.value;
+    setForm((prev) => ({ ...prev, programmeId }));
+
+    if (programmeId) {
+      fetchClasses(programmeId);
+    } else {
+      setClasses([]);
+    }
+  };
+
   const handleEdit = (row) => {
     setForm({
       batchName: row.batchName,
       startDate: toInputDate(row.startDate),
       endDate: toInputDate(row.endDate),
       bid: Number(row.bid) || 0,
+      programmeId: row.programmeId || "",
+      classId: row.classId || "",
     });
     toast.info("✏️ Edit mode");
   };
 
   const handleCancelEdit = () => {
-    setForm({ batchName: "", startDate: "", endDate: "", bid: 0 });
+    setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "" });
     toast.dismiss();
   };
 
@@ -298,12 +364,12 @@ const BatchTab = () => {
   };
 
   const handleSave = async () => {
-    const { batchName, startDate, endDate, bid } = form;
+    const { batchName, startDate, endDate, bid, programmeId, classId } = form;
 
     if (DEBUG) console.log("🧾 handleSave form:", form);
 
-    if (!batchName || !startDate || !endDate) {
-      toast.error("Please fill Batch, Start Date, and End Date");
+    if (!batchName || !startDate || !endDate || !programmeId || !classId) {
+      toast.error("Please fill all required fields, including Programme and Class.");
       return;
     }
     if (new Date(startDate) > new Date(endDate)) {
@@ -316,6 +382,8 @@ const BatchTab = () => {
       BatchName: batchName,
       StartDate: toIsoMidnight(startDate),
       EndDate: toIsoMidnight(endDate),
+      Pid: Number(programmeId), // Pass programmeId
+      Gid: Number(classId), // Pass groupId
     };
 
     try {
@@ -324,7 +392,7 @@ const BatchTab = () => {
       await postBatchArray([dto], token);
       toast.success(isEditMode ? "✅ Batch updated successfully" : "✅ Batch created successfully");
       await refreshList();
-      setForm({ batchName: "", startDate: "", endDate: "", bid: 0 }); // back to insert mode
+      setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "" }); // Reset form
     } catch (err) {
       console.error("❌ Save failed:", err);
       toast.error(`❌ Save failed: ${err.message}`);
@@ -340,6 +408,46 @@ const BatchTab = () => {
     <h5 className="mb-3 text-primary">Add / Edit Batch</h5>
     <Form onSubmit={(e) => e.preventDefault()}>
       <div className="row gy-3">
+
+         <div className="col-md-6">
+          <Form.Group>
+            <Form.Label>Select Board</Form.Label>
+            <Form.Control
+              as="select"
+              name="programmeId"
+              value={form.programmeId}
+              onChange={handleBoardChange}
+            >
+              <option value="">Select Board</option>
+              {boards.map((board) => (
+                <option key={board.programmeId} value={board.programmeId}>
+                  {board.programmeCode} - {board.programmeName}
+                </option>
+              ))}
+            </Form.Control>
+          </Form.Group>
+        </div>
+
+        <div className="col-md-6">
+          <Form.Group>
+            <Form.Label>Class</Form.Label>
+            <Form.Control
+              as="select"
+              name="classId"
+              value={form.classId}
+              onChange={(e) => setForm((prev) => ({ ...prev, classId: e.target.value }))}
+            >
+              <option value="">Select Class</option>
+              {(Array.isArray(classes) ? classes : []).map((cls) => (
+                <option key={cls.groupId} value={cls.groupId}>
+                  {cls.groupName}
+                </option>
+              ))}
+            </Form.Control>
+          </Form.Group>
+        </div>
+
+        
         <div className="col-md-6">
           <Form.Group>
             <Form.Label>Batch</Form.Label>
@@ -375,6 +483,8 @@ const BatchTab = () => {
             />
           </Form.Group>
         </div>
+
+       
 
         <div className="col-12 mt-2 d-flex gap-2 align-items-center">
           <Button
