@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import API_BASE_URL from "../config";
 import RightSidebar from "../components/RightSidebar";
 import LeftSidebar from "../components/LeftSidebar";
@@ -93,6 +94,11 @@ function RoleMenuMapping() {
   const [roleQuery, setRoleQuery] = useState("");
   const [menuQuery, setMenuQuery] = useState("");
 
+  // NEW: Menu ordering states
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [mainMenus, setMainMenus] = useState([]);
+  const [orderedMenus, setOrderedMenus] = useState([]);
+
   // NEW: master checkbox ref for tri-state
   const masterMenuRef = useRef(null);
 
@@ -163,6 +169,51 @@ function RoleMenuMapping() {
     } catch (err) {
       console.error("Error fetching mappings", err);
       toast.error("Error fetching mappings");
+    }
+  };
+
+  // ✅ Fetch main menus for ordering
+  const fetchMainMenus = async () => {
+    console.log("🚀 [DEBUG] fetchMainMenus called");
+    const label = "Fetch Main Menus";
+    try {
+      console.log("🚀 [DEBUG] Making API call to GetMainMenu");
+      console.log("🚀 [DEBUG] Auth headers:", authHeaders());
+      
+      const { res, json } = await apiFetch(label, "https://localhost:7099/api/RoleMenu/GetMainMenu", {
+        headers: { ...authHeaders() },
+      });
+      
+      console.log("🚀 [DEBUG] API response:", {
+        ok: res.ok,
+        status: res.status,
+        statusText: res.statusText
+      });
+      console.log("🚀 [DEBUG] Raw JSON response:", json);
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list = Array.isArray(json) ? json : [];
+      console.log("🚀 [DEBUG] Converted to array, length:", list.length);
+      console.log("🚀 [DEBUG] First few items:", list.slice(0, 3));
+      
+      // Sort by mord (menu order)
+      const sortedList = list.sort((a, b) => a.mord - b.mord);
+      console.log("🚀 [DEBUG] Sorted list, first few items:", sortedList.slice(0, 3));
+      console.log("🚀 [DEBUG] Setting mainMenus and orderedMenus state");
+      
+      setMainMenus(sortedList);
+      setOrderedMenus(sortedList);
+      
+      if (DEBUG) {
+        const g = group("Main Menus Loaded");
+        console.table(sortedList);
+        g.end();
+      }
+      console.log("🚀 [DEBUG] fetchMainMenus completed successfully");
+    } catch (err) {
+      console.error("🚀 [DEBUG] Error in fetchMainMenus:", err);
+      console.error("🚀 [DEBUG] Error stack:", err.stack);
+      toast.error("Error fetching main menus");
     }
   };
 
@@ -363,6 +414,141 @@ function RoleMenuMapping() {
     if (DEBUG) log("🧹 Cleared ALL menus");
   };
 
+  // ✅ Handle drag and drop for menu ordering
+  const handleMenuDragEnd = (result) => {
+    console.log("🚀 [DEBUG] handleMenuDragEnd called with result:", result);
+    
+    if (!result.destination) {
+      console.log("🚀 [DEBUG] No destination, returning early");
+      return;
+    }
+    
+    console.log("🚀 [DEBUG] Source index:", result.source.index);
+    console.log("🚀 [DEBUG] Destination index:", result.destination.index);
+    console.log("🚀 [DEBUG] Current orderedMenus length:", orderedMenus.length);
+    
+    const newOrderedMenus = Array.from(orderedMenus);
+    console.log("🚀 [DEBUG] Created copy of orderedMenus");
+    
+    const [reorderedItem] = newOrderedMenus.splice(result.source.index, 1);
+    console.log("🚀 [DEBUG] Removed item from source:", reorderedItem?.mainMenuName);
+    
+    newOrderedMenus.splice(result.destination.index, 0, reorderedItem);
+    console.log("🚀 [DEBUG] Inserted item at destination");
+    
+    // Update the mord (menu order) based on new positions
+    const updatedMenus = newOrderedMenus.map((menu, index) => ({
+      ...menu,
+      mord: index + 1
+    }));
+    
+    console.log("🚀 [DEBUG] Updated menus with new order:", updatedMenus.map(m => ({ name: m.mainMenuName, mord: m.mord, mMId: m.mMId })));
+    
+    setOrderedMenus(updatedMenus);
+    console.log("🚀 [DEBUG] Updated orderedMenus state");
+    
+    if (DEBUG) {
+      log("🔄 Menu reordered:", reorderedItem.mainMenuName, "to position", result.destination.index + 1);
+    }
+  };
+
+  // ✅ Open menu ordering modal
+  const openMenuOrderModal = () => {
+    console.log("🚀 [DEBUG] openMenuOrderModal called");
+    console.log("🚀 [DEBUG] Current mainMenus length:", mainMenus.length);
+    console.log("🚀 [DEBUG] Current orderedMenus length:", orderedMenus.length);
+    
+    fetchMainMenus();
+    setShowOrderModal(true);
+    
+    console.log("🚀 [DEBUG] Modal state set to true");
+    if (DEBUG) log("🪟 Opening menu order modal");
+  };
+
+  // ✅ Save menu order
+  const saveMenuOrder = async () => {
+    console.log("🚀 [DEBUG] saveMenuOrder called");
+    console.log("🚀 [DEBUG] orderedMenus length:", orderedMenus.length);
+    console.log("🚀 [DEBUG] orderedMenus:", orderedMenus);
+    
+    try {
+      const updates = orderedMenus.map((menu, index) => ({
+        mMId: menu.mMId,
+        displayOrder: index + 1
+      }));
+
+      console.log("🚀 [DEBUG] Updates to be sent:", updates);
+      console.log("🚀 [DEBUG] Number of updates:", updates.length);
+
+      if (DEBUG) {
+        const g = group("Saving Menu Order");
+        console.table(updates);
+        g.end();
+      }
+
+      // Update each menu's order with detailed logging
+      console.log("🚀 [DEBUG] Starting Promise.all for updates...");
+      
+      const results = await Promise.all(
+        updates.map(async (update, index) => {
+          console.log(`🚀 [DEBUG] Processing update ${index + 1}/${updates.length}:`, update);
+          
+          const url = `https://localhost:7099/api/RoleMenu/UpdateMenuorder/${update.mMId}/${update.displayOrder}`;
+          console.log(`🚀 [DEBUG] Request URL:`, url);
+          console.log(`🚀 [DEBUG] Auth headers:`, authHeaders());
+          
+          try {
+            const { res, json, text, elapsed } = await apiFetch(
+              `Update Menu Order ${update.mMId}`,
+              url,
+              {
+                method: "PUT",
+                headers: { ...authHeaders() },
+              }
+            );
+            
+            console.log(`🚀 [DEBUG] Response for mMId ${update.mMId}:`, {
+              status: res.status,
+              statusText: res.statusText,
+              ok: res.ok,
+              elapsed,
+              responseText: text,
+              responseJson: json
+            });
+            
+            if (!res.ok) {
+              console.error(`🚀 [DEBUG] Failed response for mMId ${update.mMId}:`, {
+                status: res.status,
+                statusText: res.statusText,
+                responseText: text
+              });
+              throw new Error(`Failed to update menu ${update.mMId} - Status: ${res.status} ${res.statusText}`);
+            }
+            
+            console.log(`🚀 [DEBUG] Successfully updated mMId ${update.mMId}`);
+            return { success: true, mMId: update.mMId };
+          } catch (error) {
+            console.error(`🚀 [DEBUG] Error updating mMId ${update.mMId}:`, error);
+            throw error;
+          }
+        })
+      );
+
+      console.log("🚀 [DEBUG] All updates completed successfully:", results);
+      toast.success("Menu order updated successfully!");
+      setShowOrderModal(false);
+      
+      if (DEBUG) log("✅ Menu order saved successfully");
+      console.log("🚀 [DEBUG] saveMenuOrder completed successfully");
+      
+    } catch (err) {
+      console.error("🚀 [DEBUG] Error in saveMenuOrder:", err);
+      console.error("🚀 [DEBUG] Error stack:", err.stack);
+      console.error("🚀 [DEBUG] Error message:", err.message);
+      toast.error(`Error saving menu order: ${err.message}`);
+    }
+  };
+
   return (
     <div id="main_content" className="font-muli theme-blush">
       <HeaderTop />
@@ -394,9 +580,14 @@ function RoleMenuMapping() {
                 <h6 className="mb-0">
                   <i className="fa fa-list mr-2"></i> Role Menu Mapping
                 </h6>
-                <button className="btn btn-light btn-sm" onClick={() => openModal()}>
-                  <i className="fa fa-plus"></i> Add Mapping
-                </button>
+                <div className="d-flex gap-2">
+                  <button className="btn btn-info btn-sm me-2" onClick={openMenuOrderModal}>
+                    <i className="fa fa-arrows-alt"></i> Manage Menu Order
+                  </button>
+                  <button className="btn btn-light btn-sm" onClick={() => openModal()}>
+                    <i className="fa fa-plus"></i> Add Mapping
+                  </button>
+                </div>
               </div>
 
               <div className="card-body">
@@ -583,6 +774,120 @@ function RoleMenuMapping() {
               </button>
             </div>
           </form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Menu Order Modal */}
+      <Modal show={showOrderModal} onHide={() => setShowOrderModal(false)} centered size="lg">
+        <Modal.Header>
+          <Modal.Title>
+            <i className="fa fa-arrows-alt me-2"></i>
+            Manage Menu Order
+          </Modal.Title>
+          <button className="close" onClick={() => setShowOrderModal(false)}>
+            <span>&times;</span>
+          </button>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <p className="text-muted">
+              <i className="fa fa-info-circle me-1"></i>
+              Drag and drop the menu items to reorder them. The new order will be saved when you click "Save Order".
+            </p>
+            <hr />
+          </div>
+
+          {/* Debug info */}
+          <div className="mb-2 p-2 bg-light border rounded">
+            <small className="text-muted">
+              <strong>Debug Info:</strong> orderedMenus.length = {orderedMenus.length} | 
+              mainMenus.length = {mainMenus.length} | 
+              Modal visible = {showOrderModal.toString()}
+            </small>
+          </div>
+
+          <DragDropContext onDragEnd={handleMenuDragEnd}>
+            <Droppable droppableId="menuList">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  style={{ maxHeight: "400px", overflowY: "auto" }}
+                  className="border rounded p-2"
+                >
+                  {orderedMenus.length === 0 ? (
+                    <div className="text-center text-muted p-4">
+                      <i className="fa fa-spinner fa-spin me-2"></i>
+                      Loading menus...
+                    </div>
+                  ) : (
+                    orderedMenus.map((menu, index) => (
+                      <Draggable
+                        key={menu.mMId}
+                        draggableId={String(menu.mMId)}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`d-flex align-items-center p-3 mb-2 border rounded ${
+                              snapshot.isDragging ? "bg-light shadow" : "bg-white"
+                            }`}
+                            style={{
+                              ...provided.draggableProps.style,
+                              cursor: "grab",
+                              transition: snapshot.isDragging ? "none" : "all 0.2s ease",
+                            }}
+                          >
+                            <div className="me-3 text-muted">
+                              <i className="fa fa-grip-vertical"></i>
+                            </div>
+                            <div className="me-3 fw-bold text-primary" style={{ minWidth: "40px" }}>
+                              #{menu.mord}
+                            </div>
+                            <div className="flex-grow-1">
+                              <span className="fw-semibold">{menu.mainMenuName}</span>
+                            </div>
+                            <div className="text-muted small">
+                              ID: {menu.mMId}
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))
+                  )}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+
+          <div className="mt-4 d-flex justify-content-between align-items-center">
+            <small className="text-muted">
+              <i className="fa fa-lightbulb me-1"></i>
+              Total menus: <strong>{orderedMenus.length}</strong>
+            </small>
+            <div className="d-flex gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowOrderModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-success"
+                onClick={saveMenuOrder}
+                disabled={orderedMenus.length === 0}
+              >
+                <i className="fa fa-save me-1"></i>
+                Save Order
+              </button>
+            </div>
+          </div>
         </Modal.Body>
       </Modal>
     </div>

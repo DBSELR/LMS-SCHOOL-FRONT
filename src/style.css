@@ -1464,7 +1464,13 @@ button.btn-sm {
   border-radius: 3px;
 }
 
-
+.theme-blush #left-sidebar .brand-name{
+  margin: auto;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  
+}
 
 /* LeftSidebar.css end */
 
