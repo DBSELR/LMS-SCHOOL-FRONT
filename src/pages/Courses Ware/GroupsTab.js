@@ -309,7 +309,7 @@ const GroupsTab = ({ isActive }) => {
             </div>
 
             {/* Class (dropdown) */}
-            <div className="col-md-4">
+            <div className="col-md-6">
               <Form.Group>
                 <Form.Label>Class</Form.Label>
                 <Form.Control
@@ -343,7 +343,7 @@ const GroupsTab = ({ isActive }) => {
             */}
 
             {/* Total Fee (visible, same old logic: auto from Board, editable unless No-Group) */}
-            <div className="col-md-4">
+            <div className="col-md-6">
               <Form.Group>
                 <Form.Label>Total Fee</Form.Label>
                 <Form.Control

@@ -344,14 +344,14 @@ const SubjectsBankTab = ({ isActive }) => {
             <Row className="g-3">
               <Col xs={12} md={4}>
                 <Form.Group>
-                  <Form.Label>Paper Code</Form.Label>
+                  <Form.Label>Subject Code</Form.Label>
                   <Form.Control name="paperCode" value={form.paperCode} onChange={handleChange} />
                 </Form.Group>
               </Col>
 
               <Col xs={12} md={8}>
                 <Form.Group>
-                  <Form.Label>Paper Name</Form.Label>
+                  <Form.Label>Subject Name</Form.Label>
                   <Form.Control name="paperName" value={form.paperName} onChange={handleChange} />
                 </Form.Group>
               </Col>
@@ -387,9 +387,9 @@ const SubjectsBankTab = ({ isActive }) => {
               <Table bordered striped hover size="sm" className="mb-0">
                 <thead>
                   <tr>
-                    <th>Batch</th>
-                    <th>Paper Code</th>
-                    <th>Paper Name</th>
+                    {/* <th>Batch</th> */}
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
                     <th>Units</th>
                     <th>Actions</th>
                   </tr>
@@ -397,7 +397,7 @@ const SubjectsBankTab = ({ isActive }) => {
                 <tbody>
                   {(filteredSubjects || []).map((exam) => (
                     <tr key={exam.examinationId ?? `${exam.paperCode}-${exam.batchName}`}>
-                      <td>{exam.batchName}</td>
+                      {/* <td>{exam.batchName}</td> */}
                       <td>{exam.paperCode}</td>
                       <td className="text-start">{exam.paperName}</td>
                       <td>
@@ -405,11 +405,11 @@ const SubjectsBankTab = ({ isActive }) => {
                           ➕ {exam.unitCount != null ? `(${exam.unitCount})` : ""}
                         </Button>
                       </td>
-                      <td className="actions-cell">
+                      <td className="actions-cell d-flex flex-row align-items-center border-0 mt-3">
                         <Button size="sm" variant="outline-primary" onClick={() => handleEdit(exam)} className="me-1 mb-2 mb-sm-0">
                           Edit
                         </Button>
-                        <Button size="sm" variant="outline-danger" onClick={() => handleDelete(exam.examinationId)} className="mt-1">
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDelete(exam.examinationId)} className="me-1 mb-2 mb-sm-0">
                           Delete
                         </Button>
                       </td>

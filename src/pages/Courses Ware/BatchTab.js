@@ -428,7 +428,7 @@ const BatchTab = () => {
           </Form.Group>
         </div>
 
-        <div className="col-md-6">
+        <div className="col-md-3">
           <Form.Group>
             <Form.Label>Class</Form.Label>
             <Form.Control
@@ -448,7 +448,7 @@ const BatchTab = () => {
         </div>
 
         
-        <div className="col-md-6">
+        <div className="col-md-3">
           <Form.Group>
             <Form.Label>Batch</Form.Label>
             <Form.Control

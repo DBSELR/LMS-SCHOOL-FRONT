@@ -319,7 +319,7 @@ const CourseGroupAssignmentTab = () => {
         </h5>
         <Form>
           <div className="row mb-3">
-            <div className="col-md-6">
+            <div className="col-md-4">
               <Form.Label>Batch</Form.Label>
               <Form.Control
                 as="select"
@@ -335,7 +335,7 @@ const CourseGroupAssignmentTab = () => {
               </Form.Control>
             </div>
 
-            <div className="col-md-6">
+            <div className="col-md-4">
               <Form.Label>Board</Form.Label>
               <Form.Control
                 as="select"
@@ -351,7 +351,7 @@ const CourseGroupAssignmentTab = () => {
               </Form.Control>
             </div>
 
-            <div className="col-md-6">
+            <div className="col-md-4">
               <Form.Label>Class</Form.Label>
               <Form.Control
                 as="select"
@@ -383,8 +383,8 @@ const CourseGroupAssignmentTab = () => {
                 <thead>
                   <tr className="bg-light">
                     <th style={{ width: 40 }}></th>
-                    <th style={{ width: 130 }}>Paper Code</th>
-                    <th>Paper Name</th>
+                    <th style={{ width: 130 }}>Subject Code</th>
+                    <th>Subject Name</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -454,8 +454,8 @@ const CourseGroupAssignmentTab = () => {
                             ⇅
                           </th>
                           <th style={{ width: 100 }}>#</th>
-                          <th style={{ width: 130 }}>Paper Code</th>
-                          <th style={{ width: 200 }}>Paper Name</th>
+                          <th style={{ width: 130 }}>Sub Code</th>
+                          <th style={{ width: 200 }}>Subject Name</th>
                           <th style={{ width: 92 }}>Actions</th>
                         </tr>
                       </thead>
