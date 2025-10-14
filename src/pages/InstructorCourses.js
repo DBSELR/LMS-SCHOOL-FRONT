@@ -47,7 +47,7 @@ function InstructorCourses() {
 
         const grouped = {};
         data.forEach((course) => {
-          const key = `${course.batchName}-${course.semester}`;
+          const key = `${course.batchName}-${course.board}-${course.class}`;
           if (!grouped[key]) grouped[key] = [];
           grouped[key].push(course);
         });
