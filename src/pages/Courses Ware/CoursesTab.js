@@ -325,10 +325,10 @@ const CoursesTab = ({ isActive }) => {
           <div className="row gy-3">
           
 
-            <div className="col-md-6">
+            {/* <div className="col-md-6">
               <Form.Group>
-                <Form.Label>Board Code</Form.Label>
-                {/* use text to preserve leading zeros/alphanumeric codes */}
+                <Form.Label>Board</Form.Label>
+                
                 <Form.Control
                   type="text"
                   name="courseCode"
@@ -336,9 +336,38 @@ const CoursesTab = ({ isActive }) => {
                   onChange={handleChange}
                 />
               </Form.Group>
-            </div>
+            </div> */}
 
             <div className="col-md-6">
+  <Form.Group>
+    <Form.Label>Board</Form.Label>
+    <Form.Control
+      as="select"
+      name="courseCode"
+      value={form.courseCode || ""}
+      onChange={handleChange}
+      required
+    >
+      <option value="">Select Board</option>
+      {[
+        "AP-Andhra Pradesh",
+        "TG-Telangana",
+        "CB-Central Board",
+        "IC-International",
+      ].map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </Form.Control>
+  </Form.Group>
+</div>
+
+
+
+            
+
+            {/* <div className="col-md-6">
               <Form.Group>
                 <Form.Label>Board Name</Form.Label>
                 <Form.Control
@@ -347,7 +376,7 @@ const CoursesTab = ({ isActive }) => {
                   onChange={handleChange}
                 />
               </Form.Group>
-            </div>
+            </div> */}
 
             <div className="col-md-6">
               <Form.Group>
