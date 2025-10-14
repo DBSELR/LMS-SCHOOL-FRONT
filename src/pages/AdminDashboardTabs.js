@@ -23,7 +23,7 @@ const tabs = [
   { key: "groups", label: "Classes", component: <GroupsTab isActive={activeTab === "groups"} /> },
   { key: "batch", label: "Batch", component: <BatchTab isActive={activeTab === "batch"} /> },
   { key: "subjects", label: "Subjects Bank", component: <SubjectsBankTab isActive={activeTab === "subjects"} /> },
-  { key: "assignment", label: "Board & Class Assig", component: <CourseGroupAssignmentTab isActive={activeTab === "assignment"} /> },
+  { key: "assignment", label: "Subject Assign", component: <CourseGroupAssignmentTab isActive={activeTab === "assignment"} /> },
   // { key: "subjectsList", label: "Subjects Overview", component: <SubjectsListTab isActive={activeTab === "subjectsList"} /> },
 ];
 

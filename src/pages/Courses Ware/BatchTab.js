@@ -1,6 +1,6 @@
 // File: src/pages/Courses Ware/BatchTab.jsx
 import React, { useEffect, useState } from "react";
-import { Form, Button, Row, Col, Table, Spinner, Alert } from "react-bootstrap";
+import { Form, Button, Table, Spinner, Alert } from "react-bootstrap";
 import { toast } from "react-toastify";
 import API_BASE_URL from "../../config";
 const DEBUG = true;
@@ -49,35 +49,27 @@ function toIsoFromMsAjax(s) {
     return d.toISOString();
   } catch { return ""; }
 }
-
 function toIsoFromSlash(s) {
-  // supports dd-MM-yyyy or dd/MM/yyyy
   const m = s.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
   if (!m) return "";
-  const [ , dd, mm, yyyy ] = m;
+  const [, dd, mm, yyyy] = m;
   return `${yyyy}-${mm}-${dd}T00:00:00`;
 }
-
 const toInputDate = (s) => {
   if (!s) return "";
   if (isIsoDate(s)) return s.includes("T") ? s.split("T")[0] : s.substring(0, 10);
   if (isMsAjaxDate(s)) return toInputDate(toIsoFromMsAjax(s));
   if (isSlashDate(s)) return toInputDate(toIsoFromSlash(s));
-  // last resort: try Date(...)
   const d = new Date(s);
-  if (!isNaN(d.getTime())) {
-    return d.toISOString().substring(0, 10);
-  }
+  if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10);
   return "";
 };
-
 const toIsoMidnight = (dateStr) => `${dateStr}T00:00:00`;
 
 /* ===================== Shape-safe normalizer ===================== */
 function ci(obj) {
-  // case-insensitive object accessor
   const map = {};
-  Object.keys(obj || {}).forEach(k => (map[k.toLowerCase()] = obj[k]));
+  Object.keys(obj || {}).forEach((k) => (map[k.toLowerCase()] = obj[k]));
   return (keyCandidates) => {
     for (const k of keyCandidates) {
       const v = map[k.toLowerCase()];
@@ -86,38 +78,25 @@ function ci(obj) {
     return undefined;
   };
 }
-
 function looksLikeDateString(x) {
   if (typeof x !== "string") return false;
   return isIsoDate(x) || isSlashDate(x) || isMsAjaxDate(x) || !isNaN(new Date(x).getTime());
 }
-
 function normalizeFromArray(arr) {
-  // Heuristics:
-  // - id: first integer-like number
-  // - dates: first two date-like strings
-  // - name: first non-empty string that is NOT a date
   let bid = 0, batchName = "", startDate = "", endDate = "";
-
   if (!Array.isArray(arr)) return { bid, batchName, startDate, endDate };
 
-  const numbers = arr.filter(v => typeof v === "number");
-  const strings = arr.filter(v => typeof v === "string");
-
-  // id
-  const idCandidate = arr.find(v => typeof v === "number" && Number.isFinite(v));
+  const idCandidate = arr.find((v) => typeof v === "number" && Number.isFinite(v));
   if (idCandidate !== undefined) bid = Number(idCandidate);
 
-  // dates
+  const strings = arr.filter((v) => typeof v === "string");
   const dateCandidates = strings.filter(looksLikeDateString);
   if (dateCandidates[0]) startDate = dateCandidates[0];
   if (dateCandidates[1]) endDate = dateCandidates[1];
 
-  // name
-  const nameCandidate = strings.find(s => s && !looksLikeDateString(s));
+  const nameCandidate = strings.find((s) => s && !looksLikeDateString(s));
   if (nameCandidate) batchName = String(nameCandidate);
 
-  // Fallback: common ordering [Bid, BatchName, StartDate, EndDate, ...]
   if (!batchName && typeof arr[1] === "string") batchName = arr[1];
   if (!startDate && typeof arr[2] === "string") startDate = arr[2];
   if (!endDate && typeof arr[3] === "string") endDate = arr[3];
@@ -125,12 +104,9 @@ function normalizeFromArray(arr) {
   return { bid, batchName, startDate, endDate };
 }
 
+/* ⚠️ KEY FIX: capture programmeId (Pid/ProgrammeId/programmeid) and classId (Gid/GroupId/Groupid) */
 function normalizeBatchDto(dto) {
-  // Supports:
-  // 1) Object with any casing or alternative keys
-  // 2) Array rows
   if (Array.isArray(dto)) return normalizeFromArray(dto);
-
   const get = ci(dto || {});
   const bid =
     get(["Bid", "BID", "bid", "Id", "ID"]) ?? 0;
@@ -141,16 +117,23 @@ function normalizeBatchDto(dto) {
   const endDate =
     get(["EndDate", "endDate", "End", "EndDt", "End_Date", "ToDate", "To"]) ?? "";
 
+  // NEW: ids for dropdowns
+  const programmeId =
+    get(["ProgrammeId", "programmeid", "ProgrammeID", "Pid", "pid"]) ?? "";
+  const classId =
+    get(["GroupId", "groupid", "GroupID", "Gid", "gid"]) ?? "";
+
   return {
     bid: Number(bid) || 0,
     batchName: String(batchName || ""),
     startDate,
     endDate,
+    programmeId: programmeId !== "" ? String(programmeId) : "",
+    classId: classId !== "" ? String(classId) : "",
   };
 }
 
-/* ===================== API helpers (use only final endpoints) ===================== */
-// POST: insert / update (expects List<BatchesDto> at root)
+/* ===================== API helpers ===================== */
 async function postBatchArray(payloadArray, token) {
   const url = `${API_BASE_URL}/Programme/insertBatches`;
   const body = JSON.stringify(payloadArray);
@@ -161,8 +144,6 @@ async function postBatchArray(payloadArray, token) {
   if (!res.ok) throw new Error(text || (json && (json.title || json.message)) || `HTTP ${res.status}`);
   return json ?? text;
 }
-
-// GET: list all
 async function getAllBatches(token) {
   const url = `${API_BASE_URL}/Programme/GetAllBatch`;
   const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
@@ -172,22 +153,15 @@ async function getAllBatches(token) {
   if (!res.ok) throw new Error(text || (json && (json.title || json.message)) || `HTTP ${res.status}`);
 
   let data;
-  try {
-    data = json ?? (text ? JSON.parse(text) : []);
-  } catch {
-    data = [];
-  }
+  try { data = json ?? (text ? JSON.parse(text) : []); } catch { data = []; }
 
   if (!Array.isArray(data)) {
-    // Some APIs wrap results like { data: [...] }
     const wrapper = (data && (data.data || data.result || data.items)) || [];
     if (!Array.isArray(wrapper)) throw new Error("GetAllBatch did not return an array");
     return wrapper;
   }
   return data;
 }
-
-// GET: by id (helper, optional)
 async function getBatchById(bid, token) {
   const url = `${API_BASE_URL}/Programme/GetBatchById?Bid=${bid}`;
   const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
@@ -197,8 +171,6 @@ async function getBatchById(bid, token) {
   if (!res.ok) throw new Error(text || (json && (json.title || json.message)) || `HTTP ${res.status}`);
   return json ?? (text ? JSON.parse(text) : {});
 }
-
-// DELETE: by id (tries DELETE, falls back to GET on the same URL if server uses GET)
 async function deleteBatchById(bid, token) {
   const url = `${API_BASE_URL}/Programme/DeleteBatchById?Bid=${bid}`;
   const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
@@ -222,7 +194,7 @@ const BatchTab = () => {
     batchName: "",
     startDate: "",
     endDate: "",
-    bid: 0, // 0 = create, >0 = update (same POST endpoint)
+    bid: 0,
     programmeId: "",
     classId: "",
   });
@@ -245,11 +217,19 @@ const BatchTab = () => {
   const fetchBoards = async () => {
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch("https://localhost:7099/api/Group/GetCoursesByBatch", {
+      const res = await fetch(`${API_BASE_URL}/Group/GetCoursesByBatch`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setBoards(data);
+      // Normalize option values to strings for reliable matching in <select>
+      const normalized = Array.isArray(data)
+        ? data.map((b) => ({
+            programmeId: b.programmeId != null ? String(b.programmeId) : "",
+            programmeCode: b.programmeCode,
+            programmeName: b.programmeName,
+          }))
+        : [];
+      setBoards(normalized);
     } catch {
       toast.error("❌ Failed to load boards");
     }
@@ -258,9 +238,10 @@ const BatchTab = () => {
   const fetchClasses = async (programmeId) => {
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch(`https://localhost:7099/api/Programme/GetGroupByProgrammes?pid=${encodeURIComponent(programmeId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/Programme/GetGroupByProgrammes?pid=${encodeURIComponent(programmeId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -271,18 +252,14 @@ const BatchTab = () => {
       }
 
       const data = await res.json();
+      const normalized = Array.isArray(data)
+        ? data.map((g) => ({
+            groupId: g.groupId != null ? String(g.groupId) : "",
+            groupName: g.groupName,
+          }))
+        : [];
 
-      if (DEBUG) {
-        console.log("Classes API Response:", data);
-      }
-
-      if (Array.isArray(data)) {
-        setClasses(data);
-      } else {
-        console.error("Unexpected response format for classes:", data);
-        toast.error("❌ Invalid response format for classes");
-        setClasses([]);
-      }
+      setClasses(normalized);
     } catch (error) {
       console.error("Error fetching classes:", error);
       toast.error("❌ Failed to load classes");
@@ -297,7 +274,6 @@ const BatchTab = () => {
       const token = localStorage.getItem("jwt");
       const rows = await getAllBatches(token);
 
-      // Normalize all shapes (objects/arrays)
       const normalized = rows.map(normalizeBatchDto).map((r, i) => {
         if (DEBUG && (!r.batchName || r.batchName === "")) {
           console.warn("⚠️ Row missing batchName, raw:", rows[i], "normalized:", r);
@@ -322,9 +298,8 @@ const BatchTab = () => {
   };
 
   const handleBoardChange = (e) => {
-    const programmeId = e.target.value;
-    setForm((prev) => ({ ...prev, programmeId }));
-
+    const programmeId = e.target.value; // string
+    setForm((prev) => ({ ...prev, programmeId, classId: "" }));
     if (programmeId) {
       fetchClasses(programmeId);
     } else {
@@ -332,15 +307,28 @@ const BatchTab = () => {
     }
   };
 
+  /* ⚠️ KEY FIX: when editing, set programmeId/classId and trigger fetchClasses(programmeId) */
   const handleEdit = (row) => {
+    const programmeId = row.programmeId ? String(row.programmeId) : "";
+    const classId = row.classId ? String(row.classId) : "";
+
     setForm({
-      batchName: row.batchName,
+      batchName: row.batchName || "",
       startDate: toInputDate(row.startDate),
       endDate: toInputDate(row.endDate),
       bid: Number(row.bid) || 0,
-      programmeId: row.programmeId || "",
-      classId: row.classId || "",
+      programmeId,
+      classId,
     });
+
+    // Populate classes for this programme so the Class dropdown has the option selected
+    if (programmeId) {
+      fetchClasses(programmeId).then(() => {
+        // Ensure classId remains set after classes load
+        setForm((prev) => ({ ...prev, classId }));
+      });
+    }
+
     toast.info("✏️ Edit mode");
   };
 
@@ -382,8 +370,8 @@ const BatchTab = () => {
       BatchName: batchName,
       StartDate: toIsoMidnight(startDate),
       EndDate: toIsoMidnight(endDate),
-      Pid: Number(programmeId), // Pass programmeId
-      Gid: Number(classId), // Pass groupId
+      Pid: Number(programmeId), // backend expects numeric
+      Gid: Number(classId),
     };
 
     try {
@@ -392,7 +380,7 @@ const BatchTab = () => {
       await postBatchArray([dto], token);
       toast.success(isEditMode ? "✅ Batch updated successfully" : "✅ Batch created successfully");
       await refreshList();
-      setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "" }); // Reset form
+      setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "" });
     } catch (err) {
       console.error("❌ Save failed:", err);
       toast.error(`❌ Save failed: ${err.message}`);
@@ -403,207 +391,197 @@ const BatchTab = () => {
 
   return (
     <div className="container py-0 pt-0 welcome-card animate-welcome">
-  {/* Form Card */}
-  <div className="mb-0 bg-glass p-3 rounded">
-    <h5 className="mb-3 text-primary">Add / Edit Batch</h5>
-    <Form onSubmit={(e) => e.preventDefault()}>
-      <div className="row gy-3">
+      {/* Form Card */}
+      <div className="mb-0 bg-glass p-3 rounded">
+        <h5 className="mb-3 text-primary">Add / Edit Batch</h5>
+        <Form onSubmit={(e) => e.preventDefault()}>
+          <div className="row gy-3">
 
-         <div className="col-md-6">
-          <Form.Group>
-            <Form.Label>Select Board</Form.Label>
-            <Form.Control
-              as="select"
-              name="programmeId"
-              value={form.programmeId}
-              onChange={handleBoardChange}
-            >
-              <option value="">Select Board</option>
-              {boards.map((board) => (
-                <option key={board.programmeId} value={board.programmeId}>
-                  {board.programmeCode} - {board.programmeName}
-                </option>
-              ))}
-            </Form.Control>
-          </Form.Group>
-        </div>
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>Select Board</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="programmeId"
+                  value={form.programmeId}
+                  onChange={handleBoardChange}
+                >
+                  <option value="">Select Board</option>
+                  {boards.map((board) => (
+                    <option key={board.programmeId} value={board.programmeId}>
+                      {board.programmeCode} - {board.programmeName}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+            </div>
 
-        <div className="col-md-3">
-          <Form.Group>
-            <Form.Label>Class</Form.Label>
-            <Form.Control
-              as="select"
-              name="classId"
-              value={form.classId}
-              onChange={(e) => setForm((prev) => ({ ...prev, classId: e.target.value }))}
-            >
-              <option value="">Select Class</option>
-              {(Array.isArray(classes) ? classes : []).map((cls) => (
-                <option key={cls.groupId} value={cls.groupId}>
-                  {cls.groupName}
-                </option>
-              ))}
-            </Form.Control>
-          </Form.Group>
-        </div>
+            <div className="col-md-3">
+              <Form.Group>
+                <Form.Label>Class</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="classId"
+                  value={form.classId}
+                  onChange={(e) => setForm((prev) => ({ ...prev, classId: e.target.value }))}
+                  disabled={!form.programmeId}
+                >
+                  <option value="">Select Class</option>
+                  {(Array.isArray(classes) ? classes : []).map((cls) => (
+                    <option key={cls.groupId} value={cls.groupId}>
+                      {cls.groupName}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+            </div>
 
-        
-        <div className="col-md-3">
-          <Form.Group>
-            <Form.Label>Batch</Form.Label>
-            <Form.Control
-              name="batchName"
-              placeholder="e.g., August 2025 - Evening"
-              value={form.batchName}
-              onChange={handleChange}
-            />
-          </Form.Group>
-        </div>
+            <div className="col-md-3">
+              <Form.Group>
+                <Form.Label>Batch</Form.Label>
+                <Form.Control
+                  name="batchName"
+                  placeholder="e.g., AUG-25(1)"
+                  value={form.batchName}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </div>
 
-        <div className="col-md-6">
-          <Form.Group>
-            <Form.Label>Start Date</Form.Label>
-            <Form.Control
-              type="date"
-              name="startDate"
-              value={form.startDate}
-              onChange={handleChange}
-            />
-          </Form.Group>
-        </div>
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>Start Date</Form.Label>
+                <Form.Control
+                  type="date"
+                  name="startDate"
+                  value={form.startDate}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </div>
 
-        <div className="col-md-6">
-          <Form.Group>
-            <Form.Label>End Date</Form.Label>
-            <Form.Control
-              type="date"
-              name="endDate"
-              value={form.endDate}
-              onChange={handleChange}
-            />
-          </Form.Group>
-        </div>
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>End Date</Form.Label>
+                <Form.Control
+                  type="date"
+                  name="endDate"
+                  value={form.endDate}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </div>
 
-       
+            <div className="col-12 mt-2 d-flex gap-2 align-items-center">
+              <Button
+                variant={isEditMode ? "warning" : "success"}
+                className="rounded-pill px-4"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Saving..."
+                  : isEditMode
+                  ? "Update"
+                  : "Save"}
+              </Button>
 
-        <div className="col-12 mt-2 d-flex gap-2 align-items-center">
+              {isEditMode && (
+                <Button
+                  variant="outline-secondary"
+                  className="rounded-pill px-4"
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </div>
+        </Form>
+      </div>
+
+      {/* List Card */}
+      <div className="p-4 mt-3 rounded bg-white border shadow-sm">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5 className="mb-0">📋 Batches</h5>
           <Button
-            variant={isEditMode ? "warning" : "success"}
-            className="rounded-pill px-4"
-            onClick={handleSave}
-            disabled={saving}
+            variant="outline-primary"
+            size="sm"
+            onClick={refreshList}
+            disabled={loadingList}
           >
-            {saving
-              ? isEditMode
-                ? "Updating..."
-                : "Saving..."
-              : isEditMode
-              ? "Update"
-              : "Save"}
+            {loadingList ? "Refreshing..." : "Refresh"}
           </Button>
+        </div>
 
-          {isEditMode && (
-            <Button
-              variant="outline-secondary"
-              className="rounded-pill px-4"
-              onClick={handleCancelEdit}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
+        {listError && (
+          <Alert variant="warning" className="mb-3">
+            Couldn’t load from server: {listError}
+          </Alert>
+        )}
+
+        <div className="p-0 overflow-auto custom-scrollbar flex-grow-1">
+          {loadingList ? (
+            <div className="py-3 text-center">
+              <Spinner animation="border" role="status" />
+            </div>
+          ) : batches.length === 0 ? (
+            <p className="mb-0">No batches found.</p>
+          ) : (
+            <div className="batch-table-scroll">
+              <Table bordered hover responsive size="sm" className="mb-0">
+                <thead>
+                  <tr className="bg-light">
+                    <th style={{ width: 110 }}>Bid</th>
+                    <th style={{ width: 130 }}>Batch</th>
+                    <th style={{ width: 200 }}>Start Date</th>
+                    <th style={{ width: 200 }}>End Date</th>
+                    <th style={{ width: 200 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batches.map((b, idx) => {
+                    const start = toInputDate(b.startDate);
+                    const end = toInputDate(b.endDate);
+                    return (
+                      <tr key={b.bid || idx}>
+                        <td data-label="Bid">{b.bid}</td>
+                        <td data-label="Batch" className="text-start">
+                          {b.batchName || <em>(no name)</em>}
+                        </td>
+                        <td data-label="Start Date">{start}</td>
+                        <td data-label="End Date">{end}</td>
+                        <td data-label="Actions" className="d-flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline-info"
+                            onClick={() => handleEdit(b)}
+                            type="button"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            onClick={() => handleDelete(b)}
+                            type="button"
+                          >
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
           )}
         </div>
       </div>
-    </Form>
-  </div>
-
-  {/* List Card */}
-  <div className="p-4 mt-3 rounded bg-white border shadow-sm">
-    <div className="d-flex justify-content-between align-items-center mb-3">
-      <h5 className="mb-0">📋 Batches</h5>
-      <Button
-        variant="outline-primary"
-        size="sm"
-        onClick={refreshList}
-        disabled={loadingList}
-      >
-        {loadingList ? "Refreshing..." : "Refresh"}
-      </Button>
     </div>
-
-    {listError && (
-      <Alert variant="warning" className="mb-3">
-        Couldn’t load from server: {listError}
-      </Alert>
-    )}
-
-    <div className="p-0 overflow-auto custom-scrollbar flex-grow-1">
-      {loadingList ? (
-        <div className="py-3 text-center">
-          <Spinner animation="border" role="status" />
-        </div>
-      ) : batches.length === 0 ? (
-        <p className="mb-0">No batches found.</p>
-      ) : (
-        <div className="batch-table-scroll">
-          <Table
-            bordered
-            hover
-            responsive
-            size="sm"
-            className="mb-0"
-            table-stacked
-          >
-            <thead>
-              <tr className="bg-light">
-                <th style={{ width: 110 }}>Bid</th>
-                <th style={{ width: 130 }}>Batch</th>
-                <th style={{ width: 200 }}>Start Date</th>
-                <th style={{ width: 200 }}>End Date</th>
-                <th style={{ width: 200 }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {batches.map((b, idx) => {
-                const start = toInputDate(b.startDate);
-                const end = toInputDate(b.endDate);
-                return (
-                  <tr key={b.bid || idx}>
-                    <td data-label="Bid">{b.bid}</td>
-                    <td data-label="Batch" className="text-start">
-                      {b.batchName || <em>(no name)</em>}
-                    </td>
-                    <td data-label="Start Date">{start}</td>
-                    <td data-label="End Date">{end}</td>
-                    <td data-label="Actions" className="d-flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline-info"
-                        onClick={() => handleEdit(b)}
-                        type="button"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        onClick={() => handleDelete(b)}
-                        type="button"
-                      >
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-        </div>
-      )}
-    </div>
-  </div>
-</div>
-
   );
 };
 

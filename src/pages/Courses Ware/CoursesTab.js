@@ -206,8 +206,22 @@ const CoursesTab = ({ isActive }) => {
     }
   };
 
+  // ====== FIX 1: derive courseName from the selected courseCode (AP-Andhra Pradesh) ======
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "courseCode") {
+      let next = { ...form, courseCode: value };
+      if (value && value.includes("-")) {
+        const [, right] = value.split("-", 2);
+        next.courseName = (right || "").trim();
+      } else if (!form.courseName) {
+        next.courseName = "";
+      }
+      setForm(next);
+      return;
+    }
+
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -243,21 +257,34 @@ const CoursesTab = ({ isActive }) => {
   const handleSaveOrUpdate = async () => {
     toast.dismiss();
 
-    const { batchName, courseCode, courseName, fee, courseId } = form;
+    const { courseCode, courseName, fee, courseId } = form;
 
-    if (!courseCode || !courseName || !fee) {
-      toast.error("❌ Please fill all fields", { autoClose: 3000 });
+    // ====== FIX 2: only require Board + Fee; name is derived or split on backend ======
+    if (!courseCode || !fee) {
+      toast.error("❌ Please select a Board and enter Total Fee", {
+        autoClose: 3000,
+      });
       return;
     }
 
-    if (DEBUG) {
-      // Removed unnecessary debug logs
-      console.log("Loaded Programmes:", courses);
+    // Derive name from code if not set
+    let derivedName = courseName?.trim();
+    if (!derivedName && courseCode.includes("-")) {
+      const [, right] = courseCode.split("-", 2);
+      derivedName = (right || "").trim();
+    }
+
+    // If there's no hyphen and no name, block it
+    if (!derivedName && !courseCode.includes("-")) {
+      toast.error("❌ Please provide a valid Board selection", {
+        autoClose: 3000,
+      });
+      return;
     }
 
     const payload = {
-      programmeName: courseName,
-      programmeCode: courseCode,
+      programmeName: derivedName || "", // backend will ignore if hyphen present and split
+      programmeCode: courseCode, // send combined like "AP-Andhra Pradesh"
       numberOfSemesters: 1,
       fee: parseFloat(fee),
       installments: 1,
@@ -323,51 +350,35 @@ const CoursesTab = ({ isActive }) => {
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Boards</h5>
         <Form>
           <div className="row gy-3">
-          
-
-            {/* <div className="col-md-6">
+            {/* Board dropdown (combined value like AP-Andhra Pradesh) */}
+            <div className="col-md-6">
               <Form.Group>
                 <Form.Label>Board</Form.Label>
-                
                 <Form.Control
-                  type="text"
+                  as="select"
                   name="courseCode"
-                  value={form.courseCode}
+                  value={form.courseCode || ""}
                   onChange={handleChange}
-                />
+                  required
+                >
+                  <option value="">Select Board</option>
+                  {[
+                    "AP-Andhra Pradesh",
+                    "TG-Telangana",
+                    "CB-Central Board",
+                    "IC-International",
+                  ].map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </Form.Control>
               </Form.Group>
-            </div> */}
+            </div>
 
+            {/* Board Name field intentionally removed/commented; name is auto-derived */}
+            {/*
             <div className="col-md-6">
-  <Form.Group>
-    <Form.Label>Board</Form.Label>
-    <Form.Control
-      as="select"
-      name="courseCode"
-      value={form.courseCode || ""}
-      onChange={handleChange}
-      required
-    >
-      <option value="">Select Board</option>
-      {[
-        "AP-Andhra Pradesh",
-        "TG-Telangana",
-        "CB-Central Board",
-        "IC-International",
-      ].map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </Form.Control>
-  </Form.Group>
-</div>
-
-
-
-            
-
-            {/* <div className="col-md-6">
               <Form.Group>
                 <Form.Label>Board Name</Form.Label>
                 <Form.Control
@@ -376,7 +387,8 @@ const CoursesTab = ({ isActive }) => {
                   onChange={handleChange}
                 />
               </Form.Group>
-            </div> */}
+            </div>
+            */}
 
             <div className="col-md-6">
               <Form.Group>
@@ -407,63 +419,61 @@ const CoursesTab = ({ isActive }) => {
       <h5 className="mb-3">Boards</h5>
 
       <div className="semester-panel-body">
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        courses.map((course) => (
-          
-          <div key={course.programmeId} style={{ margin: "10px" }}>
-            <button
-              className="w-100 btn btn-dark text-start"
-              onClick={() => toggle(course.programmeId)}
-            >
-              {course.batchName} | {course.programmeCode} -{" "}
-              {course.programmeName} | Fee: ₹{course.fee}
-              {open[course.programmeId] ? (
-                <FaChevronUp className="float-end" />
-              ) : (
-                <FaChevronDown className="float-end" />
-              )}
-            </button>
-            <Collapse in={open[course.programmeId]}>
-              <div
-                className="bg-white border p-3"
-                style={{ transition: "all 0.3s", minHeight: "120px" }}
+        {loading ? (
+          <p>Loading...</p>
+        ) : (
+          courses.map((course) => (
+            <div key={course.programmeId} style={{ margin: "10px" }}>
+              <button
+                className="w-100 btn btn-dark text-start"
+                onClick={() => toggle(course.programmeId)}
               >
-                <p>
-                  <strong>Batch:</strong> {course.batchName}
-                </p>
-                <p>
-                  <strong>Code:</strong> {course.programmeCode}
-                </p>
-                <p>
-                  <strong>Name:</strong> {course.programmeName}
-                </p>
-                <p>
-                  <strong>Fee:</strong> ₹{course.fee}
-                </p>
-                <div className="d-flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="info"
-                    onClick={() => handleEdit(course)}
-                  >
-                    <FaEdit /> Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() => handleDelete(course.programmeId)}
-                  >
-                    <FaTrash /> Delete
-                  </Button>
+                {course.batchName} | {course.programmeCode} -{" "}
+                {course.programmeName} | Fee: ₹{course.fee}
+                {open[course.programmeId] ? (
+                  <FaChevronUp className="float-end" />
+                ) : (
+                  <FaChevronDown className="float-end" />
+                )}
+              </button>
+              <Collapse in={open[course.programmeId]}>
+                <div
+                  className="bg-white border p-3"
+                  style={{ transition: "all 0.3s", minHeight: "120px" }}
+                >
+                  <p>
+                    <strong>Batch:</strong> {course.batchName}
+                  </p>
+                  <p>
+                    <strong>Code:</strong> {course.programmeCode}
+                  </p>
+                  <p>
+                    <strong>Name:</strong> {course.programmeName}
+                  </p>
+                  <p>
+                    <strong>Fee:</strong> ₹{course.fee}
+                  </p>
+                  <div className="d-flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="info"
+                      onClick={() => handleEdit(course)}
+                    >
+                      <FaEdit /> Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => handleDelete(course.programmeId)}
+                    >
+                      <FaTrash /> Delete
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Collapse>
-          </div>
-        
-        ))
-      )}
+              </Collapse>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
