@@ -134,8 +134,8 @@ function InstructorDashboard() {
   const cards = [
     { label: "My Subjects", value: summary.subjects, icon: "fa-book", link: "/my-courseware" },
     { label: "Live Classes", value: summary.liveClasses, icon: "fa-video-camera", link: "/instructor/live-classes" },
-    { label: "Examinations", value: summary.exams, icon: "fa-file-text", link: "/instructor/exams" },
-    { label: "Assignments", value: summary.assignments, icon: "fa-upload", link: "/admin-manage-assignments" },
+    // { label: "Examinations", value: summary.exams, icon: "fa-file-text", link: "/instructor/exams" },
+    // { label: "Assignments", value: summary.assignments, icon: "fa-upload", link: "/admin-manage-assignments" },
     { label: "Tasks", value: summary.meetings, icon: "fa-tasks", link: "/taskboard" },
     { label: "Library Books", value: summary.books, icon: "fa-book", link: "/library" },
   ];
