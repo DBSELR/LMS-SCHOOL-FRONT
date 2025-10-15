@@ -893,7 +893,7 @@ function InstructorCourseViewPage() {
               </a>
             </div>
             <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
-              <strong>{`${batchName} - ${semester} - ${courseCode} - ${courseName} - Exam Id ${examId}`}</strong>
+              <strong>{`${batchName} -  ${courseCode} - ${courseName} - Subject Id ${examId}`}</strong>
             </h5>
           </div>
           </div>

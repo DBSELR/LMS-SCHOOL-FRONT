@@ -123,18 +123,11 @@ function InstructorCourses() {
             {Object.keys(groupedCourses).length > 0 && (
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <button
-  className="btn btn-sm btn-outline-primary"
-  onClick={toggleAll}
-  title={allOpen ? "Collapse all" : "Expand all"}
-  aria-label={allOpen ? "Collapse all" : "Expand all"}
->
-  {allOpen ? (
-    <i className="fa-solid fa-minimize" />
-  ) : (
-    <i className="fa-solid fa-maximize" />
-  )}
-</button>
-
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={toggleAll}
+                >
+                  {allOpen ? "Collapse" : "Expand"}
+                </button>
 
                 <input
                   type="text"
@@ -245,6 +238,7 @@ function CourseCard({ course, navigate, role }) {
                   batchName: course.batchName,
                   name: course.name,
                   semester: course.semester,
+                  class: course.class,
                 },
               });
             }}
