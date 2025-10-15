@@ -145,18 +145,18 @@ function AdminDashboard() {
                   icon: "fa-book",
                   link: "/library",
                 },
-                {
-                  label: "Examinations",
-                  value: summary.exams,
-                  icon: "fa-pencil-square-o",
-                  link: "/admin-exams",
-                },
-                {
-                  label: "Assignments",
-                  value: summary.assignments,
-                  icon: "fa-pencil-square-o",
-                  link: "/admin-manage-assignments",
-                },
+                // {
+                //   label: "Examinations",
+                //   value: summary.exams,
+                //   icon: "fa-pencil-square-o",
+                //   link: "/admin-exams",
+                // },
+                // {
+                //   label: "Assignments",
+                //   value: summary.assignments,
+                //   icon: "fa-pencil-square-o",
+                //   link: "/admin-manage-assignments",
+                // },
                 {
                   label: "Live Classes",
                   value: summary.liveClasses,
