@@ -77,7 +77,6 @@ function LeftSidebar({ role: propRole }) {
               .map((m) => {
                 let href = m.path.trim().replace(/\s+/g, " ");
                 if (!href.startsWith("/")) href = "/" + href;
-                // Remove accidental internal spaces like "/student-exams  "
                 href = href.replace(/\s+$/g, "");
                 return {
                   icon: m?.icon || "fa fa-circle",
@@ -144,22 +143,47 @@ function LeftSidebar({ role: propRole }) {
   /* Menu list (dynamic only) */
   const menuItems = DYNAMIC_ONLY ? serverMenus : serverMenus;
 
-  /* Active route rules */
+  /* Active route helpers */
+  const path = location.pathname;
+
   const isCoursewareActive =
-    location.pathname === "/my-courseware" ||
-    location.pathname.startsWith("/view-course-content") ||
-    location.pathname.startsWith("/instructor/upload-course-content");
+    path === "/my-courseware" ||
+    path.startsWith("/view-course-content") ||
+    path.startsWith("/instructor/upload-course-content");
 
   const isManageUsersActive =
-    location.pathname.startsWith("/students") ||
-    location.pathname.startsWith("/professors") ||
-    location.pathname.startsWith("/admin-users");
+    path.startsWith("/students") ||
+    path.startsWith("/professors") ||
+    path.startsWith("/admin-users");
+
+  // Treat item as active if the current path equals it OR starts with it (parent routes)
+  const isPathActiveForItem = (itemHref) => {
+    if (!itemHref) return false;
+    if (path === itemHref) return true;
+    // Avoid "/" matching everything
+    if (itemHref !== "/" && path.startsWith(itemHref + "/")) return true;
+    return false;
+  };
+
+  // Some menus act as "parents" for groups of routes; broaden active rules here.
+  const isGroupedActive = (itemHref) => {
+    // Any alias your dynamic "Manage Users" item might use:
+    const manageUsersAliases = ["/users-dashboard", "/manage-users", "/users"];
+    if (manageUsersAliases.includes(itemHref)) {
+      return isManageUsersActive || isPathActiveForItem(itemHref);
+    }
+    if (itemHref === "/my-courseware") {
+      return isCoursewareActive;
+    }
+    // Fallback: normal prefix match
+    return isPathActiveForItem(itemHref);
+  };
 
   return (
     <div id="left-sidebar" className="sidebar" style={{ paddingTop: "10px" }}>
       <div className="sidebar-header" style={{ padding: 0, paddingLeft: "20px" }}>
         <h5 className="brand-name d-flex align-items-center">
-          <img src="/assets/5mantra.png" alt="logo" height="32" />
+          <img src="/assets/5mantra.png" alt="logo" height="50" />
         </h5>
       </div>
 
@@ -192,27 +216,20 @@ function LeftSidebar({ role: propRole }) {
               </li>
             ) : (
               menuItems.map((item, index) => {
-                const computedActive =
-                  item.href === "/my-courseware"
-                    ? isCoursewareActive
-                    : item.href === "/users-dashboard"
-                    ? isManageUsersActive
-                    : location.pathname === item.href;
+                const active = isGroupedActive(item.href);
 
                 DEBUG &&
                   console.debug(
                     "[LeftSidebar] render menu",
                     { idx: index, href: item.href, label: item.label },
-                    "active?", computedActive
+                    "active?", active
                   );
 
                 return (
                   <li key={`${item.href || "menu"}-${index}`}>
                     <NavLink
                       to={item.href || "#"}
-                      className={`d-flex align-items-center ${
-                        computedActive ? "fw-bold text-primary" : ""
-                      }`}
+                      className={`d-flex align-items-center ${active ? "fw-bold text-primary" : ""}`}
                     >
                       <i className={`${item.icon || "fa fa-circle"} mr-2`} />
                       <span>{item.label}</span>

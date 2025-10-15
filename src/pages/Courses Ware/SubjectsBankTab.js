@@ -401,8 +401,12 @@ const SubjectsBankTab = ({ isActive }) => {
                       <td>{exam.paperCode}</td>
                       <td className="text-start">{exam.paperName}</td>
                       <td>
-                        <Button size="sm" variant="link" onClick={() => fetchUnitsByExamId(exam)}>
-                          ➕ {exam.unitCount != null ? `(${exam.unitCount})` : ""}
+                        <Button
+                          size="sm"
+                          variant="link"
+                          onClick={() => fetchUnitsByExamId(exam)}
+                        >
+                          {exam.unitCount != null ? exam.unitCount : 0}
                         </Button>
                       </td>
                       <td className="actions-cell d-flex flex-row align-items-center border-0 mt-3">
