@@ -183,7 +183,7 @@ function AdminDashboard() {
         aria-label={`Open ${item.label}`}
       >
         <i className={`fa ${item.icon}  dashboard-icon text-primary`} aria-hidden="true" />
-        <div className="dashboard-label text-muted">{item.label}</div>
+        <div className="dashboard-label text-dark fw-1000">{item.label}</div>
         <div className="dashboard-count text-dark fw-bold">{item.value}</div>
       </div>
                </div>
