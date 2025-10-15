@@ -582,7 +582,7 @@ const SubjectsBankTab = ({ isActive }) => {
                               onClick={() => handleEdit(exam)}
                               className="me-1 mb-2 mb-sm-0"
                             >
-                              Edit
+                              <i class="fa-solid fa-pen-to-square"></i>
                             </Button>
                             <Button
                               size="sm"
@@ -590,7 +590,7 @@ const SubjectsBankTab = ({ isActive }) => {
                               onClick={() => requestDelete(exam.examinationId)}
                               className="me-1 mb-2 mb-sm-0"
                             >
-                              Delete
+                              <i class="fa-solid fa-trash"></i>
                             </Button>
                           </td>
                         </tr>
