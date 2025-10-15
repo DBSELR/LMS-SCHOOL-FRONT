@@ -38,7 +38,7 @@ const AddStudent = ({
     const token = localStorage.getItem("jwt");
     console.log("📥 Fetching Programmes and Groups...");
 
-    fetch(`${API_BASE_URL}/Programme/All`, {
+    fetch(`${API_BASE_URL}/Programme/ProgrammeBatch`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -53,7 +53,7 @@ const AddStudent = ({
       })
       .catch((err) => console.error("❌ Error fetching programmes:", err));
 
-    fetch(`${API_BASE_URL}/Group/All`, {
+    fetch(`${API_BASE_URL}/Group/GroupBatch`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -263,7 +263,8 @@ const AddStudent = ({
             <option value="">-- Select Class --</option>
             {filteredGroups.map((g) => (
               <option key={g.groupId} value={g.groupId}>
-                {g.groupCode} - {g.groupName}
+                {/* {g.groupCode} - {g.groupName} */}
+                 {`Class ${g.groupName ?? ""}`}
               </option>
             ))}
           </select>
