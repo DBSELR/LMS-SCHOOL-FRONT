@@ -52,7 +52,7 @@ function AdminDashboardTabs() {
               <div className="card welcome-card animate-welcome">
                 <div className="card-header bg-primary text-white d-flex align-items-center ">
                   <FaChalkboardTeacher className="mr-2" />
-                  <h6 className="mb-0">LMS Board Configuration</h6>
+                  <h6 className="mb-0">LMS Subject Master</h6>
                 </div>
 
                 <div>

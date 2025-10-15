@@ -92,7 +92,7 @@ function LibraryTable({ books = [] }) {
                     rel="noopener noreferrer"
                     className="btn btn-sm btn-outline-secondary mb-2"
                   >
-                    <i className="fa fa-file-pdf-o mr-1"></i> View PDF
+                    <i className="fa fa-file-pdf-o mr-1"></i> View
                   </a>
                 ) : (
                   <div className="text-muted small mb-2">No PDF available</div>
