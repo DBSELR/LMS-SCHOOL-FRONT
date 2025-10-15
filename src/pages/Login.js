@@ -181,7 +181,7 @@ function Login() {
                 autoComplete="username"
           /* use defaultValue to keep it uncontrolled */
         />
-        <label htmlFor="email">Email</label>
+        <label htmlFor="username">Username</label>
         </div>
             
 
