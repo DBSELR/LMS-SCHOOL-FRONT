@@ -37,10 +37,10 @@ function AdminDashboardTabs() {
           <div className="container-fluid ">
             <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
               <h2 className="page-title text-primary pt-0 dashboard-hero-title">
-                <i class="fa-solid fa-book"></i> Subject Master – Courseware Module
+                <i class="fa-solid fa-book"></i> Subject Master
               </h2>
               <p className="text-muted mb-0 dashboard-hero-sub">
-                Manage Boards, Classes, Subjects, and Assignments with streamlined workflow.
+                Manage Boards, Classes and Subjects with streamlined workflow.
               </p>
             </div>
           </div>
