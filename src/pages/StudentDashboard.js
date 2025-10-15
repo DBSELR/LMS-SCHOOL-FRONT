@@ -187,8 +187,8 @@ function StudentDashboard() {
   const cards = [
     { label: "My Subjects", value: summary.subjects, icon: "fa-book", link: "/courses" },
     { label: "Live Classes", value: summary.liveClasses, icon: "fa-video-camera", link: "/student/live-classes" },
-    { label: "Examinations", value: summary.exams, icon: "fa-file", link: "/student-examinations" },
-    { label: "Assignments", value: summary.assignments, icon: "fa-file-text", link: "/student-submissions" },
+    // { label: "Examinations", value: summary.exams, icon: "fa-file", link: "/student-examinations" },
+    // { label: "Assignments", value: summary.assignments, icon: "fa-file-text", link: "/student-submissions" },
     { label: "Library Books", value: summary.books, icon: "fa-book", link: "/library" },
     { label: "Fees", value: summary.fees, icon: "fa-credit-card", link: "/fees/student" },
     { label: "Support Tickets", value: summary.supportTickets, icon: "fa-headphones", link: "/student/support-tickets" },
