@@ -297,7 +297,7 @@ function StudentDashboard() {
                       title={`Go to ${item.label}`}
                     >
                       <i className={`fa ${item.icon} dashboard-icon text-primary`} />
-                      <div className="dashboard-label text-muted">{item.label}</div>
+                      <div className="dashboard-label text-dark fw-bold">{item.label}</div>
                       <div className="dashboard-count text-dark fw-bold">{item.value}</div>
                     </div>
                   </div>
