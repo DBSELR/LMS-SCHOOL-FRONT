@@ -448,7 +448,7 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-md-6">
+            <div className="col-md-4">
               <Form.Group>
                 <Form.Label>Start Date</Form.Label>
                 <Form.Control
@@ -460,7 +460,7 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-md-6">
+            <div className="col-md-4">
               <Form.Group>
                 <Form.Label>End Date</Form.Label>
                 <Form.Control
@@ -472,7 +472,7 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-12 mt-2 d-flex gap-2 align-items-center">
+            <div className="col-4 mt-4 d-flex gap-2 align-items-center">
               <Button
                 variant={isEditMode ? "warning" : "success"}
                 className="rounded-pill px-4"
