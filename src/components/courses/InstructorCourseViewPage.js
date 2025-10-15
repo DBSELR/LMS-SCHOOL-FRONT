@@ -157,6 +157,8 @@ function InstructorCourseViewPage() {
   const courseDisplayName = location.state?.name || "Unknown Name";
   const semester = location.state?.semester || "Unknown Semester";
   const examId = location.state?.examinationID || "Unknown examination ID";
+  const className = location.state?.class || "Unknown Class";
+
 
   const [materials, setMaterials] = useState([]);
   const [ebooks, setEBOOKS] = useState([]);
@@ -893,7 +895,9 @@ function InstructorCourseViewPage() {
               </a>
             </div>
             <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
-              <strong>{`${batchName} -  ${courseCode} - ${courseName} - Subject Id ${examId}`}</strong>
+              <strong>{`${batchName} - Class ${className} - ${courseCode} - ${courseName} `}</strong>
+
+
             </h5>
           </div>
           </div>
