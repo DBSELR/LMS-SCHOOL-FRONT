@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Form, Button, Table, Row, Col, Modal } from "react-bootstrap";
 import Select from "react-select";
 import { toast } from "react-toastify";
@@ -140,9 +140,7 @@ const SubjectsBankTab = ({ isActive }) => {
     try {
       const token = localStorage.getItem("jwt");
       const res = await fetch(
-        `${API_BASE_URL}/COURSE/GetProgrammeandgroups?Batch=${encodeURIComponent(
-          batch
-        )}&SEM=${encodeURIComponent(sem)}`,
+        `${API_BASE_URL}/COURSE/GetProgrammeandgroups?Batch=${encodeURIComponent(batch)}&SEM=${encodeURIComponent(sem)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) {
@@ -567,12 +565,14 @@ const SubjectsBankTab = ({ isActive }) => {
                           <td>{exam.paperCode}</td>
                           <td className="text-start">{exam.paperName}</td>
                           <td>
+                            {/* 🆕 Show "+" when there are no units */}
                             <Button
                               size="sm"
                               variant="link"
                               onClick={() => fetchUnitsByExamId(exam)}
+                              title={Number(exam.unitCount) > 0 ? "View Units" : "Add Units"}
                             >
-                              {exam.unitCount != null ? exam.unitCount : 0}
+                              {Number(exam.unitCount) > 0 ? exam.unitCount : "➕"}
                             </Button>
                           </td>
                           <td className="actions-cell d-flex flex-row align-items-center border-0 mt-3">
@@ -582,7 +582,7 @@ const SubjectsBankTab = ({ isActive }) => {
                               onClick={() => handleEdit(exam)}
                               className="me-1 mb-2 mb-sm-0"
                             >
-                              <i class="fa-solid fa-pen-to-square"></i>
+                              <i className="fa-solid fa-pen-to-square"></i>
                             </Button>
                             <Button
                               size="sm"
@@ -590,7 +590,7 @@ const SubjectsBankTab = ({ isActive }) => {
                               onClick={() => requestDelete(exam.examinationId)}
                               className="me-1 mb-2 mb-sm-0"
                             >
-                              <i class="fa-solid fa-trash"></i>
+                              <i className="fa-solid fa-trash"></i>
                             </Button>
                           </td>
                         </tr>
