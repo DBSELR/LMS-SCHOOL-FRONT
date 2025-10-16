@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Modal } from "react-bootstrap";
 import HeaderTop from "../../components/HeaderTop";
 import RightSidebar from "../../components/RightSidebar";
@@ -8,7 +8,7 @@ import { useParams, useLocation, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { Document, Page, pdfjs } from "react-pdf";
 import API_BASE_URL from "../../config";
-import { useMemo } from "react";
+
 // If you later want to switch to your watermark component inside the modal, it's ready.
 // import VimeoWithWatermark from "../VimeoWithWatermark";
 
@@ -52,6 +52,42 @@ function normalizeUrl(raw) {
 /* =========================
    Watermark helpers
    ========================= */
+   // Live clock (ticks every second)
+function useLiveClock({ timeZone = 'Asia/Kolkata', intervalMs = 1000 } = {}) {
+  const [now, setNow] = React.useState(() => new Date());
+  React.useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now.toLocaleString('en-IN', {
+    timeZone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: true,
+  });
+}
+
+// Extract only identity once (role + userId)
+function getIdentityFromToken(storageKey = "jwt") {
+  try {
+    const token = localStorage.getItem(storageKey) || (storageKey !== "jwt" ? localStorage.getItem("jwt") : null);
+    if (!token) return { role: "User", userId: "NA" };
+    const claims = jwtDecode(token) || {};
+    const role =
+      claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+      claims.role ||
+      (Array.isArray(claims.roles) && claims.roles[0]) ||
+      "User";
+    const userId =
+      claims.UserId ||
+      claims["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+      claims.sub || claims.nameid || "NA";
+    return { role, userId };
+  } catch {
+    return { role: "User", userId: "NA" };
+  }
+}
+
 function getDisplayTextFromToken(storageKey = "jwt") {
   try {
     const token = localStorage.getItem(storageKey) || (storageKey !== "jwt" ? localStorage.getItem("jwt") : null);
@@ -201,10 +237,13 @@ function InstructorCourseViewPage() {
   const lastLoggedVideoPct = useRef(-1);
   
   // Watermark refs and displayText
-  const displayText = useMemo(() => getDisplayTextFromToken("jwt"), []);
-  const wmVideoRef = useRef(null);
-  const wmPdfRef = useRef(null);
-  
+  // Watermark refs and displayText (live ticking time)
+      const { role: wmRole, userId: wmUserId } = useMemo(() => getIdentityFromToken("jwt"), []);
+      const liveTime = useLiveClock({ timeZone: 'Asia/Kolkata', intervalMs: 1000 });
+      const displayText = `${wmRole}-${wmUserId} | ${liveTime}`;
+
+      const wmVideoRef = useRef(null);
+      const wmPdfRef = useRef(null);
   // Animation state for watermarks
   const videoWmStateRef = useRef({
     x: 20,
@@ -871,11 +910,10 @@ function InstructorCourseViewPage() {
           -webkit-tap-highlight-color: transparent;
         }
         
-        /* Prevent highlighting and selection */
-        * {
-          -webkit-touch-callout: none;
-          -webkit-tap-highlight-color: transparent;
-        }
+        .video-wrapper, .pdf-container, .wm-overlay, .relative-wrap {
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+          }
       `}</style>
 
       <HeaderTop />
