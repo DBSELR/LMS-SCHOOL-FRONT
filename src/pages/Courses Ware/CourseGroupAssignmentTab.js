@@ -376,7 +376,7 @@ const CourseGroupAssignmentTab = () => {
                 <option value="">Select Class</option>
                 {groupList.map((g) => (
                   <option key={g.groupId} value={g.groupId}>
-                    {g.groupCode}-{g.groupName}
+                    Class-{g.groupName}
                   </option>
                 ))}
               </Form.Control>
