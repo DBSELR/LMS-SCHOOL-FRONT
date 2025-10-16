@@ -451,9 +451,9 @@ function StudentsPage() {
                                               <p className="text-muted small mb-1">
                                                 <strong>Class:</strong> {student.group || "N/A"}
                                               </p>
-                                              <p className="text-muted small mb-1">
+                                              {/* <p className="text-muted small mb-1">
                                                 <strong>Semester:</strong> {student.semester || "N/A"}
-                                              </p>
+                                              </p> */}
                                               <p className="text-muted small mb-1">
                                                 <strong>mentor:</strong> {student.mentor || "N/A"}
                                               </p>
@@ -564,14 +564,14 @@ function StudentsPage() {
                                                           <strong>Username:</strong> {student.username || "N/A"}
                                                         </p>
                                                         <p className="text-muted small mb-1">
-                                                          <strong>Programme:</strong> {student.programme || "N/A"}
+                                                          <strong>Board:</strong> {student.programme || "N/A"}
                                                         </p>
                                                         <p className="text-muted small mb-1">
                                                           <strong>Class:</strong> {student.group || "N/A"}
                                                         </p>
-                                                        <p className="text-muted small mb-1">
+                                                        {/* <p className="text-muted small mb-1">
                                                           <strong>Semester:</strong> {student.semester || "N/A"}
-                                                        </p>
+                                                        </p> */}
                                                         <p className="text-muted small mb-1">
                                                           <strong>SRO:</strong> {student.mentor || "N/A"}
                                                         </p>
