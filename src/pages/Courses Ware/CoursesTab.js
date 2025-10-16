@@ -210,11 +210,14 @@ const CoursesTab = ({ isActive }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    console.log(`🔄 handleChange: ${name} = ${value}`);
+
     if (name === "courseCode") {
       let next = { ...form, courseCode: value };
       if (value && value.includes("-")) {
         const [, right] = value.split("-", 2);
         next.courseName = (right || "").trim();
+        console.log(`📝 Derived courseName: ${next.courseName}`);
       } else if (!form.courseName) {
         next.courseName = "";
       }
@@ -226,9 +229,19 @@ const CoursesTab = ({ isActive }) => {
   };
 
   const handleEdit = (course) => {
+    // Create the combined courseCode value that matches the dropdown options
+    const combinedCourseCode = `${course.programmeCode}-${course.programmeName}`;
+    
+    console.log("🔄 Editing course:", {
+      original: course,
+      combinedCourseCode,
+      programmeCode: course.programmeCode,
+      programmeName: course.programmeName
+    });
+    
     setForm({
       batchName: course.batchName ?? "",
-      courseCode: course.programmeCode ?? "",
+      courseCode: combinedCourseCode, // Use combined format
       courseName: course.programmeName ?? "",
       fee: course.fee ?? "",
       courseId: course.programmeId ?? null,
@@ -364,7 +377,7 @@ const CoursesTab = ({ isActive }) => {
                   <option value="">Select Board</option>
                   {[
                     "AP-Andhra Pradesh",
-                    "TG-Telangana",
+                    "TG-Telangana", 
                     "CB-Central Board",
                     "IC-International",
                   ].map((opt) => (
@@ -372,6 +385,13 @@ const CoursesTab = ({ isActive }) => {
                       {opt}
                     </option>
                   ))}
+                  {/* If form has a courseCode that doesn't match predefined options, add it */}
+                  {form.courseCode && 
+                   !["AP-Andhra Pradesh", "TG-Telangana", "CB-Central Board", "IC-International"].includes(form.courseCode) && (
+                    <option key={form.courseCode} value={form.courseCode}>
+                      {form.courseCode}
+                    </option>
+                  )}
                 </Form.Control>
               </Form.Group>
             </div>
