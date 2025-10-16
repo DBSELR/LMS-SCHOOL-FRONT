@@ -369,13 +369,13 @@ const GroupsTab = ({ isActive }) => {
               {g.groupCode} - {g.groupName} | Fee: ₹{g.fee}
               <div className="d-flex justify-content-end gap-2 mt-2">
                 <button className="btn btn-sm btn-outline-info" onClick={() => handleEdit(g)}>
-                  <FaEdit /> Edit
+                  <i className="fa-solid fa-pen-to-square" ></i>
                 </button>
                 <button
                   className="btn btn-sm btn-outline-danger"
                   onClick={() => handleDelete(g.groupId)}
                 >
-                  <FaTrash /> Delete
+                  <i className="fa-solid fa-trash"></i>
                 </button>
               </div>
             </div>
