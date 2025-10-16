@@ -366,7 +366,7 @@ const GroupsTab = ({ isActive }) => {
           groups.map((g) => (
             <div key={g.groupId} className="group-card mb-3">
               <strong>{g.batchName}</strong> | {g.programmeCode} - {g.programmeName} |{" "}
-              {g.groupCode} - {g.groupName} | Fee: ₹{g.fee}
+              Class - {g.groupName} | Fee: ₹{g.fee}
               <div className="d-flex justify-content-end gap-2 mt-2">
                 <button className="btn btn-sm btn-outline-info" onClick={() => handleEdit(g)}>
                   <i className="fa-solid fa-pen-to-square" ></i>
