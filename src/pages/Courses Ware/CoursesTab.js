@@ -459,14 +459,14 @@ const CoursesTab = ({ isActive }) => {
                       variant="info"
                       onClick={() => handleEdit(course)}
                     >
-                      <FaEdit /> Edit
+                      <i className="fa-solid fa-pen-to-square" ></i>
                     </Button>
                     <Button
                       size="sm"
                       variant="danger"
                       onClick={() => handleDelete(course.programmeId)}
                     >
-                      <FaTrash /> Delete
+                      <i className="fa-solid fa-trash"></i>
                     </Button>
                   </div>
                 </div>
