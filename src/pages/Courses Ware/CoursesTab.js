@@ -351,7 +351,7 @@ const CoursesTab = ({ isActive }) => {
         <Form>
           <div className="row gy-3">
             {/* Board dropdown (combined value like AP-Andhra Pradesh) */}
-            <div className="col-md-6">
+            <div className="col-md-4">
               <Form.Group>
                 <Form.Label>Board</Form.Label>
                 <Form.Control
@@ -390,7 +390,7 @@ const CoursesTab = ({ isActive }) => {
             </div>
             */}
 
-            <div className="col-md-6">
+            <div className="col-md-4">
               <Form.Group>
                 <Form.Label>Total Fee</Form.Label>
                 <Form.Control
@@ -403,10 +403,10 @@ const CoursesTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            <div className="col-12 mt-3">
+            <div className="col-12 col-md-4 d-flex align-items-center mt-4 gap-2">
               <Button
                 variant="success"
-                className="w-100 w-md-auto"
+                className="w-75 w-md-auto"
                 onClick={handleSaveOrUpdate}
               >
                 {form.courseId ? "Update" : "Save"}

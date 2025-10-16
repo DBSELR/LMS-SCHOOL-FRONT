@@ -493,19 +493,19 @@ const BatchTab = () => {
             {/* Total Fee */}
             <div className="col-12 col-lg-6">
               <Form.Group>
-                <Form.Label>Total Fee</Form.Label>
+                <Form.Label>Fee</Form.Label>
                 <Form.Control
                   name="fee"
                   value={form.fee}
                   onChange={handleChange}
-                  placeholder={form.programmeId ? "Fee auto-filled from board" : "Select board to auto-fill fee"}
+                  placeholder={form.programmeId ? "Fee auto-filled from board" : ""}
                   type="number"
                 />
               </Form.Group>
             </div>
 
             {/* Start Date */}
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>Start Date</Form.Label>
                 <Form.Control
@@ -518,7 +518,7 @@ const BatchTab = () => {
             </div>
 
             {/* End Date */}
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>End Date</Form.Label>
                 <Form.Control
@@ -531,9 +531,9 @@ const BatchTab = () => {
             </div>
 
             {/* Save Button - Full width on small, auto width on large */}
-            <div className="col-12 col-lg-6 d-flex align-items-end gap-2">
+            <div className="col-12 col-md-6 col-lg-4 d-flex align-items-center mt-4 gap-2">
               <Button
-                className="w-100 w-lg-auto px-4"
+                className="rounded-pill px-4"
                 variant={isEditMode ? "warning" : "success"}
                 onClick={(e) => {
                   e.preventDefault();
