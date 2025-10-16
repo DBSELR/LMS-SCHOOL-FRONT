@@ -282,9 +282,9 @@ const GroupsTab = ({ isActive }) => {
       <div className="mb-0 bg-glass p-0 border">
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Class</h5>
         <Form>
-          <div className="row gy-3">
+          <div className="row g-3">
             {/* Select Board */}
-            <div className="col-md-6">
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Select Board</Form.Label>
                 <Form.Control
@@ -308,7 +308,7 @@ const GroupsTab = ({ isActive }) => {
             </div>
 
             {/* Class (dropdown) */}
-            <div className="col-md-6">
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Class</Form.Label>
                 <Form.Control
@@ -329,7 +329,7 @@ const GroupsTab = ({ isActive }) => {
             </div>
 
             {/* Total Fee */}
-            <div className="col-md-6">
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Total Fee</Form.Label>
                 <Form.Control
@@ -341,9 +341,10 @@ const GroupsTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            <div className="col-12 mt-3">
+            {/* Save Button - Full width on small, auto width on large */}
+            <div className="col-4 mt-4 d-flex gap-2 align-items-center">
               <Button
-                className="w-100 w-md-auto"
+                className="rounded-pill px-4"
                 variant="success"
                 onClick={(e) => {
                   e.preventDefault();
