@@ -70,7 +70,7 @@ function InstructorLiveClassManage() {
     endTime: "",
     meetingLink: "",
     examinationID: "",
-    semester: "",
+   // semester: "",
     batchName: "",
   });
 
@@ -122,7 +122,7 @@ function InstructorLiveClassManage() {
       setForm((prevForm) => ({
         ...prevForm,
         examinationID: "",
-        semester: "",
+        //semester: "",
         batchName: "",
       }));
       return;
@@ -137,7 +137,7 @@ function InstructorLiveClassManage() {
       setForm((prevForm) => ({
         ...prevForm,
         examinationID: selectedId,
-        semester: selectedCourse.semester || "",
+      //  semester: selectedCourse.semester || "",
         batchName: selectedCourse.batchName || "",
       }));
     }
@@ -162,18 +162,19 @@ function InstructorLiveClassManage() {
       !form.liveDate ||
       !form.startTime ||
       !form.endTime ||
-      !form.examinationID ||
-      !form.semester
+      !form.examinationID 
+     // !form.semester
     ) {
       toast.warning("⚠️ Please fill in all required fields.");
       return;
     }
 
     const examinationID = parseInt(form.examinationID);
-    const semester = parseInt(form.semester);
+   // const semester = parseInt(form.semester);
 
-    if (isNaN(examinationID) || isNaN(semester)) {
-      toast.error("❌ Invalid course or semester selection.");
+    //if (isNaN(examinationID) || isNaN(semester)) {
+       if (isNaN(examinationID)) {
+      toast.error("❌ Invalid course selection.");
       return;
     }
 
@@ -196,7 +197,7 @@ function InstructorLiveClassManage() {
       ...form,
       instructorId: parseInt(instructorId),
       examinationID,
-      semester,
+      //semester,
       liveDate: start.toISOString(),
       startTime: normalizedStart,
       endTime: normalizedEnd,
@@ -241,7 +242,7 @@ function InstructorLiveClassManage() {
         endTime: "",
         meetingLink: "",
         examinationID: "",
-        semester: "",
+       // semester: "",
         batchName: "",
       });
 
@@ -263,7 +264,7 @@ function InstructorLiveClassManage() {
       endTime: cls.endTime,
       meetingLink: cls.meetingLink,
       examinationID: cls.examinationID,
-      semester: cls.semester,
+    //  semester: cls.semester,
       batchName: cls.batchName,
     });
     setEditingId(cls.liveClassId);
@@ -326,7 +327,7 @@ function InstructorLiveClassManage() {
   extendedProps: {
     instructor: cls.instructorName,
     course: cls.courseName,
-    semester: cls.semester,
+   // semester: cls.semester,
     status: getClassStatus(cls),
     meetingLink: cls.meetingLink,
   },
@@ -378,7 +379,8 @@ function InstructorLiveClassManage() {
   const groupByBatchSemester = (data) => {
     const grouped = {};
     data.forEach((cls) => {
-      const key = `${cls.batchName} - Semester: ${cls.semester}`;
+      //const key = `${cls.batchName} - Semester: ${cls.semester}`;
+        const key = `${cls.batchName} `;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(cls);
     });
@@ -396,7 +398,7 @@ function InstructorLiveClassManage() {
       if (courseInfo) {
         key = `Subject: ${courseInfo.paperCode} - ${courseInfo.paperName} (${
           courseInfo.semester
-        } Sem / ${courseInfo.batchName || "N/A"})`;
+        } batch / ${courseInfo.batchName || "N/A"})`;
       }
 
       if (!grouped[key]) grouped[key] = [];
@@ -417,7 +419,7 @@ const renderClassCard = (cls) => {
   );
 
   const subjectLine = courseInfo
-    ? `${courseInfo.paperCode} - ${courseInfo.paperName} (${courseInfo.semester} Sem / ${courseInfo.batchName || "N/A"})`
+    ? `${courseInfo.paperCode} - ${courseInfo.paperName} ( Batch / ${courseInfo.batchName || "N/A"})`
     : "Subject info not found";
 
   return (
@@ -802,8 +804,8 @@ const renderClassCard = (cls) => {
                 <option value="">Select Subject</option>
                 {assignedCourses.map((course, i) => (
                   <option key={i} value={course.examinationID}>
-                    {course.paperCode}-{course.paperName} ({course.semester} Sem
-                    / {course.batchName || "N/A"})
+                    {course.paperCode}-{course.paperName} ( Batch
+                    - {course.batchName || "N/A"})
                   </option>
                 ))}
               </select>
