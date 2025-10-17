@@ -805,7 +805,7 @@ const renderClassCard = (cls) => {
                 {assignedCourses.map((course, i) => (
                   <option key={i} value={course.examinationID}>
                     {course.paperCode}-{course.paperName} ( Batch
-                    - {course.batchName || "N/A"})
+                    - {course.batchName || "N/A"} / {course.class || "N/A"})
                   </option>
                 ))}
               </select>
