@@ -167,12 +167,27 @@ const CourseGroupAssignmentTab = () => {
           );
         });
 
-      fetch(
-        `${API_BASE_URL}/Course/ByProgrammeAndSemester?batchName=${batchName}&semester=1`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-        .then((res) => res.json())
-        .then((data) => setSubjectBank(data));
+      // Get board and class information for the API call
+      const selectedCourseInfo = courseList.find((c) => c.programmeName === selectedCourse);
+      const selectedGroupInfo = groupList.find((g) => g.groupId == selectedGroup);
+      const boardCode = selectedCourseInfo?.programmeCode; // e.g., "AP"
+      const classCode = selectedGroupInfo?.groupCode; // e.g., "10"
+
+      if (boardCode && classCode) {
+        fetch(
+          `${API_BASE_URL}/Course/ByProgrammeAndSemester?Board=${boardCode}&group=${classCode}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("📚 Subject Bank API Response:", data);
+            setSubjectBank(data);
+          })
+          .catch((error) => {
+            console.error("❌ Error fetching subject bank:", error);
+            toast.error("Failed to load subject bank");
+          });
+      }
     }
   }, [
     selectedBatch,
@@ -361,7 +376,7 @@ const CourseGroupAssignmentTab = () => {
                 <option value="">Select Class</option>
                 {groupList.map((g) => (
                   <option key={g.groupId} value={g.groupId}>
-                    {g.groupCode}-{g.groupName}
+                    Class-{g.groupName}
                   </option>
                 ))}
               </Form.Control>

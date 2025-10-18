@@ -33,10 +33,16 @@ function UsersDashboard() {
       const name = decoded["Username"] || decoded.name || "Admin";
       setAdminName(name);
 
-      if (role !== "Admin") {
+      const allowed = new Set(["admin", "faculty"]);
+      if (!allowed.has(role.toLowerCase())) {
         setLoading(false);
-        return;
+        return; // or navigate("/unauthorized");
       }
+
+      // if (role !== "Admin") {
+      //   setLoading(false);
+      //   return;
+      // }
 
       const fetchSummary = async () => {
         try {

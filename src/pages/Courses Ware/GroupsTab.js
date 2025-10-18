@@ -282,9 +282,9 @@ const GroupsTab = ({ isActive }) => {
       <div className="mb-0 bg-glass p-0 border">
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Class</h5>
         <Form>
-          <div className="row gy-3">
+          <div className="row g-3">
             {/* Select Board */}
-            <div className="col-md-6">
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Select Board</Form.Label>
                 <Form.Control
@@ -308,7 +308,7 @@ const GroupsTab = ({ isActive }) => {
             </div>
 
             {/* Class (dropdown) */}
-            <div className="col-md-6">
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Class</Form.Label>
                 <Form.Control
@@ -329,7 +329,7 @@ const GroupsTab = ({ isActive }) => {
             </div>
 
             {/* Total Fee */}
-            <div className="col-md-6">
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Total Fee</Form.Label>
                 <Form.Control
@@ -341,9 +341,10 @@ const GroupsTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            <div className="col-12 mt-3">
+            {/* Save Button - Full width on small, auto width on large */}
+            <div className="col-4 mt-4 d-flex gap-2 align-items-center">
               <Button
-                className="w-100 w-md-auto"
+                className="rounded-pill px-4"
                 variant="success"
                 onClick={(e) => {
                   e.preventDefault();
@@ -365,16 +366,16 @@ const GroupsTab = ({ isActive }) => {
           groups.map((g) => (
             <div key={g.groupId} className="group-card mb-3">
               <strong>{g.batchName}</strong> | {g.programmeCode} - {g.programmeName} |{" "}
-              {g.groupCode} - {g.groupName} | Fee: ₹{g.fee}
+              Class - {g.groupName} | Fee: ₹{g.fee}
               <div className="d-flex justify-content-end gap-2 mt-2">
                 <button className="btn btn-sm btn-outline-info" onClick={() => handleEdit(g)}>
-                  <FaEdit /> Edit
+                  <i className="fa-solid fa-pen-to-square" ></i>
                 </button>
                 <button
                   className="btn btn-sm btn-outline-danger"
                   onClick={() => handleDelete(g.groupId)}
                 >
-                  <FaTrash /> Delete
+                  <i className="fa-solid fa-trash"></i>
                 </button>
               </div>
             </div>

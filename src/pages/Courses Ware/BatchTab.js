@@ -111,7 +111,7 @@ function normalizeBatchDto(dto) {
   const bid =
     get(["Bid", "BID", "bid", "Id", "ID"]) ?? 0;
   const batchName =
-    get(["BatchName", "batchName", "Batch", "BATCH", "Name", "NAME", "Batch_Title", "Batch_Name"]) ?? "";
+    get(["BatchName", "batchName", "Batch", "BATCH", "Name", "NAME", "Batch_Title", "Batch_Name", "batch"]) ?? "";
   const startDate =
     get(["StartDate", "startDate", "Start", "StartDt", "Start_Date", "FromDate", "From"]) ?? "";
   const endDate =
@@ -123,6 +123,14 @@ function normalizeBatchDto(dto) {
   const classId =
     get(["GroupId", "groupid", "GroupID", "Gid", "gid"]) ?? "";
 
+  // NEW: display names for table
+  const programmeName =
+    get(["programmeName", "ProgrammeName", "programName", "ProgramName"]) ?? "";
+  const groupName =
+    get(["groupName", "GroupName", "ClassName", "className"]) ?? "";
+  const fee =
+    get(["fee", "Fee", "totalFee", "TotalFee"]) ?? "";
+
   return {
     bid: Number(bid) || 0,
     batchName: String(batchName || ""),
@@ -130,6 +138,9 @@ function normalizeBatchDto(dto) {
     endDate,
     programmeId: programmeId !== "" ? String(programmeId) : "",
     classId: classId !== "" ? String(classId) : "",
+    programmeName: String(programmeName || ""),
+    groupName: String(groupName || ""),
+    fee: String(fee || ""),
   };
 }
 
@@ -146,6 +157,7 @@ async function postBatchArray(payloadArray, token) {
 }
 async function getAllBatches(token) {
   const url = `${API_BASE_URL}/Programme/GetAllBatch`;
+  console.log("🔗 GetAllBatch URL:", url);
   const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   logRequest("GetAllBatch", { url, method: "GET", headers });
   const res = await fetch(url, { headers });
@@ -197,6 +209,7 @@ const BatchTab = () => {
     bid: 0,
     programmeId: "",
     classId: "",
+    fee: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -227,8 +240,11 @@ const BatchTab = () => {
             programmeId: b.programmeId != null ? String(b.programmeId) : "",
             programmeCode: b.programmeCode,
             programmeName: b.programmeName,
+            fee: b.fee || "", // Include fee information
           }))
         : [];
+      
+      console.log("📋 Boards loaded with fee data:", normalized);
       setBoards(normalized);
     } catch {
       toast.error("❌ Failed to load boards");
@@ -299,10 +315,30 @@ const BatchTab = () => {
 
   const handleBoardChange = (e) => {
     const programmeId = e.target.value; // string
-    setForm((prev) => ({ ...prev, programmeId, classId: "" }));
+    
     if (programmeId) {
+      // Find the selected board to get fee information
+      const selectedBoard = boards.find(board => board.programmeId === programmeId);
+      const boardFee = selectedBoard?.fee || "";
+      
+      console.log("🔄 Board changed:", { programmeId, selectedBoard, boardFee });
+      
+      setForm((prev) => ({ 
+        ...prev, 
+        programmeId, 
+        classId: "",
+        fee: boardFee // Auto-populate fee from selected board
+      }));
+      
       fetchClasses(programmeId);
     } else {
+      // Reset everything when no board is selected
+      setForm((prev) => ({ 
+        ...prev, 
+        programmeId: "", 
+        classId: "",
+        fee: "" // Clear fee when no board selected
+      }));
       setClasses([]);
     }
   };
@@ -319,6 +355,7 @@ const BatchTab = () => {
       bid: Number(row.bid) || 0,
       programmeId,
       classId,
+      fee: row.fee || "",
     });
 
     // Populate classes for this programme so the Class dropdown has the option selected
@@ -333,7 +370,7 @@ const BatchTab = () => {
   };
 
   const handleCancelEdit = () => {
-    setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "" });
+    setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "", fee: "" });
     toast.dismiss();
   };
 
@@ -352,7 +389,7 @@ const BatchTab = () => {
   };
 
   const handleSave = async () => {
-    const { batchName, startDate, endDate, bid, programmeId, classId } = form;
+    const { batchName, startDate, endDate, bid, programmeId, classId, fee } = form;
 
     if (DEBUG) console.log("🧾 handleSave form:", form);
 
@@ -372,6 +409,7 @@ const BatchTab = () => {
       EndDate: toIsoMidnight(endDate),
       Pid: Number(programmeId), // backend expects numeric
       Gid: Number(classId),
+      Fee: fee ? Number(fee) : 0,
     };
 
     try {
@@ -380,7 +418,7 @@ const BatchTab = () => {
       await postBatchArray([dto], token);
       toast.success(isEditMode ? "✅ Batch updated successfully" : "✅ Batch created successfully");
       await refreshList();
-      setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "" });
+      setForm({ batchName: "", startDate: "", endDate: "", bid: 0, programmeId: "", classId: "", fee: "" });
     } catch (err) {
       console.error("❌ Save failed:", err);
       toast.error(`❌ Save failed: ${err.message}`);
@@ -395,9 +433,10 @@ const BatchTab = () => {
       <div className="mb-0 bg-glass p-3 rounded">
         <h5 className="mb-3 text-primary">Add / Edit Batch</h5>
         <Form onSubmit={(e) => e.preventDefault()}>
-          <div className="row gy-3">
+          <div className="row g-3">
 
-            <div className="col-md-6">
+            {/* Select Board */}
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Select Board</Form.Label>
                 <Form.Control
@@ -405,6 +444,7 @@ const BatchTab = () => {
                   name="programmeId"
                   value={form.programmeId}
                   onChange={handleBoardChange}
+                  required
                 >
                   <option value="">Select Board</option>
                   {boards.map((board) => (
@@ -416,7 +456,8 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-md-3">
+            {/* Class */}
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Class</Form.Label>
                 <Form.Control
@@ -436,7 +477,8 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-md-3">
+            {/* Batch */}
+            <div className="col-12 col-lg-6">
               <Form.Group>
                 <Form.Label>Batch</Form.Label>
                 <Form.Control
@@ -448,7 +490,22 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-md-4">
+            {/* Total Fee */}
+            <div className="col-12 col-lg-6">
+              <Form.Group>
+                <Form.Label>Fee</Form.Label>
+                <Form.Control
+                  name="fee"
+                  value={form.fee}
+                  onChange={handleChange}
+                  placeholder={form.programmeId ? "Fee auto-filled from board" : ""}
+                  type="number"
+                />
+              </Form.Group>
+            </div>
+
+            {/* Start Date */}
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>Start Date</Form.Label>
                 <Form.Control
@@ -460,7 +517,8 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-md-4">
+            {/* End Date */}
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>End Date</Form.Label>
                 <Form.Control
@@ -472,12 +530,15 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            <div className="col-4 mt-4 d-flex gap-2 align-items-center">
+            {/* Save Button - Full width on small, auto width on large */}
+            <div className="col-12 col-md-6 col-lg-4 d-flex align-items-center mt-4 gap-2">
               <Button
-                variant={isEditMode ? "warning" : "success"}
                 className="rounded-pill px-4"
-                onClick={handleSave}
-                disabled={saving}
+                variant={isEditMode ? "warning" : "success"}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSave();
+                }}
               >
                 {saving
                   ? isEditMode
@@ -491,7 +552,7 @@ const BatchTab = () => {
               {isEditMode && (
                 <Button
                   variant="outline-secondary"
-                  className="rounded-pill px-4"
+                  className="w-100 w-lg-auto px-4"
                   onClick={handleCancelEdit}
                   disabled={saving}
                 >
@@ -535,11 +596,13 @@ const BatchTab = () => {
               <Table bordered hover responsive size="sm" className="mb-0">
                 <thead>
                   <tr className="bg-light">
-                    <th style={{ width: 110 }}>Bid</th>
-                    <th style={{ width: 130 }}>Batch</th>
-                    <th style={{ width: 200 }}>Start Date</th>
-                    <th style={{ width: 200 }}>End Date</th>
-                    <th style={{ width: 200 }}>Actions</th>
+                    <th style={{ width: 180 }}>Board</th>
+                    <th style={{ width: 80 }}>Class</th>
+                    <th style={{ width: 120 }}>Batch</th>
+                    <th style={{ width: 120 }}>Start Date</th>
+                    <th style={{ width: 120 }}>End Date</th>
+                    <th style={{ width: 100 }}>Fee</th>
+                    <th style={{ width: 120 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -548,28 +611,38 @@ const BatchTab = () => {
                     const end = toInputDate(b.endDate);
                     return (
                       <tr key={b.bid || idx}>
-                        <td data-label="Bid">{b.bid}</td>
+                        <td data-label="Board" className="text-start">
+                          {b.programmeName || <em>(no board)</em>}
+                        </td>
+                        <td data-label="Class" className="text-center">
+                          {b.groupName || <em>(no class)</em>}
+                        </td>
                         <td data-label="Batch" className="text-start">
                           {b.batchName || <em>(no name)</em>}
                         </td>
                         <td data-label="Start Date">{start}</td>
                         <td data-label="End Date">{end}</td>
-                        <td data-label="Actions" className="d-flex gap-2">
+                        <td data-label="Fee" className="text-end">
+                          {b.fee ? `₹${b.fee}` : <em>(no fee)</em>}
+                        </td>
+                        <td data-label="Actions" className="d-flex gap-2" style={{margin:'auto', alignItems:'center',textAlign:'center', justifyContent:'center'}}>
                           <Button
                             size="sm"
                             variant="outline-info"
                             onClick={() => handleEdit(b)}
                             type="button"
+                            style={{marginTop:'0px', marginBottom:'0px'}}
                           >
-                            Edit
+                            <i className="fa-solid fa-pen-to-square" ></i>
                           </Button>
                           <Button
                             size="sm"
                             variant="outline-danger"
                             onClick={() => handleDelete(b)}
                             type="button"
+                            style={{marginTop:'0px', marginBottom:'0px'}}
                           >
-                            Delete
+                            <i className="fa-solid fa-trash"></i>
                           </Button>
                         </td>
                       </tr>

@@ -31,7 +31,7 @@ function InstructorDashboard() {
     pending: 0,
     averageScore: 0,
   });
-  const [instructorName, setInstructorName] = useState("Instructor");
+  const [instructorName, setInstructorName] = useState("Faculty");
 
   useEffect(() => {
     let isMounted = true;
@@ -58,13 +58,13 @@ function InstructorDashboard() {
           decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
           decoded.role ||
           "";
-        const name = decoded["Username"] || decoded.name || "Instructor";
+        const name = decoded["Username"] || decoded.name || "Faculty";
         const instructorId = decoded?.UserId ?? decoded?.id ?? 0;
 
         if (isMounted) setInstructorName(name);
 
         // If not an Instructor (or no id), stop loading and show nothing special
-        if (role !== "Instructor" || !instructorId) {
+        if (role !== "Faculty" || !instructorId) {
           return;
         }
 
@@ -153,7 +153,7 @@ function InstructorDashboard() {
 
       <HeaderTop />
       <RightSidebar />
-      <LeftSidebar role="Instructor" />
+      <LeftSidebar role="Faculty" />
 
       <div className="section-wrapper">
         <div className="page admin-dashboard">
