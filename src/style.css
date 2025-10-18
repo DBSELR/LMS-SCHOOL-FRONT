@@ -2658,3 +2658,17 @@ background-size: cover; */
 .tracking-wide {
   letter-spacing: 2px;
 }
+
+
+/* Taskboard Styles start */
+
+/* subtle polish */
+.task-card { border-radius: 12px; }
+.line-clamp-3 {
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* skeleton look using Bootstrap placeholders */
+.skeleton-glow .placeholder { display: inline-block; }
+
+
+/* Taskboard Styles end */
