@@ -19,6 +19,8 @@ const STATUS_META = {
 
 function TaskboardPage() {
   const [loggedInUserId, setLoggedInUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Add custom styles
   const customStyles = `
@@ -92,6 +94,96 @@ function TaskboardPage() {
     .badge {
       border-radius: 20px !important;
     }
+    
+    /* Enhanced Custom Filter Select */
+    .custom-filter-select {
+      appearance: none;
+      background-image: none;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .custom-filter-select:focus {
+      border-color: #667eea !important;
+      box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+      transform: translateY(-1px);
+    }
+    
+    .custom-filter-select:hover {
+      border-color: #b8c5ea;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Style for dropdown options */
+    .custom-filter-select option {
+      padding: 12px 16px;
+      font-weight: 600;
+      color: #495057;
+      background: #ffffff;
+      border: none;
+    }
+    
+    .custom-filter-select option:hover {
+      background: #f8f9fa;
+    }
+    
+    /* Custom dropdown arrow animation */
+    .custom-filter-select:focus + .position-absolute i {
+      transform: rotate(180deg);
+      transition: transform 0.3s ease;
+    }
+    
+    /* Enhanced styling for different states */
+    .custom-filter-select[value="all"] {
+      background: linear-gradient(135deg, #667eea 5%, #ffffff 5%);
+      border-left: 4px solid #667eea;
+    }
+    
+    .custom-filter-select[value="todo"] {
+      background: linear-gradient(135deg, #0dcaf0 5%, #ffffff 5%);
+      border-left: 4px solid #0dcaf0;
+    }
+    
+    .custom-filter-select[value="inprogress"] {
+      background: linear-gradient(135deg, #ffc107 5%, #ffffff 5%);
+      border-left: 4px solid #ffc107;
+    }
+    
+    .custom-filter-select[value="done"] {
+      background: linear-gradient(135deg, #198754 5%, #ffffff 5%);
+      border-left: 4px solid #198754;
+    }
+    
+    /* Dropdown animation */
+    .custom-filter-select {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+      /* Enhanced label styling */
+    .form-label {
+      color: #495057 !important;
+      font-weight: 700 !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px !important;
+    }
+    
+    /* Admin badge styling */
+    .admin-badge {
+      animation: pulse-admin 2s infinite;
+    }
+    
+    @keyframes pulse-admin {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .custom-filter-select {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+    }
   `;
 
   // raw + grouped
@@ -135,7 +227,17 @@ function TaskboardPage() {
       const userId =
         d["UserId"] || d.userId || d["user_id"] || d.id || d.sub;
       const finalUserId = !isNaN(Number(userId)) ? Number(userId) : userId;
+      
+      // Check user role - adjust these field names based on your JWT structure
+      const role = d["role"] || d["Role"] || d["userRole"] || d["UserRole"] || "";
+      const adminRoles = ["admin", "administrator", "Admin", "Administrator", "ADMIN"];
+      const isUserAdmin = adminRoles.some(adminRole => 
+        role.toLowerCase().includes(adminRole.toLowerCase())
+      );
+      
       setLoggedInUserId(finalUserId);
+      setUserRole(role);
+      setIsAdmin(isUserAdmin);
     } catch {
       // ignore
     }
@@ -143,13 +245,13 @@ function TaskboardPage() {
 
   /** ===== load tasks + users once we know user ===== */
   useEffect(() => {
-    if (!loggedInUserId) return;
+    if (!loggedInUserId || userRole === null) return;
     (async () => {
       await Promise.all([fetchTasks(), fetchUsers()]);
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loggedInUserId]);
+  }, [loggedInUserId, isAdmin]);
 
   /** ===== derive filtered/grouped tasks ===== */
   const filtered = useMemo(() => {
@@ -194,7 +296,13 @@ function TaskboardPage() {
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch(`${API_BASE_URL}/TaskBoard/GetTasks`, {
+      
+      // For admin users, pass UserId as 0 or a special value to get all tasks
+      // For regular users, pass their actual UserId to get only their tasks
+      const userIdParam = isAdmin ? 0 : loggedInUserId;
+      
+      const url = `${API_BASE_URL}/TaskBoard/GetTasks?UserId=${userIdParam}`;
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = (await res.json()) || [];
@@ -500,8 +608,17 @@ function TaskboardPage() {
       }
     };
 
+    // Determine column width based on filter
+    const getColumnWidth = () => {
+      if (statusFilter === "all") {
+        return "col-12 col-lg-4"; // 3 columns layout
+      } else {
+        return "col-12"; // Full width when filtered
+      }
+    };
+
     return (
-      <div className="col-12 col-lg-4 mb-4" key={colId}>
+      <div className={`${getColumnWidth()} mb-4`} key={colId}>
         <div className="card border-0 shadow-sm h-100">
           <div className={`card-header ${headerColor} text-white border-0 py-3`}>
             <div className="d-flex justify-content-between align-items-center w-100">
@@ -561,18 +678,28 @@ function TaskboardPage() {
                 <div className="card-body p-4 text-white">
                   <div className="row align-items-center">
                     <div className="col-md-8">
-                      <h1 className="mb-2 fw-bold">
-                        <i className="fa-solid fa-list-check me-3 fs-2 mr-10" />
+                      <h1 className="mb-2 fw-bold hero-title">
+                        <i className="fa-solid fa-list-check me-3 hero-icon" />
                         Task Management Board
                       </h1>
-                      <p className="mb-0 fs-2 opacity-90">
+                      <p className="mb-0 opacity-90 hero-subtitle">
                         Organize, prioritize, and track your team's progress with our intuitive Kanban board
                       </p>
                     </div>
-                    <div className="col-md-4 text-md-end mt-3 mt-md-0">
-                      <div className="d-inline-flex align-items-center bg-white bg-opacity-20 rounded-pill px-4 py-2" style={{color:'#000'}}>
-                        <i className="fa fa-tasks me-2 mr-10" />
-                        <span className="fw-semibold">{allTasks.length} Total Tasks</span>
+                    <div className="col-md-4 text-md-end text-center mt-3 mt-md-0">
+                      <div className="d-flex flex-column align-items-end align-items-center align-items-md-end gap-2">
+                        {isAdmin && (
+                          <div className="d-inline-flex align-items-center bg-success bg-opacity-20 rounded-pill px-3 py-1 admin-badge" style={{color:'#198754'}}>
+                            <i className="fa fa-shield-alt me-2" style={{fontSize: '0.8rem'}} />
+                            <span className="fw-bold" style={{fontSize: '0.8rem'}}>Admin Access - All Tasks</span>
+                          </div>
+                        )}
+                        <div className="d-inline-flex align-items-center bg-white bg-opacity-20 rounded-pill px-3 py-2 hero-badge" style={{color:'#000'}}>
+                          <i className="fa fa-tasks me-2" />
+                          <span className="fw-semibold">
+                            {allTasks.length} {isAdmin ? "Total Tasks" : "My Tasks"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -614,18 +741,39 @@ function TaskboardPage() {
                     {/* Filter Section */}
                     <div className="col-lg-4 col-md-6">
                       <label className="form-label fw-semibold mb-2 text-muted small text-uppercase">
-                        <i className="fa fa-filter me-1" /> Status Filter
+                        <i className="fa fa-filter me-2" /> Status Filter
                       </label>
-                      <select
-                        className="form-select"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                      >
-                        <option value="all">All Statuses ({allTasks.length})</option>
-                        <option value="todo">To Do ({tasks.todo?.length || 0})</option>
-                        <option value="inprogress">In Progress ({tasks.inProgress?.length || 0})</option>
-                        <option value="done">Done ({tasks.done?.length || 0})</option>
-                      </select>
+                      <div className="position-relative">
+                        <select
+                          className="form-select form-select-lg custom-filter-select"
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          style={{
+                            borderRadius: '12px',
+                            border: '2px solid #e9ecef',
+                            padding: '12px 16px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <option value="all" style={{ padding: '8px' }}>
+                            All Statuses ({allTasks.length} tasks) 
+                          </option>
+                          <option value="todo" style={{ padding: '8px' }}>
+                            To Do ({tasks.todo?.length || 0} tasks)
+                          </option>
+                          <option value="inprogress" style={{ padding: '8px' }}>
+                            In Progress ({tasks.inProgress?.length || 0} tasks)
+                          </option>
+                          <option value="done" style={{ padding: '8px' }}>
+                            Done ({tasks.done?.length || 0} tasks)
+                          </option>
+                        </select>
+                        
+                      </div>
                     </div>
 
                     {/* Action Section */}
@@ -667,27 +815,27 @@ function TaskboardPage() {
                         </h6>
                         <div className="row g-3">
                           <div className="col-6 col-md-3">
-                            <div className="text-center p-3 bg-light rounded">
+                            <div className="text-center p-3 bg-light rounded" style={{ fontWeight:'bold'}}>
                               <div className="fs-4 fw-bold">{allTasks.length}</div>
-                              <div className="small">Total Tasks</div>
+                              <div className="small" style={{fontWeight:'bold'}}>Total Tasks</div>
                             </div>
                           </div>
                           <div className="col-6 col-md-3">
-                            <div className="text-center p-3 bg-info bg-opacity-10 rounded">
+                            <div className="text-center p-3 bg-info bg-opacity-10 rounded" style={{color:'#fff', fontWeight:'bold'}}>
                               <div className="fs-4 fw-bold ">{tasks.todo?.length || 0}</div>
-                              <div className="small">To Do</div>
+                              <div className="small" style={{color:'#fff', fontWeight:'bold'}}>To Do</div>
                             </div>
                           </div>
                           <div className="col-6 col-md-3">
-                            <div className="text-center p-3 bg-warning bg-opacity-10 rounded">
+                            <div className="text-center p-3 bg-warning bg-opacity-10 rounded" style={{color:'#000', fontWeight:'bold'}}>
                               <div className="fs-4 fw-bold ">{tasks.inProgress?.length || 0}</div>
-                              <div className="small">In Progress</div>
+                              <div className="small" style={{color:'#000', fontWeight:'bold'}}>In Progress</div>
                             </div>
                           </div>
                           <div className="col-6 col-md-3">
-                            <div className="text-center p-3 bg-success bg-opacity-10 rounded">
+                            <div className="text-center p-3 bg-success bg-opacity-10 rounded" style={{color:'#fff', fontWeight:'bold'}}>
                               <div className="fs-4 fw-bold">{tasks.done?.length || 0}</div>
-                              <div className="small ">Completed</div>
+                              <div className="small" style={{color:'#fff', fontWeight:'bold'}} >Completed</div>
                             </div>
                           </div>
                         </div>
@@ -716,9 +864,9 @@ function TaskboardPage() {
 
               {/* columns */}
               <div className="row g-4">
-                {renderColumn("todo", "To Do", "bg-info")}
-                {renderColumn("inProgress", "In Progress", "bg-warning")}
-                {renderColumn("done", "Done", "bg-success")}
+                {(statusFilter === "all" || statusFilter === "todo") && renderColumn("todo", "To Do", "bg-info")}
+                {(statusFilter === "all" || statusFilter === "inprogress") && renderColumn("inProgress", "In Progress", "bg-warning")}
+                {(statusFilter === "all" || statusFilter === "done") && renderColumn("done", "Done", "bg-success")}
               </div>
             </div>
           </div>
