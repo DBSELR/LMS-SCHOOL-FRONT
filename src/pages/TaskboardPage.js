@@ -566,25 +566,27 @@ function TaskboardPage() {
               </button>
             </div>
             
-            {/* Edit/Delete buttons */}
-            <div className="d-flex gap-2">
-              <button 
-                className="btn btn-sm btn-outline-primary flex-fill" 
-                onClick={() => handleEdit(task)}
-                title="Edit task"
-              >
-                <i className="fa fa-edit me-1" />
-                Edit
-              </button>
-              <button 
-                className="btn btn-sm btn-outline-danger flex-fill" 
-                onClick={() => requestDelete(task.id)}
-                title="Delete task"
-              >
-                <i className="fa fa-trash me-1" />
-                Delete
-              </button>
-            </div>
+            {/* Edit/Delete buttons - Only for Admin users */}
+            {isAdmin && (
+              <div className="d-flex gap-2">
+                <button 
+                  className="btn btn-sm btn-outline-primary flex-fill" 
+                  onClick={() => handleEdit(task)}
+                  title="Edit task"
+                >
+                  <i className="fa fa-edit me-1" />
+                  Edit
+                </button>
+                <button 
+                  className="btn btn-sm btn-outline-danger flex-fill" 
+                  onClick={() => requestDelete(task.id)}
+                  title="Delete task"
+                >
+                  <i className="fa fa-trash me-1" />
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
