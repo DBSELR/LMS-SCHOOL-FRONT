@@ -18,20 +18,34 @@ function SRODashboard() {
     liveClasses: 0,
   });
   const [sroName, setSroName] = useState("SRO");
+  const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("🔄 SRO Dashboard useEffect triggered");
     const token = localStorage.getItem("jwt");
     if (!token) {
+      console.log("❌ No JWT token found");
       setLoading(false);
       return;
     }
+    console.log("✅ JWT token found, proceeding with decode");
 
     try {
       const decoded = jwtDecode(token);
+      console.log("🔍 JWT Decoded:", decoded);
+      
       const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
       const name = decoded["Username"] || decoded.name || "SRO";
+      
+      // Extract userId from JWT token
+      const extractedUserId = decoded["UserId"] || decoded.userId || decoded["user_id"] || decoded.id || decoded.sub;
+      const finalUserId = !isNaN(Number(extractedUserId)) ? Number(extractedUserId) : extractedUserId;
+      
+      console.log("👤 User Details:", { role, name, extractedUserId, finalUserId });
+      
       setSroName(name);
+      setUserId(finalUserId);
 
       // if (role !== "SRO") {
       //   setLoading(false);
@@ -40,14 +54,34 @@ function SRODashboard() {
       // }
 
       const fetchSummary = async () => {
+        if (!finalUserId) {
+          console.error("❌ UserId not found in token");
+          setLoading(false);
+          return;
+        }
+
+        console.log("🚀 Starting API call with UserId:", finalUserId);
+
         try {
           const token = localStorage.getItem("jwt");
-          const res = await fetch(`${API_BASE_URL}/SROSummary/dashboard`, {
+          const apiUrl = `${API_BASE_URL}/SROSummary/dashboard/${finalUserId}`;
+          console.log("📡 API URL:", apiUrl);
+          
+          const res = await fetch(apiUrl, {
             headers: {
               "Authorization": `Bearer ${token}`
             }
           });
+          
+          console.log("📊 API Response Status:", res.status, res.statusText);
+          
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          
           const data = await res.json();
+          console.log("✅ API Response Data:", data);
+          
           setSummary({
             students: data.students || 0,
             programmes: data.programmes || 0,
@@ -55,16 +89,25 @@ function SRODashboard() {
             leaves: data.leaves || 0,
             liveClasses: data.liveClasses || 0,
           });
+          
+          console.log("📈 Summary State Updated:", {
+            students: data.students || 0,
+            programmes: data.programmes || 0,
+            tasks: data.tasks || 0,
+            leaves: data.leaves || 0,
+            liveClasses: data.liveClasses || 0,
+          });
         } catch (err) {
-          console.error("Failed to fetch dashboard summary", err);
+          console.error("❌ Failed to fetch dashboard summary", err);
         } finally {
           setLoading(false);
+          console.log("🏁 Loading completed");
         }
       };
 
       fetchSummary();
     } catch (err) {
-      console.error("Token decode error", err);
+      console.error("❌ Token decode error", err);
       setLoading(false);
     }
   }, []);
