@@ -2677,6 +2677,170 @@ background-size: cover; */
 
 /* Taskboard Styles start */
 
+/* ==== Jumbotron-style dashboard hero (matches your example) ==== */
+
+
+.dashboard-hero-title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  margin: 0;
+}
+
+.dashboard-hero-sub {
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+/* ==== Generic radii / chips ==== */
+.task-card {
+  transition: all 0.2s ease-in-out;
+  border-radius: 12px !important;
+}
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+.badge-pill-20 { border-radius: 20px !important; }
+.card, .modal-content { border-radius: 12px !important; }
+.modal-rounded { border-radius: 15px !important; }
+
+/* ==== Clamp text ==== */
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ==== Tiny icon sizes ==== */
+.icon-10 { font-size: 10px; }
+.icon-12 { font-size: 12px; }
+.icon-08 { font-size: 0.8rem; }
+
+/* ==== Status indicator line on cards ==== */
+.status-indicator { height: 4px; }
+
+/* ==== Scrollable list within column ==== */
+.task-list {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+.task-list::-webkit-scrollbar { width: 6px; }
+.task-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.task-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+.task-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+/* ==== Inputs & buttons polish ==== */
+.form-control:focus,
+.form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-1px);
+}
+.btn { border-radius: 8px !important; }
+.input-group-text { border-radius: 8px 0 0 8px !important; }
+.form-control.rounded-right-8 { border-radius: 0 8px 8px 0 !important; }
+.rounded-left-8 { border-radius: 8px 0 0 8px !important; }
+.form-select { border-radius: 8px !important; }
+.badge { border-radius: 20px !important; }
+
+/* ==== Labels ==== */
+.form-label {
+  color: #495057 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px !important;
+}
+
+/* ==== Column body bg/min-height ==== */
+.column-body { min-height: 400px; background-color: #fafbfc; }
+
+/* ==== Count badge in column header ==== */
+.count-pill { color: #000 !important; }
+
+/* ==== Filter select (enhanced) ==== */
+.custom-filter-select {
+  appearance: none;
+  background-image: none;
+  cursor: pointer;
+  position: relative;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+.custom-filter-select:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+  transform: translateY(-1px);
+}
+.custom-filter-select:hover {
+  border-color: #b8c5ea;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.custom-filter-select option {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #495057;
+  background: #ffffff;
+  border: none;
+}
+.custom-filter-select.value-all {
+  background: linear-gradient(135deg, #667eea 5%, #ffffff 5%);
+  border-left: 4px solid #667eea;
+}
+.custom-filter-select.value-todo {
+  background: linear-gradient(135deg, #0dcaf0 5%, #ffffff 5%);
+  border-left: 4px solid #0dcaf0;
+}
+.custom-filter-select.value-inprogress {
+  background: linear-gradient(135deg, #ffc107 5%, #ffffff 5%);
+  border-left: 4px solid #ffc107;
+}
+.custom-filter-select.value-done {
+  background: linear-gradient(135deg, #198754 5%, #ffffff 5%);
+  border-left: 4px solid #198754;
+}
+
+/* ==== Stats cards ==== */
+.stat-box { border-radius: 8px; font-weight: bold; }
+.stat-total { background: #f8f9fa; }
+.stat-todo { background: #5a67d8; color: #fff; }
+.stat-progress { background: #ffc107; color: #000; }
+.stat-done { background: #28a745; color: #fff; }
+
+/* ==== Progress height helper ==== */
+.progress-8 { height: 8px; }
+
+/* ==== Modal overlay tint ==== */
+.modal-overlay { background-color: rgba(0, 0, 0, 0.6); }
+
+/* ==== Skeleton opacity ==== */
+.skeleton-card { opacity: 0.6; }
+
+/* ==== Empty state icon circle ==== */
+.empty-state-icon { width: 80px; height: 80px; font-size: 32px; }
+
+/* ==== Responsive tweaks ==== */
+@media (max-width: 768px) {
+  .custom-filter-select { padding: 10px 14px; font-size: 13px; }
+}
+
 /* subtle polish */
 .task-card { border-radius: 12px; }
 .line-clamp-3 {
