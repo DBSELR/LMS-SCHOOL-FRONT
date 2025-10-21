@@ -161,7 +161,7 @@ function AdminDashboard() {
                   label: "Live Classes",
                   value: summary.liveClasses,
                   icon: "fa-video-camera",
-                  link: "instructor/live-classes",
+                  link: "/instructor/live-classes",
                 },
                 {
                   label: "Tasks",
