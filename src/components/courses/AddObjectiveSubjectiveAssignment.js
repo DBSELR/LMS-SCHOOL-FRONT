@@ -379,16 +379,19 @@ function AddObjectiveSubjectiveAssignment() {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Instructor" />
-
-      <div className="page">
-        <div className="section-body container-fluid mt-4">
-          <div className="jumbotron bg-light p-4 rounded shadow-sm mb-4 welcome-card animate-welcome">
-            <h2 className="page-title text-primary">Add Practice Test</h2>
-            <p className="text-muted mb-0">
+       
+      <div className="section-wrapper">
+      <div className="page admin-dashboard">
+        <div className="section-body mt-3 pt-0">
+          <div className="container-fluid">
+          <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+            <h2 className="page-title text-primary pt-0 dashboard-hero-title">Add Practice Test</h2>
+            <p className="text-muted mb-0 dashboard-hero-sub">
               {courseMeta.batchName} - {courseMeta.semester} -{" "}
               {courseMeta.examinationID} - {courseMeta.courseCode} -{" "}
               {courseMeta.courseName} - Unit - {unitId}
             </p>
+          </div>
           </div>
           <div className="container-fluid mb-3">
             <div className="d-flex justify-content-end">
@@ -585,7 +588,7 @@ function AddObjectiveSubjectiveAssignment() {
 
         <Footer />
       </div>
-
+      </div>
       <ConfirmationPopup
         show={showDeletePopup}
         message="Are you sure you want to remove this question?"

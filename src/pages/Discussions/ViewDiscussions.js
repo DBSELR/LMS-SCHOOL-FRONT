@@ -130,7 +130,7 @@ function ViewDiscussions() {
       <RightSidebar />
       <LeftSidebar />
 
-      <div className="page section-body mt-3 instructor-course-page">
+      <div className="page section-body mt-3 instructor-course-page admin-dashboard pt-0">
         <div className="container-fluid">
           {/* Back Button */}
           <div className="d-flex justify-content-end mb-3">
