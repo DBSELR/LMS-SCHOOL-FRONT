@@ -1222,6 +1222,10 @@ body {
   .remember-me{
     margin-left: 80px !important;
   }
+  .board-save-btn{
+    margin-top: 0px !important;
+    margin-bottom: 10px !important;
+  }
 }
 /* Input Label Animation  CSS End*/
 

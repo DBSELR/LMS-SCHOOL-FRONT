@@ -270,7 +270,7 @@ const CoursesTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            <div className="col-12 col-md-4 d-flex align-items-center mt-4 gap-2">
+            <div className="col-12 col-md-4 d-flex align-items-center mt-4 gap-2 board-save-btn">
               <Button
                 variant="success"
                 className="w-75 w-md-auto"
