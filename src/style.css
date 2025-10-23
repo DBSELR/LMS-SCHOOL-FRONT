@@ -217,6 +217,10 @@ body:not(.sidebar-open) .page {
     margin-left: 0 !important;
     width: 100% !important;
   }
+
+
+
+
 }
 
 .metismenu:not(.grid) li a{
@@ -853,6 +857,12 @@ table td, table th {
   margin-left: 30px;
 }
 
+@media (max-width: 767px) {
+  .section-wrapper{
+    margin-left: 0px;
+  }
+}
+
 /* Section-wrapper css end */
 
 /* Global Dashboard CSS Start */
@@ -1276,6 +1286,10 @@ button.btn-sm {
   .col-md-8 {
     max-width: 100%;
     flex: 0 0 100%;
+    margin: auto;
+        align-items: center;
+        text-align: center;
+        justify-content: center;
   }
 
   .card-header h6,

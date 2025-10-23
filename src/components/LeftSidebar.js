@@ -1,5 +1,5 @@
 // src/components/LeftSidebar.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import "../App.css";
@@ -14,21 +14,58 @@ function LeftSidebar({ role: propRole }) {
     try { fn?.(); } finally { console.groupEnd(); }
   };
 
+  const isSmallScreen = () => (typeof window !== "undefined" ? window.innerWidth <= 767 : false);
+
   const location = useLocation();
+  const sidebarRef = useRef(null);
   const [userName, setUserName] = useState("User");
   const [role, setRole] = useState(propRole || "");
   const [serverMenus, setServerMenus] = useState([]);
+  const [mobile, setMobile] = useState(isSmallScreen());
 
   // Force dynamic-only menus (no fallback)
   const DYNAMIC_ONLY = true;
 
-  /* Keep sidebar open */
+  /* ===== Mount: set initial open/close by screen size ===== */
   useEffect(() => {
-    document.body.classList.add("sidebar-open");
-    log("Mounted: forcing sidebar-open class on body");
+    const mobileNow = isSmallScreen();
+    setMobile(mobileNow);
+    if (mobileNow) {
+      document.body.classList.remove("sidebar-open"); // closed by default on mobile
+      log("Mounted: small screen, sidebar CLOSED by default");
+    } else {
+      document.body.classList.add("sidebar-open"); // open by default on desktop
+      log("Mounted: desktop, sidebar OPEN by default");
+    }
   }, []);
 
-  /* Load user + menus from storage (and on storage updates) */
+  /* ===== Handle window resize (debounced) to toggle default state ===== */
+  useEffect(() => {
+    let t;
+    const onResize = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const nowMobile = isSmallScreen();
+        if (nowMobile !== mobile) {
+          setMobile(nowMobile);
+          if (nowMobile) {
+            document.body.classList.remove("sidebar-open"); // switch to closed on mobile
+            log("Resize -> now MOBILE: closing sidebar by default");
+          } else {
+            document.body.classList.add("sidebar-open"); // open on desktop
+            log("Resize -> now DESKTOP: opening sidebar by default");
+          }
+        }
+      }, 120);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [mobile]);
+
+  /* ===== Load user + menus from storage (and on storage updates) ===== */
   useEffect(() => {
     const loadFromStorage = () => {
       group("loadFromStorage()", () => {
@@ -113,23 +150,25 @@ function LeftSidebar({ role: propRole }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propRole]);
 
-  /* Keep sidebar open on route change */
+  /* ===== On route change: auto-close on small screens ===== */
   useEffect(() => {
-    document.body.classList.add("sidebar-open");
-    log("route changed ->", location.pathname, "keeping sidebar-open");
+    if (isSmallScreen()) {
+      document.body.classList.remove("sidebar-open");
+      log("route changed ->", location.pathname, "auto-closing sidebar on MOBILE");
+    }
   }, [location.pathname]);
 
-  /* Click-outside to close on mobile only */
+  /* ===== Click-outside to close on mobile only ===== */
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (window.innerWidth <= 767) {
-        const sidebar = document.getElementById("left-sidebar");
-        const isClickInsideSidebar = sidebar && sidebar.contains(event.target);
-        const isMenuToggleClick = event.target.closest?.(".menu_toggle");
-        if (!isClickInsideSidebar && !isMenuToggleClick) {
-          document.body.classList.remove("sidebar-open");
-          log("mobile: click outside sidebar -> closing");
-        }
+      if (!isSmallScreen()) return;
+
+      const sidebar = sidebarRef.current;
+      const isInside = sidebar && sidebar.contains(event.target);
+      const isMenuToggleClick = event.target.closest?.(".menu_toggle");
+      if (!isInside && !isMenuToggleClick) {
+        document.body.classList.remove("sidebar-open");
+        log("mobile: click outside sidebar -> closing");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -140,10 +179,23 @@ function LeftSidebar({ role: propRole }) {
     };
   }, []);
 
-  /* Menu list (dynamic only) */
-  const menuItems = DYNAMIC_ONLY ? serverMenus : serverMenus;
+  /* ===== Keyboard: Esc closes on mobile ===== */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!isSmallScreen()) return;
+      if (e.key === "Escape") {
+        document.body.classList.remove("sidebar-open");
+        log("mobile: ESC pressed -> closing sidebar");
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
-  /* Active route helpers */
+  /* ===== Menus ===== */
+  const menuItems = useMemo(() => (DYNAMIC_ONLY ? serverMenus : serverMenus), [serverMenus]);
+
+  /* ===== Active route helpers ===== */
   const path = location.pathname;
 
   const isCoursewareActive =
@@ -179,8 +231,16 @@ function LeftSidebar({ role: propRole }) {
     return isPathActiveForItem(itemHref);
   };
 
+  // Close helper (used on menu click)
+  const closeIfMobile = () => {
+    if (isSmallScreen()) {
+      document.body.classList.remove("sidebar-open");
+      log("menu item selected on MOBILE -> closing sidebar");
+    }
+  };
+
   return (
-    <div id="left-sidebar" className="sidebar" style={{ paddingTop: "10px" }}>
+    <div id="left-sidebar" ref={sidebarRef} className="sidebar" style={{ paddingTop: "10px" }}>
       <div className="sidebar-header" style={{ padding: 0, paddingLeft: "20px" }}>
         <h5 className="brand-name d-flex align-items-center">
           <img src="/assets/5mantra.png" alt="logo" height="50" />
@@ -230,6 +290,7 @@ function LeftSidebar({ role: propRole }) {
                     <NavLink
                       to={item.href || "#"}
                       className={`d-flex align-items-center ${active ? "fw-bold text-primary" : ""}`}
+                      onClick={closeIfMobile}
                     >
                       <i className={`${item.icon || "fa fa-circle"} mr-2`} />
                       <span>{item.label}</span>
