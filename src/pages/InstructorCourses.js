@@ -107,7 +107,7 @@ function InstructorCourses() {
       <LeftSidebar role="Instructor" />
 
       <div className="section-wrapper">
-        <div className="page admin-dashboard">
+        <div className="page admin-dashboard pt-0">
         <div className="section-body mt-2 pt-0">
         <div className="container-fluid">
           <div className="card-body">

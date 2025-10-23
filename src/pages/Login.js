@@ -219,7 +219,7 @@ function Login() {
         <label htmlFor="password">Password</label>
         </div>
 
-            <div className="d-flex align-items-center mb-3">
+            <div className="d-flex align-items-center mb-3 remember-me">
               <input
                 type="checkbox"
                 id="remember"

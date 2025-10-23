@@ -344,7 +344,7 @@ const GroupsTab = ({ isActive }) => {
             {/* Save Button - Full width on small, auto width on large */}
             <div className="col-4 mt-4 d-flex gap-2 align-items-center">
               <Button
-                className="rounded-pill px-4"
+                className="rounded-pill px-4 class-save-btn"
                 variant="success"
                 onClick={(e) => {
                   e.preventDefault();

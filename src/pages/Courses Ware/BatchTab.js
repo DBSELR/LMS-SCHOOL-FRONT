@@ -436,7 +436,7 @@ const BatchTab = () => {
           <div className="row g-3">
 
             {/* Select Board */}
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-6 select-batch">
               <Form.Group>
                 <Form.Label>Select Board</Form.Label>
                 <Form.Control
@@ -457,7 +457,7 @@ const BatchTab = () => {
             </div>
 
             {/* Class */}
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-6 select-batch">
               <Form.Group>
                 <Form.Label>Class</Form.Label>
                 <Form.Control
@@ -478,7 +478,7 @@ const BatchTab = () => {
             </div>
 
             {/* Batch */}
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-6 input-batch">
               <Form.Group>
                 <Form.Label>Batch</Form.Label>
                 <Form.Control
@@ -491,7 +491,7 @@ const BatchTab = () => {
             </div>
 
             {/* Total Fee */}
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-6 input-batch">
               <Form.Group>
                 <Form.Label>Fee</Form.Label>
                 <Form.Control
@@ -505,7 +505,7 @@ const BatchTab = () => {
             </div>
 
             {/* Start Date */}
-            <div className="col-12 col-md-6 col-lg-4">
+            <div className="col-12 col-md-6 col-lg-4 input-batch">
               <Form.Group>
                 <Form.Label>Start Date</Form.Label>
                 <Form.Control
@@ -518,7 +518,7 @@ const BatchTab = () => {
             </div>
 
             {/* End Date */}
-            <div className="col-12 col-md-6 col-lg-4">
+            <div className="col-12 col-md-6 col-lg-4 input-batch">
               <Form.Group>
                 <Form.Label>End Date</Form.Label>
                 <Form.Control
@@ -533,7 +533,7 @@ const BatchTab = () => {
             {/* Save Button - Full width on small, auto width on large */}
             <div className="col-12 col-md-6 col-lg-4 d-flex align-items-center mt-4 gap-2">
               <Button
-                className="rounded-pill px-4"
+                className="rounded-pill px-4 batch-save-btn"
                 variant={isEditMode ? "warning" : "success"}
                 onClick={(e) => {
                   e.preventDefault();

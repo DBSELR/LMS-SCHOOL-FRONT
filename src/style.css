@@ -865,9 +865,40 @@ table td, table th {
 
 /* Section-wrapper css end */
 
-/* Global Dashboard CSS Start */
+/* Batch Save btn CSS Start */
+@media (max-width:480px){
+   .input-batch input.form-control{
+    width: 50% !important;
+    margin-left: 120px !important;
 
-/* Global Dashboard CSS End */
+   }
+
+  .select-batch select.form-control{
+    width: 50% !important;
+    margin-left: 120px !important;
+  }
+  .batch-save-btn{
+    width: 50% !important;
+    margin-left: 120px !important;
+  }
+
+  .class-save-btn{
+    width: 100% !important;
+    margin-left: 120px !important;
+    margin-bottom: 10px !important;
+  }
+  .taskboard-page{
+    width: 80% !important;
+    margin-left: 0px !important;
+    margin-bottom: 10px !important;
+  }
+  .taskboard-icon{
+    /* width: 20% !important; */
+    margin-bottom: 10px;
+    height: 40px;
+  }
+}
+/* Batch Save btn CSS End */
 
 
 
@@ -1182,6 +1213,15 @@ body {
 .form-item input:focus + label{
   border-radius: 20px;
   color: #5a67d8;
+}
+
+@media (max-width:480px){
+  .form-item label{
+    left: 80px !important;
+  }
+  .remember-me{
+    margin-left: 80px !important;
+  }
 }
 /* Input Label Animation  CSS End*/
 
@@ -1574,6 +1614,7 @@ button.btn-sm {
   }
 
   .btn {
+    margin-left: 10px;
     width: 100%;
     /* margin-bottom: 0.5rem; */
   }

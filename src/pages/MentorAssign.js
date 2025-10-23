@@ -198,7 +198,7 @@ function MentorAssign() {
       <LeftSidebar />
 
       <div className="section-wrapper">
-        <div className="page admin-dashboard">
+        <div className="page admin-dashboard pt-0">
         {/* Header styling */}
         <div className="section-body mt-3 pt-0">
           <div className="container-fluid">

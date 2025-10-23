@@ -45,7 +45,7 @@ function DiscussionForum() {
       <LeftSidebar />
       
       <div className="section-wrapper">
-      <div className="page admin-dashboard">
+      <div className="page admin-dashboard pt-0">
         <div className="section-body mt-3 pt-0">
         <div className="container-fluid">
 

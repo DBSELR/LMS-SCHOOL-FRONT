@@ -460,7 +460,7 @@ function TaskboardPage() {
       <LeftSidebar />
 
       <div className="section-wrapper">
-        <div className="page admin-dashboard">
+        <div className="page admin-dashboard pt-0">
           <div className="section-body mt-3 pt-0">
             <div className="container-fluid">
 
@@ -484,12 +484,12 @@ function TaskboardPage() {
                         <i className="fa fa-search me-1" /> Search Tasks
                       </label>
                       <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0 rounded-left-8">
+                        <span className="input-group-text bg-light border-end-0 rounded-left-8 taskboard-icon">
                           <i className="fa fa-search text-muted" />
                         </span>
                         <input
                           type="text"
-                          className="form-control border-start-0 ps-0 rounded-right-8"
+                          className="form-control border-start-0 ps-0 rounded-right-8 taskboard-page"
                           placeholder="Search by title, assignee, or #ID"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
@@ -564,7 +564,7 @@ function TaskboardPage() {
                               <div className="small">Total Tasks</div>
                             </div>
                           </div>
-                          <div className="col-6 col-md-3">
+                          <div className="col-6 col-md-3 mb-1">
                             <div className="text-center p-3 stat-box stat-todo">
                               <div className="fs-4 fw-bold">{tasks.todo?.length || 0}</div>
                               <div className="small">To Do</div>
