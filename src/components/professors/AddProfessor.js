@@ -6,6 +6,15 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
   const readOnly = mode === "view";
   const editMode = mode === "edit";
 
+  // === Error Modal State ===
+  const [showErrModal, setShowErrModal] = useState(false);
+  const [errInfo, setErrInfo] = useState({
+    title: "",
+    message: "",
+    conflicts: [], // [{conflictType, details}]
+    raw: null,
+  });
+
   // Programmes state (for dropdown)
   const [programmes, setProgrammes] = useState([]);
   const [progLoading, setProgLoading] = useState(false);
@@ -34,6 +43,90 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
     programmeCode: "",
     programmeName: "",
   });
+
+  // ---- helpers: conflict extraction + modal ----
+  function normalizeErrorPayload(err) {
+    // Try to get a JSON object: priority to axios-like err.response.data or fetch body passed through
+    let status = err?.response?.status ?? err?.status ?? undefined;
+    let data = err?.response?.data ?? err?.data ?? err?.body ?? err;
+    if (typeof data === "string") {
+      try { data = JSON.parse(data); } catch { /* keep as string */ }
+    }
+    return { status, data };
+  }
+
+  function buildErrInfo(err) {
+    const { status, data } = normalizeErrorPayload(err);
+    // If 409 Conflict, show a friendly duplicate warning
+    if (Number(status) === 409) {
+      return {
+        title: "Duplicate entries detected",
+        message: "Duplicate entries detected. Please provide a unique email address and phone number.",
+        conflicts: [],
+        raw: data,
+      };
+    }
+    // Fallback for other errors
+    return {
+      title: "Save failed",
+      message:
+        (typeof data === "string" && data) ||
+        data?.message ||
+        err?.message ||
+        "An unexpected error occurred.",
+      conflicts: [],
+      raw: data,
+    };
+  }
+
+  const ErrorDetailsModal = ({ open, info, onClose }) => {
+    if (!open) return null;
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          className="modal-backdrop fade show"
+          style={{ display: "block" }}
+          onClick={onClose}
+        />
+        {/* Modal */}
+        <div
+          className="modal fade show"
+          tabIndex={-1}
+          role="dialog"
+          style={{ display: "block" }}
+          aria-modal="true"
+        >
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content shadow">
+              <div className="modal-header bg-warning text-dark">
+                <h5 className="modal-title">
+                  <i className="fa fa-exclamation-triangle me-2 text-danger" />
+                  {info.title || "Error"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  onClick={onClose}
+                />
+              </div>
+              <div className="modal-body text-center">
+                <div className="alert alert-warning mb-0 p-3">
+                  <strong>{info.message}</strong>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-warning" onClick={onClose}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   // Parse department from existing value: supports "(CODE)-NAME" or plain "CODE"
   const parseDepartment = (dep) => {
@@ -221,16 +314,26 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
         });
       }
     } catch (err) {
-      const errorMessage =
-        err?.response?.data?.message ||
-        err?.response?.data ||
-        err?.message ||
-        "Save failed";
-      console.error("🚨 Submit error:", errorMessage);
-      toast.error(`❌ ${errorMessage}`, {
-        autoClose: 3000,
-        toastId: "professor-submit-error",
-      });
+      // Build a nice modal from error payload
+      const info = buildErrInfo(err);
+      setErrInfo(info);
+      setShowErrModal(true);
+
+      // Show only the friendly message for 409 errors
+      if (info.title === "Duplicate entries detected") {
+        toast.warning("Duplicate entries detected. Please provide a unique email address and phone number.", {
+          autoClose: 3500,
+          toastId: "professor-submit-error",
+        });
+      } else {
+        toast.error(`❌ ${info.title}`, {
+          autoClose: 3500,
+          toastId: "professor-submit-error",
+        });
+      }
+
+      // Also log the raw error for devs
+      console.error("🚨 Submit error:", info.raw || err);
     }
   };
 
@@ -251,103 +354,112 @@ const AddProfessor = ({ professor, onSubmit, mode = null, availableCourses = [],
   );
 
   return (
-    <form onSubmit={handleSubmit} className="container-fluid">
-      <h4 className="mb-3">
-        {mode === "edit" ? "Edit Faculty" : mode === "view" ? "Faculty Details" : "Add New Faculty"}
-      </h4>
+    <>
+      <form onSubmit={handleSubmit} className="container-fluid">
+        <h4 className="mb-3">
+          {mode === "edit" ? "Edit Faculty" : mode === "view" ? "Faculty Details" : "Add New Faculty"}
+        </h4>
 
-      <div className="row">
-        {/* Username & Password fields are intentionally NOT rendered */}
-        {renderInput("First Name", "firstName")}
-        {renderInput("Last Name", "lastName")}
-        {renderInput("Email", "email", "email")}
-        {renderInput("Phone Number", "phoneNumber")}
+        <div className="row">
+          {/* Username & Password fields are intentionally NOT rendered */}
+          {renderInput("First Name", "firstName")}
+          {renderInput("Last Name", "lastName")}
+          {renderInput("Email", "email", "email")}
+          {renderInput("Phone Number", "phoneNumber")}
 
-        {/* Board / Programme dropdown */}
-        <div className="form-group col-md-6">
-          <label htmlFor="programme">Board</label>
-          <select
-            id="programme"
-            name="programmeCode"
-            className="form-control"
-            value={formData.programmeCode}
-            onChange={handleProgrammeChange}
-            disabled={readOnly || progLoading}
-          >
-            <option value="">{progLoading ? "Loading Boards..." : "-- Select Board --"}</option>
-            {programmes.map((p) => (
-              <option key={p.code} value={p.code}>
-                ({p.code})-{p.name}
-              </option>
-            ))}
-          </select>
-          {progError && (
-            <small className="text-danger d-block mt-1">
-              Couldn’t load Boards: {progError}
-            </small>
+          {/* Board / Programme dropdown */}
+          <div className="form-group col-md-6">
+            <label htmlFor="programme">Board</label>
+            <select
+              id="programme"
+              name="programmeCode"
+              className="form-control"
+              value={formData.programmeCode}
+              onChange={handleProgrammeChange}
+              disabled={readOnly || progLoading}
+            >
+              <option value="">{progLoading ? "Loading Boards..." : "-- Select Board --"}</option>
+              {programmes.map((p) => (
+                <option key={p.code} value={p.code}>
+                  ({p.code})-{p.name}
+                </option>
+              ))}
+            </select>
+            {progError && (
+              <small className="text-danger d-block mt-1">
+                Couldn’t load Boards: {progError}
+              </small>
+            )}
+            {formData.programmeCode && (
+              <small className="text-muted d-block mt-1">
+                Selected: ({formData.programmeCode})-{formData.programmeName || "—"}
+                {" • Sent as department: "}
+                <strong>{formData.department}</strong>
+              </small>
+            )}
+          </div>
+
+          {renderInput("Profile Picture URL", "profilePictureUrl")}
+          {renderInput("Office Location", "officeLocation")}
+          {renderInput("Office Hours", "officeHours")}
+          {renderInput("Bio", "bio")}
+          {renderInput("Social Media Links", "socialMediaLinks", "text", { placeholder: "Comma separated" })}
+          {renderInput("Educational Background", "educationalBackground")}
+          {renderInput("Research Interests", "researchInterests")}
+          {renderInput("Teaching Rating", "teachingRating", "number", { min: 1, max: 5, step: 0.1 })}
+        </div>
+
+        <div className="row">
+          <div className="form-group col-md-6">
+            <label htmlFor="employeeStatus">Status</label>
+            <select
+              name="employeeStatus"
+              id="employeeStatus"
+              className="form-control"
+              value={formData.employeeStatus}
+              onChange={handleInputChange}
+              disabled={readOnly}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="On Leave">On Leave</option>
+            </select>
+          </div>
+
+          <div className="form-group col-md-6">
+            <label htmlFor="role">Role</label>
+            <select
+              name="role"
+              id="role"
+              className="form-control"
+              value={formData.role}
+              onChange={handleInputChange}
+              disabled={readOnly}
+            >
+              <option value="Instructor">Instructor</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="d-flex gap-2 mt-3">
+          {!readOnly && (
+            <button type="submit" className="btn btn-primary">
+              {mode === "edit" ? "Update" : "Add"} Faculty
+            </button>
           )}
-          {formData.programmeCode && (
-            <small className="text-muted d-block mt-1">
-              Selected: ({formData.programmeCode})-{formData.programmeName || "—"}
-              {" • Sent as department: "}
-              <strong>{formData.department}</strong>
-            </small>
-          )}
-        </div>
-
-        {renderInput("Profile Picture URL", "profilePictureUrl")}
-        {renderInput("Office Location", "officeLocation")}
-        {renderInput("Office Hours", "officeHours")}
-        {renderInput("Bio", "bio")}
-        {renderInput("Social Media Links", "socialMediaLinks", "text", { placeholder: "Comma separated" })}
-        {renderInput("Educational Background", "educationalBackground")}
-        {renderInput("Research Interests", "researchInterests")}
-        {renderInput("Teaching Rating", "teachingRating", "number", { min: 1, max: 5, step: 0.1 })}
-      </div>
-
-      <div className="row">
-        <div className="form-group col-md-6">
-          <label htmlFor="employeeStatus">Status</label>
-          <select
-            name="employeeStatus"
-            id="employeeStatus"
-            className="form-control"
-            value={formData.employeeStatus}
-            onChange={handleInputChange}
-            disabled={readOnly}
-          >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="On Leave">On Leave</option>
-          </select>
-        </div>
-
-        <div className="form-group col-md-6">
-          <label htmlFor="role">Role</label>
-          <select
-            name="role"
-            id="role"
-            className="form-control"
-            value={formData.role}
-            onChange={handleInputChange}
-            disabled={readOnly}
-          >
-            <option value="Instructor">Instructor</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="d-flex gap-2 mt-3">
-        {!readOnly && (
-          <button type="submit" className="btn btn-primary">
-            {mode === "edit" ? "Update" : "Add"} Faculty
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            {readOnly ? "Close" : "Cancel"}
           </button>
-        )}
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>
-          {readOnly ? "Close" : "Cancel"}
-        </button>
-      </div>
-    </form>
+        </div>
+      </form>
+
+      {/* Error Modal */}
+      <ErrorDetailsModal
+        open={showErrModal}
+        info={errInfo}
+        onClose={() => setShowErrModal(false)}
+      />
+    </>
   );
 };
 

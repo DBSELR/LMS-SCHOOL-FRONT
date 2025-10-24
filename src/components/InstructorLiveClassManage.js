@@ -70,13 +70,19 @@ function InstructorLiveClassManage() {
     endTime: "",
     meetingLink: "",
     examinationID: "",
-   // semester: "",
+    // semester: "",
     batchName: "",
   });
 
   const token = localStorage.getItem("jwt");
   const decoded = jwtDecode(token);
   const instructorId = decoded["UserId"] || decoded.userId || decoded.nameid;
+
+  // Helper to construct DELETE API (falls back to localhost sample you provided)
+  const DELETE_API = (id) =>
+    API_BASE_URL
+      ? `${API_BASE_URL}/LiveClass/Delete/${id}`
+      : `https://localhost:7099/api/LiveClass/Delete/${id}`;
 
   useEffect(() => {
     console.clear();
@@ -137,7 +143,7 @@ function InstructorLiveClassManage() {
       setForm((prevForm) => ({
         ...prevForm,
         examinationID: selectedId,
-      //  semester: selectedCourse.semester || "",
+        //  semester: selectedCourse.semester || "",
         batchName: selectedCourse.batchName || "",
       }));
     }
@@ -162,18 +168,18 @@ function InstructorLiveClassManage() {
       !form.liveDate ||
       !form.startTime ||
       !form.endTime ||
-      !form.examinationID 
-     // !form.semester
+      !form.examinationID
+      // !form.semester
     ) {
       toast.warning("⚠️ Please fill in all required fields.");
       return;
     }
 
     const examinationID = parseInt(form.examinationID);
-   // const semester = parseInt(form.semester);
+    // const semester = parseInt(form.semester);
 
     //if (isNaN(examinationID) || isNaN(semester)) {
-       if (isNaN(examinationID)) {
+    if (isNaN(examinationID)) {
       toast.error("❌ Invalid course selection.");
       return;
     }
@@ -242,7 +248,7 @@ function InstructorLiveClassManage() {
         endTime: "",
         meetingLink: "",
         examinationID: "",
-       // semester: "",
+        // semester: "",
         batchName: "",
       });
 
@@ -264,7 +270,7 @@ function InstructorLiveClassManage() {
       endTime: cls.endTime,
       meetingLink: cls.meetingLink,
       examinationID: cls.examinationID,
-    //  semester: cls.semester,
+      //  semester: cls.semester,
       batchName: cls.batchName,
     });
     setEditingId(cls.liveClassId);
@@ -275,19 +281,20 @@ function InstructorLiveClassManage() {
     if (!deleteId) return;
 
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/LiveClass/Delete/${deleteId}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      // Uses provided localhost API when API_BASE_URL is undefined, otherwise uses your configured base URL
+      const endpoint = DELETE_API(deleteId);
 
-      if (res.ok) {
+      const res = await fetch(endpoint, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok || res.status === 204) {
         setClasses((prev) => prev.filter((c) => c.liveClassId !== deleteId));
         toast.success("✅ Class Deleted successfully.");
       } else {
-        toast.error("❌ Failed to delete class.");
+        const errText = await res.text().catch(() => "");
+        toast.error(`❌ Failed to delete class. ${errText || ""}`);
       }
     } catch (err) {
       console.error("❌ Error deleting class:", err);
@@ -320,18 +327,18 @@ function InstructorLiveClassManage() {
   };
 
   const calendarEvents = classes.map((cls) => ({
-  id: cls.liveClassId,
-  title: cls.className,
-  start: `${cls.liveDate.split("T")[0]}T${cls.startTime}`, // no :00
-  end: `${cls.liveDate.split("T")[0]}T${cls.endTime}`,
-  extendedProps: {
-    instructor: cls.instructorName,
-    course: cls.courseName,
-   // semester: cls.semester,
-    status: getClassStatus(cls),
-    meetingLink: cls.meetingLink,
-  },
-}));
+    id: cls.liveClassId,
+    title: cls.className,
+    start: `${cls.liveDate.split("T")[0]}T${cls.startTime}`, // no :00
+    end: `${cls.liveDate.split("T")[0]}T${cls.endTime}`,
+    extendedProps: {
+      instructor: cls.instructorName,
+      course: cls.courseName,
+      // semester: cls.semester,
+      status: getClassStatus(cls),
+      meetingLink: cls.meetingLink,
+    },
+  }));
 
   const getBadgeColor = (status) => {
     if (status === "Live Now") return "bg-success";
@@ -341,46 +348,48 @@ function InstructorLiveClassManage() {
   };
 
   const handleUploadRecording = async (liveClassId) => {
-  const fileInput = document.createElement("input");
-  fileInput.type = "file";
-  fileInput.accept = "video/*";
-  fileInput.onchange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "video/*";
+    fileInput.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+      const formData = new FormData();
+      formData.append("file", file);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/LiveClass/UploadLiveClass?id=${liveClassId}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/LiveClass/UploadLiveClass?id=${liveClassId}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          }
+        );
 
-      if (response.ok) {
-        toast.success("✅ Recording uploaded successfully!");
-        fetchClasses(); // refresh list to reflect new fileurl
-      } else {
-        const errText = await response.text();
-        toast.error(`❌ Upload failed: ${errText}`);
+        if (response.ok) {
+          toast.success("✅ Recording uploaded successfully!");
+          fetchClasses(); // refresh list to reflect new fileurl
+        } else {
+          const errText = await response.text();
+          toast.error(`❌ Upload failed: ${errText}`);
+        }
+      } catch (err) {
+        console.error("❌ Upload error:", err);
+        toast.error("❌ Error uploading file.");
       }
-    } catch (err) {
-      console.error("❌ Upload error:", err);
-      toast.error("❌ Error uploading file.");
-    }
+    };
+    fileInput.click();
   };
-  fileInput.click();
-};
-
 
   const groupByBatchSemester = (data) => {
     const grouped = {};
     data.forEach((cls) => {
       //const key = `${cls.batchName} - Semester: ${cls.semester}`;
-        const key = `${cls.batchName} `;
+      const key = `${cls.batchName} `;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(cls);
     });
@@ -407,112 +416,137 @@ function InstructorLiveClassManage() {
     return grouped;
   };
 
-const renderClassCard = (cls) => {
-  const status = getClassStatus(cls);
-  const [year, month, day] = cls.liveDate.split("T")[0].split("-");
-  const [startHour, startMinute] = cls.startTime.split(":").map(Number);
-  const [endHour, endMinute] = cls.endTime.split(":").map(Number);
-  const startDateTime = new Date(year, month - 1, day, startHour, startMinute);
+  const renderClassCard = (cls) => {
+    const status = getClassStatus(cls);
+    const [year, month, day] = cls.liveDate.split("T")[0].split("-");
+    const [startHour, startMinute] = cls.startTime.split(":").map(Number);
+    const [endHour, endMinute] = cls.endTime.split(":").map(Number);
+    const startDateTime = new Date(
+      year,
+      month - 1,
+      day,
+      startHour,
+      startMinute
+    );
 
-  const courseInfo = assignedCourses.find(
-    (c) => c.examinationID === cls.examinationID
-  );
+    const courseInfo = assignedCourses.find(
+      (c) => c.examinationID === cls.examinationID
+    );
 
-  const subjectLine = courseInfo
-    ? `${courseInfo.paperCode} - ${courseInfo.paperName} ( Batch / ${courseInfo.batchName || "N/A"})`
-    : "Subject info not found";
+    const subjectLine = courseInfo
+      ? `${courseInfo.paperCode} - ${courseInfo.paperName} ( Batch / ${
+          courseInfo.batchName || "N/A"
+        })`
+      : "Subject info not found";
 
-  return (
-    <div
-      key={cls.liveClassId}
-      className="card border-0 mb-3 d-flex flex-column"
-      style={{
-        background: "linear-gradient(135deg, #f0f0ff, #ffffff)",
-        borderRadius: "20px",
-        minHeight: "200px",
-        height: "95%",
-      }}
-    >
-      <div className="card-body d-flex flex-column p-3">
-        <h5 className="text-dark fw-bold mb-2">
-          <i className="fa fa-video-camera mr-2 text-primary"></i> {cls.className}
-        </h5>
+    return (
+      <div
+        key={cls.liveClassId}
+        className="card border-0 mb-3 d-flex flex-column"
+        style={{
+          background: "linear-gradient(135deg, #f0f0ff, #ffffff)",
+          borderRadius: "20px",
+          minHeight: "200px",
+          height: "95%",
+        }}
+      >
+        <div className="card-body d-flex flex-column p-3">
+          <h5 className="text-dark fw-bold mb-2 d-flex align-items-center justify-content-between">
+            <span>
+              <i className="fa fa-video-camera mr-2 text-primary"></i>{" "}
+              {cls.className}
+            </span>
 
-        <div className="mb-2 text-muted small">
-          <i className="fa fa-book text-secondary me-1"></i>{" "}
-          <strong>Subject:</strong> {subjectLine}
-        </div>
-
-        <div className="text-muted small mb-1">
-          <i className="fa fa-calendar-alt me-1 text-secondary"></i>{" "}
-          <strong>Date:</strong> {startDateTime.toLocaleDateString("en-GB")}
-        </div>
-
-        <div className="text-muted small mb-1">
-          <i className="fa fa-clock me-1 text-secondary"></i>{" "}
-          <strong>Time:</strong> {formatTime(cls.startTime)} to {formatTime(cls.endTime)}
-        </div>
-
-        {status !== "Completed" && (
-          <div className="text-muted small mb-2">
-            <i className="fa fa-hourglass-half me-1 text-secondary"></i>{" "}
-            <CountdownTimer startDateTime={startDateTime} />
-          </div>
-        )}
-
-        <div className="text-muted small mb-1">
-          <i className="fa fa-info-circle me-1 text-secondary"></i>{" "}
-          <strong>Status:</strong>{" "}
-          <span className={`badge ${getBadgeColor(status)} px-2 py-1`}>
-            {status}
-          </span>
-        </div>
-
-        
-
-        <div className="d-flex flex-wrap gap-2 pt-2">
-          {status !== "Completed" ? (
-            <>
-            {cls.meetingLink && status !== "Completed" && (
-          <button
-            className="btn btn-sm mr-2 btn-success"
-            onClick={() => window.open(cls.meetingLink, "_blank")}
-          >
-            <i className="fa fa-sign-in-alt me-1"></i> Join
-          </button>
-        )}
-              <button
-                className="btn btn-sm mr-2 btn-info"
-                onClick={() => handleEdit(cls)}
-              >
-                <i className="fa fa-edit me-1"></i> Edit
-              </button>
-              <button
-                className="btn btn-sm mr-2 btn-danger"
-                onClick={() => {
-                  setDeleteId(cls.liveClassId);
-                  setShowDeletePopup(true);
-                }}
-              >
-                <i className="fa fa-trash me-1"></i> Delete
-              </button>
-            </>
-          ) : (
+            {/* Top-right delete icon for quick access */}
             <button
-              className="btn btn-sm btn-warning"
-              onClick={() => handleUploadRecording(cls.liveClassId)}
+              type="button"
+              title="Delete Live Class"
+              className="btn btn-sm btn-outline-danger"
+              style={{ borderRadius: 12, minWidth: 36 }}
+              onClick={() => {
+                setDeleteId(cls.liveClassId);
+                setShowDeletePopup(true);
+              }}
             >
-              <i className="fa fa-upload me-1"></i> Upload Recording
+              <i className="fa fa-trash" aria-hidden="true"></i>
             </button>
+          </h5>
+
+          <div className="mb-2 text-muted small">
+            <i className="fa fa-book text-secondary me-1"></i>{" "}
+            <strong>Subject:</strong> {subjectLine}
+          </div>
+
+          <div className="text-muted small mb-1">
+            <i className="fa fa-calendar-alt me-1 text-secondary"></i>{" "}
+            <strong>Date:</strong> {startDateTime.toLocaleDateString("en-GB")}
+          </div>
+
+          <div className="text-muted small mb-1">
+            <i className="fa fa-clock me-1 text-secondary"></i>{" "}
+            <strong>Time:</strong> {formatTime(cls.startTime)} to{" "}
+            {formatTime(cls.endTime)}
+          </div>
+
+          {status !== "Completed" && (
+            <div className="text-muted small mb-2">
+              <i className="fa fa-hourglass-half me-1 text-secondary"></i>{" "}
+              <CountdownTimer startDateTime={startDateTime} />
+            </div>
           )}
+
+          <div className="text-muted small mb-1">
+            <i className="fa fa-info-circle me-1 text-secondary"></i>{" "}
+            <strong>Status:</strong>{" "}
+            <span className={`badge ${getBadgeColor(status)} px-2 py-1`}>
+              {status}
+            </span>
+          </div>
+
+          <div className="d-flex flex-wrap gap-2 pt-2">
+            {status !== "Completed" ? (
+              <>
+                {cls.meetingLink && status !== "Completed" && (
+                  <button
+                    type="button"
+                    className="btn btn-sm mr-2 btn-success"
+                    onClick={() => window.open(cls.meetingLink, "_blank")}
+                  >
+                    <i className="fa fa-sign-in-alt me-1"></i> Join
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-sm mr-2 btn-info"
+                  onClick={() => handleEdit(cls)}
+                >
+                  <i className="fa fa-edit me-1"></i> Edit
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm mr-2 btn-danger"
+                  onClick={() => {
+                    setDeleteId(cls.liveClassId);
+                    setShowDeletePopup(true);
+                  }}
+                >
+                  <i className="fa fa-trash me-1"></i> Delete
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-sm btn-warning"
+                onClick={() => handleUploadRecording(cls.liveClassId)}
+              >
+                <i className="fa fa-upload me-1"></i> Upload Recording
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-
-
+    );
+  };
 
   return (
     <div id="main_content" className="font-muli theme-blush">
@@ -527,202 +561,204 @@ const renderClassCard = (cls) => {
         .jiggle-effect {
           animation: jiggle 0.5s infinite;
         }
+        /* Ensure icon-buttons look clickable even if CSS resets */
+        .btn.btn-outline-danger i.fa-trash { pointer-events: none; }
       `}</style>
 
       <HeaderTop />
       <LeftSidebar role="Instructor" />
-      
+
       <div className="section-wrapper">
         <div className="page admin-dashboard pt-0">
-        <div className="section-body mt-3 pt-0">
-          <div className="container-fluid">
+          <div className="section-body mt-3 pt-0">
+            <div className="container-fluid">
               <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
-                          <h2 className="page-title text-primary pt-0 dashboard-hero-title">
-                           <i class="fa-solid fa-video-camera"></i> Manage Live Classes
-                          </h2>
-                          <p className="text-muted mb-0 dashboard-hero-sub">
-                            View, manage, and schedule live classes
-                          </p>
-        </div>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-4">Loading...</div>
-        ) : classes.length === 0 ? (
-          <div className="text-center py-4">No classes available.</div>
-        ) : (
-
-          <div></div>
-        )}
-       <div className="container-fluid mb-3">
-          <div className="d-flex justify-content-end">
-            <Button variant="primary" onClick={() => setShowModal(true)}>
-              + Add New Live Class
-            </Button>
-          </div>
-        </div>
-        <div className="container-fluid">
-          <div
-            className="d-flex justify-content-center gap-3 mt-3 mb-3 flex-wrap tab-buttons-container"
-            
-          >
-            <button
-              
-              className={`tab-btn ${activeTab === "batch" ? "active" : ""}`}
-              onClick={() => setActiveTab("batch")}
-            >
-              <FaUsers className="me-1" style={{ marginRight: "10px" }} /> Batch
-              wise
-            </button>
-            <button
-              
-              className={`tab-btn ${activeTab === "subject" ? "active" : ""}`}
-              onClick={() => setActiveTab("subject")}
-            >
-              <FaBookOpen className="me-1" style={{ marginRight: "10px" }} />{" "}
-              Subject wise
-            </button>
-            <button
-              
-              className={`tab-btn ${activeTab === "upcoming" ? "active" : ""}`}
-              onClick={() => setActiveTab("upcoming")}
-            >
-              <FaClock className="me-1" style={{ marginRight: "10px" }} />{" "}
-              Upcoming
-            </button>
-            <button
-                            className={`tab-btn ${activeTab === "calendar" ? "active" : ""}`}
-                            onClick={() => setActiveTab("calendar")}
-                          >
-                            <FaCalendar /> Calendar View
-                          </button>
+                <h2 className="page-title text-primary pt-0 dashboard-hero-title">
+                  <i className="fa-solid fa-video-camera"></i> Manage Live
+                  Classes
+                </h2>
+                <p className="text-muted mb-0 dashboard-hero-sub">
+                  View, manage, and schedule live classes
+                </p>
+              </div>
+            </div>
           </div>
 
           {loading ? (
             <div className="text-center py-4">Loading...</div>
+          ) : classes.length === 0 ? (
+            <div className="text-center py-4">No classes available.</div>
           ) : (
-            <>
-              {/* Batch wise */}
-              {activeTab === "batch" &&
-                Object.entries(groupByBatchSemester(classes)).map(
-                  ([key, group]) => (
-                    <div key={key} className="mb-3 ">
-                      <div
-                        className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
-                        onClick={() =>
-                          setOpenBatchGroups((prev) => ({
-                            ...prev,
-                            [key]: !prev[key],
-                          }))
-                        }
-                        style={{ fontWeight: "600" }}
-                      >
-                        <span>
-                          {key} ({group.length} classes)
-                        </span>
-                        {openBatchGroups[key] ? (
-                          <FaChevronUp style={{ marginRight: "10px" }} />
-                        ) : (
-                          <FaChevronDown style={{ marginRight: "10px" }} />
-                        )}
-                      </div>
+            <div></div>
+          )}
+          <div className="container-fluid mb-3">
+            <div className="d-flex justify-content-end">
+              <Button variant="primary" onClick={() => setShowModal(true)}>
+                + Add New Live Class
+              </Button>
+            </div>
+          </div>
+          <div className="container-fluid">
+            <div
+              className="d-flex justify-content-center gap-3 mt-3 mb-3 flex-wrap tab-buttons-container"
+            >
+              <button
+                className={`tab-btn ${activeTab === "batch" ? "active" : ""}`}
+                onClick={() => setActiveTab("batch")}
+              >
+                <FaUsers className="me-1" style={{ marginRight: "10px" }} />{" "}
+                Batch wise
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "subject" ? "active" : ""}`}
+                onClick={() => setActiveTab("subject")}
+              >
+                <FaBookOpen className="me-1" style={{ marginRight: "10px" }} />{" "}
+                Subject wise
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "upcoming" ? "active" : ""}`}
+                onClick={() => setActiveTab("upcoming")}
+              >
+                <FaClock className="me-1" style={{ marginRight: "10px" }} />{" "}
+                Upcoming
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "calendar" ? "active" : ""}`}
+                onClick={() => setActiveTab("calendar")}
+              >
+                <FaCalendar /> Calendar View
+              </button>
+            </div>
 
-                      <Collapse in={openBatchGroups[key]}>
-                        <div className="p-3">
-                          <div className="row">
-                            {group.map((cls) => (
-                              <div
-                                key={cls.liveClassId}
-                                className="col-lg-4 col-md-6 col-12"
-                              >
-                                {renderClassCard(cls)}
-                              </div>
-                            ))}
-                          </div>
+            {loading ? (
+              <div className="text-center py-4">Loading...</div>
+            ) : (
+              <>
+                {/* Batch wise */}
+                {activeTab === "batch" &&
+                  Object.entries(groupByBatchSemester(classes)).map(
+                    ([key, group]) => (
+                      <div key={key} className="mb-3 ">
+                        <div
+                          className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
+                          onClick={() =>
+                            setOpenBatchGroups((prev) => ({
+                              ...prev,
+                              [key]: !prev[key],
+                            }))
+                          }
+                          style={{ fontWeight: "600" }}
+                        >
+                          <span>
+                            {key} ({group.length} classes)
+                          </span>
+                          {openBatchGroups[key] ? (
+                            <FaChevronUp style={{ marginRight: "10px" }} />
+                          ) : (
+                            <FaChevronDown style={{ marginRight: "10px" }} />
+                          )}
                         </div>
-                      </Collapse>
-                    </div>
-                  )
-                )}
 
-              {/* Subject wise */}
-              {activeTab === "subject" &&
-                Object.entries(groupBySubject(classes)).map(([key, group]) => (
-                  <div key={key} className="mb-3">
-                    <div
-                      className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
-                      onClick={() =>
-                        setOpenSubjectGroups((prev) => ({
-                          ...prev,
-                          [key]: !prev[key],
-                        }))
-                      }
-                      style={{ fontWeight: "600" }}
-                    >
-                      <span>
-                        {key} ({group.length} classes)
-                      </span>
-                      {openSubjectGroups[key] ? (
-                        <FaChevronUp style={{ marginRight: "10px" }} />
-                      ) : (
-                        <FaChevronDown style={{ marginRight: "10px" }} />
-                      )}
-                    </div>
-                    <Collapse in={openSubjectGroups[key]}>
-                      <div className="p-3">
-                        <div className="row">
-                          {group.map((cls) => (
+                        <Collapse in={openBatchGroups[key]}>
+                          <div className="p-3">
+                            <div className="row">
+                              {group.map((cls) => (
+                                <div
+                                  key={cls.liveClassId}
+                                  className="col-lg-4 col-md-6 col-12"
+                                >
+                                  {renderClassCard(cls)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </Collapse>
+                      </div>
+                    )
+                  )}
+
+                {/* Subject wise */}
+                {activeTab === "subject" &&
+                  Object.entries(groupBySubject(classes)).map(
+                    ([key, group]) => (
+                      <div key={key} className="mb-3">
+                        <div
+                          className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
+                          onClick={() =>
+                            setOpenSubjectGroups((prev) => ({
+                              ...prev,
+                              [key]: !prev[key],
+                            }))
+                          }
+                          style={{ fontWeight: "600" }}
+                        >
+                          <span>
+                            {key} ({group.length} classes)
+                          </span>
+                          {openSubjectGroups[key] ? (
+                            <FaChevronUp style={{ marginRight: "10px" }} />
+                          ) : (
+                            <FaChevronDown style={{ marginRight: "10px" }} />
+                          )}
+                        </div>
+                        <Collapse in={openSubjectGroups[key]}>
+                          <div className="p-3">
+                            <div className="row">
+                              {group.map((cls) => (
+                                <div
+                                  key={cls.liveClassId}
+                                  className="col-lg-4 col-md-6 col-12"
+                                  style={{ marginBottom: "5px" }}
+                                >
+                                  {renderClassCard(cls)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </Collapse>
+                      </div>
+                    )
+                  )}
+
+                {/* Upcoming */}
+                {activeTab === "upcoming" && (
+                  <>
+                    {classes.filter((cls) =>
+                      ["Scheduled", "Live Now"].includes(getClassStatus(cls))
+                    ).length === 0 ? (
+                      <p>No upcoming classes.</p>
+                    ) : (
+                      <div className="row">
+                        {classes
+                          .filter((cls) =>
+                            ["Scheduled", "Live Now"].includes(
+                              getClassStatus(cls)
+                            )
+                          )
+                          .map((cls) => (
                             <div
                               key={cls.liveClassId}
-                              className="col-lg-4 col-md-6 col-12" 
-                              style={{marginBottom:'5px'}}
+                              className="col-lg-4 col-md-6 col-12"
                             >
                               {renderClassCard(cls)}
                             </div>
                           ))}
-                        </div>
                       </div>
-                    </Collapse>
-                  </div>
-                ))}
-
-              {/* Upcoming */}
-              {activeTab === "upcoming" && (
-                <>
-                  {classes.filter((cls) =>
-                    ["Scheduled", "Live Now"].includes(getClassStatus(cls))
-                  ).length === 0 ? (
-                    <p>No upcoming classes.</p>
-                  ) : (
-                    <div className="row">
-                      {classes
-                        .filter((cls) =>
-                          ["Scheduled", "Live Now"].includes(
-                            getClassStatus(cls)
-                          )
-                        )
-                        .map((cls) => (
-                          <div
-                            key={cls.liveClassId}
-                            className="col-lg-4 col-md-6 col-12"
-                          >
-                            {renderClassCard(cls)}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-          {activeTab === "calendar" && (
-                        <CalendarViewsAdminLiveClass events={calendarEvents} active={activeTab === "calendar"} />
-                      )}
+                    )}
+                  </>
+                )}
+              </>
+            )}
+            {activeTab === "calendar" && (
+              <CalendarViewsAdminLiveClass
+                events={calendarEvents}
+                active={activeTab === "calendar"}
+              />
+            )}
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-         
       </div>
 
       <Modal
@@ -732,18 +768,18 @@ const renderClassCard = (cls) => {
           setEditingId(null);
         }}
       >
-        <Modal.Header >
+        <Modal.Header>
           <Modal.Title>{editingId ? "Edit" : "Add New"} Live Class</Modal.Title>
           <button
-                    type="button"
-                    className="close"
-                    onClick={() => {
-                      setShowModal(false);
-                      setEditingId(null);
-                    }}
-                  >
-                    <span>&times;</span>
-                  </button>
+            type="button"
+            className="close"
+            onClick={() => {
+              setShowModal(false);
+              setEditingId(null);
+            }}
+          >
+            <span>&times;</span>
+          </button>
         </Modal.Header>
         <Modal.Body>
           <div className="row g-3 mb-3">
@@ -804,8 +840,8 @@ const renderClassCard = (cls) => {
                 <option value="">Select Subject</option>
                 {assignedCourses.map((course, i) => (
                   <option key={i} value={course.examinationID}>
-                    {course.paperCode}-{course.paperName} ( Batch
-                    - {course.batchName || "N/A"} / {course.class || "N/A"})
+                    {course.paperCode}-{course.paperName} ( Batch -{" "}
+                    {course.batchName || "N/A"} / {course.class || "N/A"})
                   </option>
                 ))}
               </select>

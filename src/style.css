@@ -1126,7 +1126,107 @@ body {
   }
 }
 
+.video-wrapper {
+          position: relative;
+          width: 100%;
+          padding-bottom: 56.25%; /* 16:9 */
+          height: 0;
+          background: #000;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .video-wrapper iframe,
+        .video-wrapper video {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
+          border-radius: 8px;
+        }
+        .modal-lg .modal-body { padding: 0.75rem 1rem; }
+      
 
+      
+        .wm-overlay {
+          position: absolute;
+          inset: 0;
+          z-index: 999999;
+          pointer-events: none;
+          overflow: hidden;
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+        }
+        .wm-chip {
+          position: absolute;
+          top: 0px; 
+          left: 0px;
+          max-width: 40%;
+          padding: 6px 12px;
+          border-radius: 8px;
+          background: rgba(0,0,0,0.15);
+          backdrop-filter: blur(2px);
+          color: #fff;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          font-size: min(2vw, 12px);
+          line-height: 1;
+          opacity: 1;
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          text-transform: uppercase;
+          pointer-events: none;
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+          transform: translate3d(0px, 0px, 0px);
+          will-change: transform;
+        }
+        .relative-wrap { 
+          position: relative; 
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+        }
+        
+        /* Enhanced security for video and PDF containers */
+        .video-wrapper, .pdf-container {
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        
+        .video-wrapper, .pdf-container, .wm-overlay, .relative-wrap {
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Delete button styling */
+        .resource-card { position: relative; }
+        .delete-btn {
+          position: absolute;
+          top: 8px;
+          right: 10px;
+          border: none;
+          background: #ffffff;
+          border-radius: 999px;
+          padding: 6px 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          cursor: pointer;
+          opacity: 0.92;
+          z-index: 1000;            /* ensure on top */
+          pointer-events: auto;     /* ensure clickable */
+        }
+        .delete-btn:hover { opacity: 1; }
+        .delete-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* InstructorCourseViewPage.css end */
 

@@ -238,12 +238,12 @@ function InstructorCourseViewPage() {
   
   // Watermark refs and displayText
   // Watermark refs and displayText (live ticking time)
-      const { role: wmRole, userId: wmUserId } = useMemo(() => getIdentityFromToken("jwt"), []);
-      const liveTime = useLiveClock({ timeZone: 'Asia/Kolkata', intervalMs: 1000 });
-      const displayText = `${wmRole}-${wmUserId} | ${liveTime}`;
+  const { role: wmRole, userId: wmUserId } = useMemo(() => getIdentityFromToken("jwt"), []);
+  const liveTime = useLiveClock({ timeZone: 'Asia/Kolkata', intervalMs: 1000 });
+  const displayText = `${wmRole}-${wmUserId} | ${liveTime}`;
 
-      const wmVideoRef = useRef(null);
-      const wmPdfRef = useRef(null);
+  const wmVideoRef = useRef(null);
+  const wmPdfRef = useRef(null);
   // Animation state for watermarks
   const videoWmStateRef = useRef({
     x: 20,
@@ -264,6 +264,80 @@ function InstructorCourseViewPage() {
   });
   
   const apiOrigin = getApiOrigin();
+
+  // === Delete helpers ===
+  function getContentId(obj) {
+    return (
+      obj?.contentId ??
+      obj?.ContentId ??
+      obj?.id ??
+      obj?.Id ??
+      obj?.cid ??
+      obj?.Cid ??
+      null
+    );
+  }
+  const [deletingId, setDeletingId] = useState(null);
+
+  function removeContentLocallyById(id) {
+    const drop = (arr) => (Array.isArray(arr) ? arr.filter((x) => getContentId(x) !== id) : []);
+    setEBOOKS((p) => drop(p));
+    setVideos((p) => drop(p));
+    setwebresources((p) => drop(p));
+    setfaq((p) => drop(p));
+    setmisconceptions((p) => drop(p));
+    setpracticeassignment((p) => drop(p));
+    setstudyguide((p) => drop(p));
+    setMaterials((p) => drop(p));
+  }
+
+  async function handleDeleteContent(item, e) {
+    if (e) e.stopPropagation();
+    const id = getContentId(item);
+    if (!id) {
+      warn("Cannot delete: no content id on item", item);
+      alert("Delete failed: content id not found.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to delete this content? This cannot be undone.")) {
+      return;
+    }
+    try {
+      setDeletingId(id);
+      const token = localStorage.getItem("jwt");
+      const res = await fetch(`${API_BASE_URL}/Content/Delete/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const bodyText = await res.text().catch(() => "");
+      log("DELETE Content response", { status: res.status, ok: res.ok, bodyText });
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${bodyText || ""}`);
+
+      // best-effort: clean cached progress keys
+      try {
+        const fileUrlAbs = item?.fileUrl ? toAbsoluteLocal(apiOrigin, item.fileUrl) : "";
+        const vurl = normalizeUrl(item?.vurl || "");
+        const playableUrl = isHttpUrl(vurl) ? vurl : fileUrlAbs;
+        [
+          `video-progress-${playableUrl}`,
+          `ebook-progress-${fileUrlAbs}`,
+          `webresource-progress-${fileUrlAbs}`,
+          `faq-progress-${fileUrlAbs}`,
+          `misconception-progress-${fileUrlAbs}`,
+          `practiceassignment-progress-${fileUrlAbs}`,
+          `studyguide-progress-${fileUrlAbs}`,
+        ].forEach((k) => localStorage.removeItem(k));
+      } catch {}
+
+      removeContentLocallyById(id);
+      alert("✅ Content deleted successfully.");
+    } catch (e2) {
+      error("Delete failed", e2);
+      alert("❌ Delete failed. See console for details.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   // Enhanced right-click and developer tools blocking
   useEffect(() => {
@@ -333,8 +407,6 @@ function InstructorCourseViewPage() {
         const wh = wm.offsetHeight;
         return { cw, ch, ww, wh };
       };
-
-      const clampInside = (v, min, max) => Math.max(min, Math.min(v, max));
 
       const pickJitter = (speed = 40) => {
         const now = performance.now();
@@ -830,92 +902,7 @@ function InstructorCourseViewPage() {
       onDragStart={(e) => e.preventDefault()}
       style={{userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'}}
     >
-      {/* Lightweight CSS fix for video modal (works on BS4/BS5) */}
-      <style>{`
-        .video-wrapper {
-          position: relative;
-          width: 100%;
-          padding-bottom: 56.25%; /* 16:9 */
-          height: 0;
-          background: #000;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        .video-wrapper iframe,
-        .video-wrapper video {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          border: 0;
-          border-radius: 8px;
-        }
-        .modal-lg .modal-body { padding: 0.75rem 1rem; }
-      `}</style>
-
-      <style>{`
-        .wm-overlay {
-          position: absolute;
-          inset: 0;
-          z-index: 999999;
-          pointer-events: none;
-          overflow: hidden;
-          user-select: none;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-        }
-        .wm-chip {
-          position: absolute;
-          top: 0px; 
-          left: 0px;
-          max-width: 40%;
-          padding: 6px 12px;
-          border-radius: 8px;
-          background: rgba(0,0,0,0.15);
-          backdrop-filter: blur(2px);
-          color: #fff;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          font-size: min(2vw, 12px);
-          line-height: 1;
-          opacity: 1;
-          user-select: none;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          text-transform: uppercase;
-          pointer-events: none;
-          -webkit-touch-callout: none;
-          -webkit-tap-highlight-color: transparent;
-          transform: translate3d(0px, 0px, 0px);
-          will-change: transform;
-        }
-        .relative-wrap { 
-          position: relative; 
-          user-select: none;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-        }
-        
-        /* Enhanced security for video and PDF containers */
-        .video-wrapper, .pdf-container {
-          user-select: none;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          -webkit-touch-callout: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-        
-        .video-wrapper, .pdf-container, .wm-overlay, .relative-wrap {
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
-          }
-      `}</style>
-
+      
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Instructor" />
@@ -933,7 +920,7 @@ function InstructorCourseViewPage() {
               </a>
             </div>
             <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
-              <strong>{`${batchName} - Class ${className} - ${courseCode} - ${courseName} `}</strong>
+              <strong>{`${batchName} - ${className} - ${courseCode} - ${courseName} `}</strong>
 
 
             </h5>
@@ -974,9 +961,7 @@ function InstructorCourseViewPage() {
               <button className="unit-tab">Discussion Forum</button>
             </Link>
 
-            <Link to="/casestudy">
-              <button className="unit-tab">Case Study</button>
-            </Link>
+         
 
             <Link to="/recorded-classes">
               <button className="unit-tab">Recorded classes</button>
@@ -1061,9 +1046,26 @@ function InstructorCourseViewPage() {
                       const progressColor =
                         progress < 30 ? "#e74c3c" : progress < 70 ? "#f39c12" : "#27ae60";
 
+                      const thisItemId = (item.id ?? item.contentId ?? item.Id ?? item.ContentId);
+
                       return (
                         <div className="col-md-6 col-lg-4 mb-3" key={idKey}>
-                          <div className="resource-card welcome-card animate-welcome h-100">
+                          <div className="resource-card welcome-card animate-welcome h-100" style={{ position: "relative" }}>
+                            {/* Delete icon (only for non-students) */}
+                            {role !== "Student" && (
+                              <button
+                                type="button"
+                                className="delete-btn text-danger btn btn-link p-0"
+                                title="Delete content"
+                                onClick={(e) => handleDeleteContent(item, e)}
+                                disabled={deletingId === thisItemId}
+                                aria-label="Delete content"
+                                style={{ lineHeight: 0 }}
+                              >
+                                <i className="fa fa-trash" aria-hidden="true"></i>
+                              </button>
+                            )}
+
                             <div className="card-body d-flex flex-column">
                               <h6 className="fw-bold">{item.title}</h6>
                               <p className="text-muted flex-grow-1">{item.description}</p>
@@ -1084,32 +1086,7 @@ function InstructorCourseViewPage() {
                                 </button>
                               )}
 
-                              <div style={{ marginTop: "12px" }}>
-                                <div style={{ fontSize: "0.95rem", marginBottom: "2px" }}>
-                                  <span>{section.title} Progress: </span>
-                                  <span style={{ color: progressColor, fontWeight: 600 }}>
-                                    {progress}%
-                                  </span>
-                                </div>
-                                <div
-                                  style={{
-                                    width: "100%",
-                                    height: "8px",
-                                    background: "#eee",
-                                    borderRadius: "6px",
-                                    overflow: "hidden",
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      width: `${progress}%`,
-                                      height: "100%",
-                                      background: progressColor,
-                                      transition: "width 0.5s",
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
+                              
                             </div>
                           </div>
                         </div>
@@ -1398,29 +1375,7 @@ function InstructorCourseViewPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: "16px" }}>
-                  <div style={{ fontSize: "0.95rem", marginBottom: "2px" }}>
-                    <span>Video Progress: </span>
-                    <span
-                      style={{
-                        color: currentVideoProgress < 30 ? "#e74c3c" : currentVideoProgress < 70 ? "#f39c12" : "#27ae60",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {currentVideoProgress}%
-                    </span>
-                  </div>
-                  <div style={{ width: "100%", height: "8px", background: "#eee", borderRadius: "6px", overflow: "hidden" }}>
-                    <div
-                      style={{
-                        width: `${currentVideoProgress}%`,
-                        height: "100%",
-                        background: currentVideoProgress < 30 ? "#e74c3c" : currentVideoProgress < 70 ? "#f39c12" : "#27ae60",
-                        transition: "width 0.5s",
-                      }}
-                    />
-                  </div>
-                </div>
+                
               </>
             )}
           </div>
@@ -1489,29 +1444,7 @@ function InstructorCourseViewPage() {
             </div>
           )}
 
-          {/* <div style={{ marginTop: "16px" }}>
-            <div style={{ fontSize: "0.95rem", marginBottom: "2px" }}>
-              <span>File Progress: </span>
-              <span
-                style={{
-                  color: fileProgress < 30 ? "#e74c3c" : fileProgress < 70 ? "#f39c12" : "#27ae60",
-                  fontWeight: 600,
-                }}
-              >
-                {fileProgress}%
-              </span>
-            </div>
-            <div style={{ width: "100%", height: "8px", background: "#eee", borderRadius: "6px", overflow: "hidden" }}>
-              <div
-                style={{
-                  width: `${fileProgress}%`,
-                  height: "100%",
-                  background: fileProgress < 30 ? "#e74c3c" : fileProgress < 70 ? "#f39c12" : "#27ae60",
-                  transition: "width 0.5s",
-                }}
-              />
-            </div>
-          </div> */}
+          
         </Modal.Body>
       </Modal>
       

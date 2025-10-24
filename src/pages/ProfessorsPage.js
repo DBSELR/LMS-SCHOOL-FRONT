@@ -167,6 +167,10 @@ const handleAdd = async (payload) => {
 
   const bodyText = await res.text(); // read body for details in case of error
   if (!res.ok) {
+    if (res.status === 409) {
+      // Always throw a plain error with only the friendly message
+      throw new Error("Duplicate entries detected. Please provide a unique email address and phone number.");
+    }
     console.error("❌ POST /Professor failed:", res.status, bodyText);
     throw new Error(bodyText || `HTTP ${res.status}`);
   }
