@@ -195,6 +195,10 @@ function InstructorCourseViewPage() {
   const examId = location.state?.examinationID || "Unknown examination ID";
   const className = location.state?.class || "Unknown Class";
 
+   // NEW: keep raw content and a unit -> title map
+  const [rawContent, setRawContent] = useState([]);
+  const [unitTitleByUnit, setUnitTitleByUnit] = useState({});
+
 
   const [materials, setMaterials] = useState([]);
   const [ebooks, setEBOOKS] = useState([]);
@@ -819,6 +823,9 @@ function InstructorCourseViewPage() {
         ]);
         console.timeEnd("[ICVP] GET Content bundle");
 
+         // ★ Keep the raw list for unit tabs (even when contentType is null)
+        setRawContent(Array.isArray(content) ? content : []);
+
         // ---- case-insensitive contentType filter
         const ci = (v) => String(v || "").toLowerCase();
         setEBOOKS(content.filter((c) => ci(c.contentType) === "ebook"));
@@ -842,42 +849,106 @@ function InstructorCourseViewPage() {
     return () => ac.abort();
   }, [courseId]);
 
-  // Scroll to section when loaded
-  useEffect(() => {
-    const scrollTo = location.state?.scrollTo;
-    if (scrollTo && sectionRefs[scrollTo]?.current) {
-      log("Scrolling to section", scrollTo);
-      setTimeout(() => {
-        sectionRefs[scrollTo].current.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 500);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ebooks, videos, faq, misconceptions, practiceassignment, studyguide, webresources]);
+  // NEW: Build unit tabs from rawContent (keeps units even with null content)
+ // Build unit tabs from the raw content (handles Title/title casing)
+// and keep a map of unit -> title for display (even if some rows are null)
+useEffect(() => {
+  const toStr = (v) => (v == null ? "" : String(v).trim());
 
-  // Compute units (from any content type, not only ebooks)
-  useEffect(() => {
-    const gatherUnits = (arr) => arr.map((item) => item.unit?.trim()).filter(Boolean);
-    const all = [
-      ...gatherUnits(ebooks),
-      ...gatherUnits(videos),
-      ...gatherUnits(webresources),
-      ...gatherUnits(faq),
-      ...gatherUnits(misconceptions),
-      ...gatherUnits(practiceassignment),
-      ...gatherUnits(studyguide),
-    ];
-    const uniqueUnits = Array.from(new Set(all)).sort((a, b) => {
-      const getUnitNumber = (u) => parseInt(u?.split("-")[1]) || 0;
-      return getUnitNumber(a) - getUnitNumber(b);
-    });
+  // be liberal about keys coming from the API
+  const getUnit = (it) => toStr(it.unit ?? it.Unit);
+  const getTitle = (it) =>
+    toStr(
+      it.title ??
+      it.Title ??
+      it.unitTitle ??
+      it.UnitTitle
+    );
 
-    log("Units computed", { uniqueUnits });
-    setAllUnits(uniqueUnits);
-    if (uniqueUnits.length > 0 && !activeUnit) {
-      log("Setting initial activeUnit", uniqueUnits[0]);
-      setActiveUnit(uniqueUnits[0]);
+  const unitSet = new Set();
+  const titleMap = {};
+
+  for (const it of rawContent || []) {
+    const u = getUnit(it);
+    if (!u) continue;
+
+    unitSet.add(u);
+
+    const t = getTitle(it);
+    // remember the first non-empty title we see for this unit
+    if (t && !titleMap[u]) titleMap[u] = t;
+  }
+
+  // If a unit still has no title, try a second pass:
+  // pick any non-empty title from any row that shares the same unit number (defensive)
+  if (unitSet.size > 0) {
+    const byUnit = {};
+    for (const it of rawContent || []) {
+      const u = getUnit(it);
+      if (!u) continue;
+      (byUnit[u] ||= []).push(it);
     }
-  }, [ebooks, videos, webresources, faq, misconceptions, practiceassignment, studyguide]); // include videos etc.
+    for (const u of unitSet) {
+      if (!titleMap[u]) {
+        const firstWithTitle = (byUnit[u] || []).find((x) => getTitle(x));
+        if (firstWithTitle) titleMap[u] = getTitle(firstWithTitle);
+      }
+    }
+  }
+
+  // Sort "Unit-3" before "Unit-10"
+  const num = (u) => {
+    const m = /(\d+)$/.exec(u.replace(/\s+/g, ""));
+    return m ? parseInt(m[1], 10) : 0;
+  };
+  const sortedUnits = Array.from(unitSet).sort((a, b) => num(a) - num(b));
+
+  setAllUnits(sortedUnits);
+  setUnitTitleByUnit(titleMap);
+
+  if (!activeUnit && sortedUnits.length > 0) {
+    setActiveUnit(sortedUnits[0]);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [rawContent]);
+
+
+  // // Scroll to section when loaded
+  // useEffect(() => {
+  //   const scrollTo = location.state?.scrollTo;
+  //   if (scrollTo && sectionRefs[scrollTo]?.current) {
+  //     log("Scrolling to section", scrollTo);
+  //     setTimeout(() => {
+  //       sectionRefs[scrollTo].current.scrollIntoView({ behavior: "smooth", block: "start" });
+  //     }, 500);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [ebooks, videos, faq, misconceptions, practiceassignment, studyguide, webresources]);
+
+  // // Compute units (from any content type, not only ebooks)
+  // useEffect(() => {
+  //   const gatherUnits = (arr) => arr.map((item) => item.unit?.trim()).filter(Boolean);
+  //   const all = [
+  //     ...gatherUnits(ebooks),
+  //     ...gatherUnits(videos),
+  //     ...gatherUnits(webresources),
+  //     ...gatherUnits(faq),
+  //     ...gatherUnits(misconceptions),
+  //     ...gatherUnits(practiceassignment),
+  //     ...gatherUnits(studyguide),
+  //   ];
+  //   const uniqueUnits = Array.from(new Set(all)).sort((a, b) => {
+  //     const getUnitNumber = (u) => parseInt(u?.split("-")[1]) || 0;
+  //     return getUnitNumber(a) - getUnitNumber(b);
+  //   });
+
+  //   log("Units computed", { uniqueUnits });
+  //   setAllUnits(uniqueUnits);
+  //   if (uniqueUnits.length > 0 && !activeUnit) {
+  //     log("Setting initial activeUnit", uniqueUnits[0]);
+  //     setActiveUnit(uniqueUnits[0]);
+  //   }
+  // }, [ebooks, videos, webresources, faq, misconceptions, practiceassignment, studyguide]); // include videos etc.
 
   const renderEmptyMessage = (label) => (
     <div className="text-muted text-center py-3">No {label} available.</div>
@@ -930,10 +1001,11 @@ function InstructorCourseViewPage() {
           {/* Unit Tabs */}
           <div className="unit-tabs mb-4">
             {allUnits.map((unit) => {
-              const titleForUnit =
-                (ebooks.find((ebook) => ebook.unit?.trim() === unit)?.title) ||
-                (videos.find((v) => v.unit?.trim() === unit)?.title) ||
-                "No title found";
+              const titleForUnit = unitTitleByUnit[unit] || "No title found";
+              // const titleForUnit =
+              //   (ebooks.find((ebook) => ebook.unit?.trim() === unit)?.title) ||
+              //   (videos.find((v) => v.unit?.trim() === unit)?.title) ||
+              //   "No title found";
 
               return (
                 <button
@@ -972,7 +1044,8 @@ function InstructorCourseViewPage() {
             <div className="d-flex justify-content-between align-items-center mb-3 px-1">
               <h5 className="mb-0">
                 <i className="fa fa-book text-primary me-2 mr-2"></i> Unit Title:{" "}
-                {filteredEbooks[0]?.title || filteredVideos[0]?.title || "No title found"}
+                 {unitTitleByUnit[activeUnit] || "No title found"}
+                {/* {filteredEbooks[0]?.title || filteredVideos[0]?.title || "No title found"} */}
               </h5>
               {role !== "Student" && (
                 <Link
