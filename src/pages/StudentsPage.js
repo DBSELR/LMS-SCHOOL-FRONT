@@ -93,15 +93,25 @@ function StudentsPage() {
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(student),
       });
-      if (res.ok) {
-        toast.success("Student added successfully!");
-        refreshStudents();
-        closeModal();
-      } else {
-        toast.error("Failed to add student.");
-      }
+      if (res.ok) {/* Lines 97-100 omitted */} else {/* Lines 101-102 omitted */}
     } catch (err) {
-      toast.error("Error occurred while adding student.");
+      return err;
+    }
+    const token = localStorage.getItem("jwt");
+    const res = await fetch(`${API_BASE_URL}/student/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify(student),
+    });
+    if (res.ok) {
+      // Success: close modal, refresh list, show toast
+      toast.success("Student added successfully!");
+      refreshStudents();
+      closeModal();
+      return res;
+    } else {
+      // Pass the error response to AddStudent for modal display
+      return res;
     }
   };
 

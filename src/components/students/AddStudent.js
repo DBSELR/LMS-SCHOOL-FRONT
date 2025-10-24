@@ -1,12 +1,19 @@
-import React, { useEffect, useState } from "react";
+// File: src/pages/students/AddStudent.jsx
+import React, { useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import API_BASE_URL from "../../config";
 
-const AddStudent = ({
-  student,
-  onSubmit,
-  editMode = false,
-  readOnly = false,
-}) => {
+const AddStudent = ({ student, onSubmit, editMode = false, readOnly = false }) => {
+  /* ========= Error Modal ========= */
+  const [showErrModal, setShowErrModal] = useState(false);
+  const [errInfo, setErrInfo] = useState({
+    title: "",
+    message: "",
+    conflicts: [],
+    raw: null,
+  });
+
+  /* ========= Options / Lists ========= */
   const [programmeOptions, setProgrammeOptions] = useState([]);
   const [groupOptions, setGroupOptions] = useState([]);
   const [batchList, setBatchList] = useState([]);
@@ -14,8 +21,11 @@ const AddStudent = ({
   const [filteredGroups, setFilteredGroups] = useState([]);
   const [semesterOptions, setSemesterOptions] = useState([]);
 
+  /* ========= Form ========= */
   const [formData, setFormData] = useState({
+    // hidden (UI) but kept if needed
     password: "",
+    // shown
     email: "",
     firstName: "",
     lastName: "",
@@ -34,52 +44,42 @@ const AddStudent = ({
     semester: "1",
   });
 
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const firstErrorRef = useRef(null);
+
+  /* ========= Load options ========= */
   useEffect(() => {
     const token = localStorage.getItem("jwt");
-    console.log("📥 Fetching Programmes and Groups...");
 
     fetch(`${API_BASE_URL}/Programme/ProgrammeBatch`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     })
-      .then((res) => res.json())
+      .then((r) => r.json())
       .then((data) => {
-        console.log("✅ Programmes fetched:", data);
-        setProgrammeOptions(data);
-        const batches = [...new Set(data.map((p) => p.batchName))];
-        console.log("📦 Unique Batches:", batches);
-        setBatchList(batches);
+        setProgrammeOptions(data || []);
+        setBatchList([...new Set((data || []).map((p) => p.batchName))]);
       })
-      .catch((err) => console.error("❌ Error fetching programmes:", err));
+      .catch((e) => console.error("Programme fetch error:", e));
 
     fetch(`${API_BASE_URL}/Group/GroupBatch`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("✅ Groups fetched:", data);
-        setGroupOptions(data);
-      })
-      .catch((err) => console.error("❌ Error fetching groups:", err));
+      .then((r) => r.json())
+      .then((data) => setGroupOptions(data || []))
+      .catch((e) => console.error("Group fetch error:", e));
   }, []);
 
+  /* ========= Populate for edit ========= */
   useEffect(() => {
     if (student && programmeOptions.length && groupOptions.length) {
-      console.log("🛠️ Populating form data for edit/view mode...");
       const matchedProgramme = programmeOptions.find(
         (p) => p.programmeName === student.programme || p.programmeId === student.programmeId
       );
       const matchedGroup = groupOptions.find(
         (g) => g.groupName === student.group || g.groupId === student.groupId
       );
-
       const dob = student.dateOfBirth?.split("T")[0] || "";
-
-      console.log("🎯 Matched Programme:", matchedProgramme);
-      console.log("🎯 Matched Group:", matchedGroup);
 
       setFormData((prev) => ({
         ...prev,
@@ -93,218 +93,378 @@ const AddStudent = ({
     }
   }, [student, programmeOptions, groupOptions]);
 
+  /* ========= Dependent lists ========= */
   useEffect(() => {
-    console.log("📍 Updating dependent dropdowns");
-    console.log("🔎 Current formData:", formData);
-
     if (!formData.batch) {
       setFilteredProgrammes([]);
       setFilteredGroups([]);
       setSemesterOptions([]);
-      console.log("❕ Batch not selected — reset filtered lists");
       return;
     }
 
-    const filtered = programmeOptions.filter(
-      (p) => p.batchName === formData.batch
-    );
-    console.log("🎯 Filtered Programmes for batch:", filtered);
-    setFilteredProgrammes(filtered);
+    const progs = programmeOptions.filter((p) => p.batchName === formData.batch);
+    setFilteredProgrammes(progs);
 
-    const filteredGrp = groupOptions.filter(
-      (g) =>
-        g.batchName === formData.batch &&
-        g.programmeId === parseInt(formData.programmeId)
+    const grps = groupOptions.filter(
+      (g) => g.batchName === formData.batch && g.programmeId === parseInt(formData.programmeId || "0")
     );
-    console.log("🎯 Filtered Groups:", filteredGrp);
-    setFilteredGroups(filteredGrp);
+    setFilteredGroups(grps);
 
     const selectedProgramme = programmeOptions.find(
-      (p) => p.programmeId === parseInt(formData.programmeId)
+      (p) => p.programmeId === parseInt(formData.programmeId || "0")
     );
     const semCount = selectedProgramme?.numberOfSemesters || 0;
-    const sems = Array.from({ length: semCount }, (_, i) => i + 1);
-    console.log("📘 Semesters for selected programme:", sems);
-    setSemesterOptions(sems);
+    setSemesterOptions(Array.from({ length: semCount }, (_, i) => i + 1));
   }, [formData.batch, formData.programmeId, programmeOptions, groupOptions]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    console.log(`✍️ Input change: ${name} = ${value}`);
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  /* ========= Validation ========= */
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const phoneDigits = (v) => (v || "").replace(/\D/g, "");
+  const zipRegexIndia = /^[1-9][0-9]{5}$/;
+
+  const validate = (fd) => {
+    const err = {};
+
+    if (!fd.email?.trim()) err.email = "Email is required";
+    else if (!emailRegex.test(fd.email.trim())) err.email = "Enter a valid email";
+
+    if (!fd.firstName?.trim()) err.firstName = "First Name is required";
+    if (!fd.lastName?.trim()) err.lastName = "Last Name is required";
+
+    const ph = phoneDigits(fd.phoneNumber);
+    if (!ph) err.phoneNumber = "Phone Number is required";
+    else if (ph.length !== 10) err.phoneNumber = "Enter a 10-digit mobile number";
+
+    if (!fd.dateOfBirth) err.dateOfBirth = "Date of Birth is required";
+    else {
+      const today = new Date();
+      const dob = new Date(fd.dateOfBirth);
+      if (dob > today) err.dateOfBirth = "DOB cannot be in the future";
+      const min = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate());
+      if (!err.dateOfBirth && dob > min) err.dateOfBirth = "Student must be at least 3 years old";
+    }
+
+    if (!fd.gender?.trim()) err.gender = "Gender is required";
+    if (!fd.address?.trim()) err.address = "Address is required";
+    if (!fd.city?.trim()) err.city = "City is required";
+    if (!fd.state?.trim()) err.state = "State is required";
+    if (!fd.country?.trim()) err.country = "Country is required";
+
+    if (!fd.zipCode?.trim()) err.zipCode = "PIN code is required";
+    else if (!zipRegexIndia.test(fd.zipCode.trim())) err.zipCode = "Enter a valid 6-digit PIN";
+
+    if (!fd.batch) err.batch = "Batch is required";
+    if (!fd.programmeId) err.programmeId = "Board is required";
+    if (!fd.groupId) err.groupId = "Class is required";
+
+    // profilePhotoUrl left optional
+    return err;
   };
 
-  const handleSubmit = (e) => {
+  /* ========= Error helpers ========= */
+  const isConflict409 = (x) => {
+    try {
+      if (!x) return false;
+      if (typeof x === "number") return x === 409;
+      if (x.status === 409) return true;
+      if (x.response?.status === 409) return true;
+      if (x.ok === false && x.status === 409) return true; // fetch Response
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  function normalizeErrorPayload(err) {
+    const status =
+      err?.response?.status ??
+      err?.status ??
+      (err?.ok === false ? err.status : undefined);
+
+    let data =
+      err?.response?.data ??
+      err?.data ??
+      err?.body ??
+      err?.payload ??
+      err;
+
+    if (typeof data === "string") {
+      try {
+        data = JSON.parse(data);
+      } catch {
+        /* keep as string */
+      }
+    }
+    return { status, data };
+  }
+
+  function buildErrInfo(err) {
+    const { status, data } = normalizeErrorPayload(err);
+    if (Number(status) === 409) {
+      return {
+        title: "Duplicate entries detected",
+        message:
+          "Duplicate entries detected. Please provide a unique email address and phone number.",
+        conflicts: [],
+        raw: data,
+      };
+    }
+    return {
+      title: "Save failed",
+      message:
+        (typeof data === "string" && data) ||
+        data?.message ||
+        err?.message ||
+        "An unexpected error occurred.",
+      conflicts: [],
+      raw: data,
+    };
+  }
+
+  /* ========= Portal Modal ========= */
+const ErrorDetailsModal = ({ open, info, onClose }) => {
+  if (!open) return null;
+  return (
+    <>
+      <div
+        className="modal-backdrop fade show"
+        style={{ display: "block" }}
+        onClick={onClose}
+      />
+      <div
+        className="modal fade show"
+        tabIndex={-1}
+        role="dialog"
+        style={{ display: "block" }}
+        aria-modal="true"
+      >
+        <div className="modal-dialog modal-dialog-centered" role="document">
+          <div className="modal-content shadow">
+            <div className="modal-header bg-warning text-dark">
+              <h5 className="modal-title">
+                <i className="fa fa-exclamation-triangle me-2 text-danger" />
+                {info.title || "Error"}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                aria-label="Close"
+                onClick={onClose}
+              />
+            </div>
+            <div className="modal-body text-center">
+              <div className="alert alert-warning mb-0 p-3">
+                <strong>{info.message}</strong>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-warning" onClick={onClose}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+  /* ========= Handlers ========= */
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let v = value;
+
+    if (name === "phoneNumber") v = v.replace(/\D/g, "").slice(0, 10);
+    if (name === "zipCode") v = v.replace(/\D/g, "").slice(0, 6);
+
+    setFormData((prev) => {
+      const next = { ...prev, [name]: v };
+      if (submitted) setErrors(validate(next)); // live-validate after first submit
+      return next;
+    });
+  };
+
+  const scrollToFirstError = (errObj) => {
+    const firstKey = Object.keys(errObj)[0];
+    if (!firstKey) return;
+    const el = document.getElementById(firstKey);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus?.();
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("📤 Form submitted with data:", formData);
+    setSubmitted(true);
 
-    const { password, username, courseId, ...validFormData } = formData;
+    const trimmed = {
+      ...formData,
+      email: formData.email.trim(),
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      gender: formData.gender.trim(),
+      address: formData.address.trim(),
+      city: formData.city.trim(),
+      state: formData.state.trim(),
+      country: formData.country.trim(),
+      zipCode: formData.zipCode.trim(),
+    };
 
-    const programmeName =
-      programmeOptions.find(
-        (p) => p.programmeId === parseInt(formData.programmeId)
-      )?.programmeName || "";
+    const validationErrors = validate(trimmed);
+    setErrors(validationErrors);
 
-    if (
-      !validFormData.email ||
-      !validFormData.firstName ||
-      !validFormData.programmeId ||
-      !validFormData.semester ||
-      !validFormData.batch
-    ) {
-      alert("Email, First Name, Batch, Programme, and Semester are required");
-      console.warn("⚠️ Missing required fields");
+    if (Object.keys(validationErrors).length) {
+      scrollToFirstError(validationErrors);
       return;
     }
+
+    // build payload
+    const { password, username, courseId, ...validFormData } = trimmed;
+    const programmeName =
+      programmeOptions.find((p) => p.programmeId === parseInt(trimmed.programmeId || "0"))?.programmeName || "";
 
     const payload = {
       ...validFormData,
-      semester: parseInt(formData.semester),
-      programmeId: parseInt(formData.programmeId),
-      groupId: parseInt(formData.groupId),
+      semester: parseInt(trimmed.semester || "1"),
+      programmeId: parseInt(trimmed.programmeId || "0"),
+      groupId: parseInt(trimmed.groupId || "0"),
       programme: programmeName,
-      dateOfBirth: formData.dateOfBirth
-        ? new Date(formData.dateOfBirth).toISOString()
-        : null,
+      dateOfBirth: trimmed.dateOfBirth ? new Date(trimmed.dateOfBirth).toISOString() : null,
     };
 
-    console.log("✅ Final payload to be sent:", payload);
-    if (onSubmit) onSubmit(payload);
+    try {
+      // Parent should either throw on non-2xx OR return the fetch Response
+      const res = await onSubmit?.(payload);
+
+      // If parent *returned* res instead of throwing:
+      if (res && res.ok === false) {
+        const info = buildErrInfo(res);
+        console.warn("[AddStudent] Non-OK response from parent:", res);
+        setErrInfo(info);
+        setShowErrModal(true);
+        return;
+      }
+
+      // Success handled by parent (toast/close)
+    } catch (err) {
+      const info = buildErrInfo(err);
+      console.warn("[AddStudent] Caught error from parent:", err);
+      setErrInfo(info);
+      setShowErrModal(true);
+    }
   };
 
-  const renderInput = (label, name, type = "text", extra = {}) => (
+  /* ========= UI helpers (errors only show after submit) ========= */
+  const showError = (name) => submitted && !!errors[name];
+
+  const renderInput = (label, name, type = "text", { placeholder, required = true } = {}) => (
     <div className="form-group">
-      <label htmlFor={name}>{label}</label>
+      <label htmlFor={name} className="mb-1">
+        {label} {required && <span className="text-danger">*</span>}
+      </label>
       <input
         type={type}
         id={name}
         name={name}
-        className="form-control"
+        className={`form-control ${showError(name) ? "is-invalid" : ""}`}
         value={formData[name] ?? ""}
         onChange={handleInputChange}
         disabled={readOnly || (name === "password" && editMode)}
-        {...extra}
+        placeholder={placeholder}
       />
+      {showError(name) && <div className="invalid-feedback">{errors[name]}</div>}
     </div>
   );
 
+  const renderSelect = (
+    label,
+    name,
+    options,
+    getValue,
+    getLabel,
+    { placeholder = "-- Select --", required = true } = {}
+  ) => (
+    <div className="form-group">
+      <label htmlFor={name} className="mb-1">
+        {label} {required && <span className="text-danger">*</span>}
+      </label>
+      <select
+        id={name}
+        name={name}
+        className={`form-control ${showError(name) ? "is-invalid" : ""}`}
+        value={formData[name]}
+        onChange={handleInputChange}
+        disabled={readOnly}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((opt) => (
+          <option key={getValue(opt)} value={getValue(opt)}>
+            {getLabel(opt)}
+          </option>
+        ))}
+      </select>
+      {showError(name) && <div className="invalid-feedback">{errors[name]}</div>}
+    </div>
+  );
+
+  /* ========= Render ========= */
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="student-form-grid">
-        {renderInput("Username (Auto-generated)", "username", "text", {
-          disabled: true,
-        })}
-        {!editMode &&
-          renderInput("Password (Auto-generated)", "password", "text", {
-            disabled: true,
-            value: "Auto-generated",
-          })}
-        {renderInput("Email", "email", "email")}
-        {renderInput("First Name", "firstName")}
-        {renderInput("Last Name", "lastName")}
-        {renderInput("Phone Number", "phoneNumber")}
-        {renderInput("Date of Birth", "dateOfBirth", "date")}
-        {renderInput("Gender", "gender")}
-        {renderInput("Address", "address")}
-        {renderInput("City", "city")}
-        {renderInput("State", "state")}
-        {renderInput("Country", "country")}
-        {renderInput("Zip Code", "zipCode")}
-        {renderInput("Profile Photo URL", "profilePhotoUrl")}
+    <>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="student-form-grid">
+          {/* Username & Password hidden in UI as requested */}
+          {renderInput("Email", "email", "email", { placeholder: "name@example.com" })}
+          {renderInput("First Name", "firstName")}
+          {renderInput("Last Name", "lastName")}
+          {renderInput("Phone Number", "phoneNumber", "tel", { placeholder: "10-digit mobile number" })}
+          {renderInput("Date of Birth", "dateOfBirth", "date")}
+          {renderInput("Gender", "gender", { placeholder: "Male / Female / Other" })}
+          {renderInput("Address", "address")}
+          {renderInput("City", "city")}
+          {renderInput("State", "state")}
+          {renderInput("Country", "country")}
+          {renderInput("Zip / PIN Code", "zipCode", "text", { placeholder: "6-digit PIN" })}
+          {renderInput("Profile Photo URL (optional)", "profilePhotoUrl", "url", { required: false, placeholder: "https://..." })}
 
-        {/* Batch */}
-        <div className="form-group">
-          <label>Batch</label>
-          <select
-            className="form-control"
-            name="batch"
-            value={formData.batch}
-            onChange={handleInputChange}
-            disabled={readOnly}
-          >
-            <option value="">-- Select Batch --</option>
-            {batchList.map((b, i) => (
-              <option key={i} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
+          {renderSelect("Batch", "batch", batchList, (b) => b, (b) => b, { placeholder: "-- Select Batch --" })}
+          {renderSelect(
+            "Board",
+            "programmeId",
+            filteredProgrammes,
+            (p) => p.programmeId,
+            (p) => `${p.programmeName} (${p.programmeCode})`,
+            { placeholder: "-- Select Board --" }
+          )}
+          {renderSelect(
+            "Class",
+            "groupId",
+            filteredGroups,
+            (g) => g.groupId,
+            (g) => `Class ${g.groupName ?? ""}`,
+            { placeholder: "-- Select Class --" }
+          )}
         </div>
 
-        {/* Programme */}
-        <div className="form-group">
-          <label>Board</label>
-          <select
-            className="form-control"
-            name="programmeId"
-            value={formData.programmeId}
-            onChange={handleInputChange}
-            disabled={readOnly}
-          >
-            <option value="">-- Select Board --</option>
-            {filteredProgrammes.map((p) => (
-              <option key={p.programmeId} value={p.programmeId}>
-                {p.programmeName} ({p.programmeCode})
-              </option>
-            ))}
-          </select>
-        </div>
+        {!readOnly && (
+          <div className="student-form-actions mt-3 d-flex gap-2">
+            <button type="submit" className="btn btn-primary">
+              {editMode ? "Update" : "Add"} Student
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => window.history.back()}>
+              Cancel
+            </button>
+          </div>
+        )}
+      </form>
 
-        {/* Group */}
-        <div className="form-group">
-          <label>Class</label>
-          <select
-            className="form-control"
-            name="groupId"
-            value={formData.groupId}
-            onChange={handleInputChange}
-            disabled={readOnly}
-          >
-            <option value="">-- Select Class --</option>
-            {filteredGroups.map((g) => (
-              <option key={g.groupId} value={g.groupId}>
-                {/* {g.groupCode} - {g.groupName} */}
-                 {`Class ${g.groupName ?? ""}`}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Semester */}
-        {/* <div className="form-group">
-          <label>Semester</label>
-          <select
-            className="form-control"
-            name="semester"
-            value={formData.semester}
-            onChange={handleInputChange}
-            disabled={readOnly}
-          >
-            <option value="">-- Select Semester --</option>
-            {semesterOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div> */}
-      </div>
-
-      {!readOnly && (
-        <div className="student-form-actions">
-          <button type="submit" className="btn btn-primary">
-            {editMode ? "Update" : "Add"} Student
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => window.history.back()}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-    </form>
+      {/* Error Modal (Portal) */}
+      <ErrorDetailsModal
+        open={showErrModal}
+        info={errInfo}
+        onClose={() => setShowErrModal(false)}
+      />
+    </>
   );
 };
 
