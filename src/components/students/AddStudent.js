@@ -1,9 +1,22 @@
 // File: src/pages/students/AddStudent.jsx
 import React, { useEffect, useRef, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import ReactDOM from "react-dom";
 import API_BASE_URL from "../../config";
 
 const AddStudent = ({ student, onSubmit, editMode = false, readOnly = false }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Get UserId from JWT token once, at the top
+  let userId = "";
+  const token = localStorage.getItem("jwt");
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded.UserId || decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || "";
+    } catch (e) {
+      console.warn("Failed to decode JWT for UserId", e);
+    }
+  }
   /* ========= Error Modal ========= */
   const [showErrModal, setShowErrModal] = useState(false);
   const [errInfo, setErrInfo] = useState({
@@ -295,8 +308,10 @@ const ErrorDetailsModal = ({ open, info, onClose }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitted(true);
+  e.preventDefault();
+  if (isSubmitting) return; // Prevent double submit
+  setIsSubmitting(true);
+  setSubmitted(true);
 
     const trimmed = {
       ...formData,
@@ -331,7 +346,10 @@ const ErrorDetailsModal = ({ open, info, onClose }) => {
       groupId: parseInt(trimmed.groupId || "0"),
       programme: programmeName,
       dateOfBirth: trimmed.dateOfBirth ? new Date(trimmed.dateOfBirth).toISOString() : null,
+      RefCode: userId,
     };
+    console.log("RefCode for AddStudent:", userId);
+    console.log("Payload for AddStudent:", payload);
 
     try {
       // Parent should either throw on non-2xx OR return the fetch Response
@@ -343,6 +361,7 @@ const ErrorDetailsModal = ({ open, info, onClose }) => {
         console.warn("[AddStudent] Non-OK response from parent:", res);
         setErrInfo(info);
         setShowErrModal(true);
+        setIsSubmitting(false);
         return;
       }
 
@@ -352,6 +371,8 @@ const ErrorDetailsModal = ({ open, info, onClose }) => {
       console.warn("[AddStudent] Caught error from parent:", err);
       setErrInfo(info);
       setShowErrModal(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -448,10 +469,10 @@ const ErrorDetailsModal = ({ open, info, onClose }) => {
 
         {!readOnly && (
           <div className="student-form-actions mt-3 d-flex gap-2">
-            <button type="submit" className="btn btn-primary">
-              {editMode ? "Update" : "Add"} Student
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : (editMode ? "Update" : "Add") + " Student"}
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => window.history.back()}>
+            <button type="button" className="btn btn-secondary" onClick={() => window.history.back()} disabled={isSubmitting}>
               Cancel
             </button>
           </div>
