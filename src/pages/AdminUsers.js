@@ -48,7 +48,7 @@ function AdminUsers() {
 
   // Filter roles and search input
   const filteredUsers = users
-    .filter((u) => u.role !== "Instructor" && u.role !== "Student")
+    .filter((u) => u.role !== "Faculty" && u.role !== "Student")
     .filter(
       (u) =>
         u.username.toLowerCase().includes(search.toLowerCase()) ||
