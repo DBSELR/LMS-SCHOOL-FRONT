@@ -130,17 +130,10 @@ function HeaderTop({ notificationCount = 0 }) {
               <i className="fe fe-align-justify" title="Toggle Menu"></i>
             </a>
 
-            {role === "Instructor" && (
-              <a href="/instructor-profile" className="nav-link icon xs-hide">
-                <i className="fe fe-user-check" title="Instructor Profile"></i>
-              </a>
-            )}
-
-            {role === "Student" && (
-              <a href="/student-profile" className="nav-link icon xs-hide">
-                <i className="fe fe-user" title="Student Profile"></i>
-              </a>
-            )}
+            {/* Profile icon for all users */}
+            <a href="/profile" className="nav-link icon xs-hide">
+              <i className="fe fe-user" title="Profile"></i>
+            </a>
 
             {role !== "Student" && (
               <a href="/inbox" className="nav-link icon app_inbox">
