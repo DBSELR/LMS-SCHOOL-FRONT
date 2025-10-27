@@ -749,19 +749,7 @@ function ProfilePage() {
                   Change Password
                 </button>
 
-                <ol className="breadcrumb bg-transparent p-0 m-0">
-                  <li className="breadcrumb-item">
-                    <a href="/" className="text-secondary">
-                      Dashboard
-                    </a>
-                  </li>
-                  <li
-                    className="breadcrumb-item active text-dark"
-                    aria-current="page"
-                  >
-                    Profile
-                  </li>
-                </ol>
+               
               </div>
             </div>
 
@@ -770,11 +758,9 @@ function ProfilePage() {
               <div className="idcard-shell">
                 {/* Card gradient header */}
                 <div className="idcard-header">
-                  <div className="idcard-header-badge">
-                    {profile?.role || "ROLE / STATUS"}
-                  </div>
+                  
                   <div className="idcard-header-role">
-                    {profile?.education || "Education not available"}
+                    
                   </div>
 
                   <div className="idcard-avatar-wrap">
@@ -889,7 +875,9 @@ function ProfilePage() {
                       </div>
                     </div>
                   </div>
-
+<div className="idcard-header-badge" style={{background:'#5441e3'}}>
+                    {profile?.role || "ROLE / STATUS"} - {profile?.education || "Education not available"}
+                  </div>
                   {/* action buttons */}
                   <div className="idcard-actions">
                     {profile && !editMode && (
@@ -1098,7 +1086,7 @@ function ProfilePage() {
                       style={{ fontSize: ".8rem" }}
                     />
                   </div>
-
+{/* 
                   <div
                     className="text-muted mt-2"
                     style={{
@@ -1116,7 +1104,7 @@ function ProfilePage() {
                         {`${API_BASE_URL}/Auth/ChangePassword`}
                       </div>
                     )}
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="modal-footer d-flex justify-content-between">
