@@ -1,3 +1,40 @@
+.course-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr auto;
+  align-items: center;
+  gap: 1rem;
+}
+.course-row-item {
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 900px) {
+  .course-row-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+  }
+  .course-row-item {
+    font-size: 0.95rem;
+    white-space: normal;
+  }
+}
+@media (max-width: 600px) {
+  .course-row-grid {
+    display: block;
+  }
+  .course-row-item {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+}
+.no-bg-shadow {
+  background: transparent !important;
+  box-shadow: none !important;
+}
 .App {
   text-align: center;
   width: 100%;

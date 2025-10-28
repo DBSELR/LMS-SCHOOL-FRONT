@@ -55,7 +55,7 @@ function AdminDashboardTabs() {
                   <h6 className="mb-0">LMS Subject Master</h6>
                 </div>
 
-                <div>
+                <div className="container-fluid no-bg-shadow" style={{background:'transparent !important' , boxShadow:"none !important", margin:'auto', alignItems:'center',textAlign:'center', justifyContent:'center'}}>
                   <ul
                     className="nav nav-tabs page-header-tab animate-welcome"
                     role="tablist"

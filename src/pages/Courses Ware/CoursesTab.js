@@ -204,7 +204,7 @@ const CoursesTab = ({ isActive }) => {
 
 
   return (
-    <div className="container py-0 pt-0 welcome-card animate-welcome">
+    <div className="container py-0 pt-0 welcome-card animate-welcome" style={{width:'100%'}}>
       <div className="mb-0 bg-glass p-0">
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Boards</h5>
         <Form>
@@ -304,19 +304,19 @@ const CoursesTab = ({ isActive }) => {
               </button>
               <Collapse in={open[course.programmeId]}>
                 <div
-                  className="bg-white border p-3"
-                  style={{ transition: "all 0.3s", minHeight: "120px" }}
+                  className="bg-white border p-3 course-row-grid"
+                  style={{ transition: "all 0.3s", minHeight: "60px" }}
                 >
-                  <p>
+                  <div className="course-row-item">
                     <strong>Code:</strong> {course.programmeCode}
-                  </p>
-                  <p>
+                  </div>
+                  <div className="course-row-item">
                     <strong>Name:</strong> {course.programmeName}
-                  </p>
-                  <p>
+                  </div>
+                  <div className="course-row-item">
                     <strong>Fee:</strong> ₹{course.fee}
-                  </p>
-                  <div className="d-flex gap-2">
+                  </div>
+                  <div className="course-row-item d-flex gap-2 justify-content-end">
                     <Button
                       size="sm"
                       variant="info"

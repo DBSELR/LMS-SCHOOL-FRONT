@@ -13,8 +13,8 @@ const normalizeKeys = (obj) =>
   Object.fromEntries(Object.entries(obj).map(([k, v]) => [toCamel(k), v]));
 const STATUS_META = {
   todo: { label: "To Do", badge: "bg-info", header: "bg-info" },
-  inprogress: { label: "In Progress", badge: "bg-warning", header: "bg-warning" },
-  done: { label: "Done", badge: "bg-success", header: "bg-success" },
+  inprogress: { label: "In Progress", badge: "stat-progress", header: "stat-progress" },
+  done: { label: "Done", badge: "stat-done", header: "stat-done" },
 };
 
 function TaskboardPage() {
@@ -355,7 +355,7 @@ function TaskboardPage() {
                 To Do
               </button>
               <button
-                className={`btn btn-sm ${s === "inprogress" ? "btn-warning" : "btn-outline-warning"} flex-fill`}
+                className={`btn btn-sm ${s === "inprogress" ? "stat-progress" : "btn-outline-warning"} flex-fill`}
                 onClick={() => handleStatusChange(task, "inprogress")}
                 title="Move to In Progress"
               >
@@ -588,7 +588,7 @@ function TaskboardPage() {
                           <div className="mt-3">
                             <div className="progress progress-8">
                               <div
-                                className="progress-bar bg-success"
+                                className="progress-bar stat-done"
                                 role="progressbar"
                                 style={{
                                   width: `${Math.round(((tasks.done?.length || 0) / allTasks.length) * 100)}%`,
@@ -612,9 +612,9 @@ function TaskboardPage() {
                 {(statusFilter === "all" || statusFilter === "todo") &&
                   renderColumn("todo", "To Do", "bg-info")}
                 {(statusFilter === "all" || statusFilter === "inprogress") &&
-                  renderColumn("inProgress", "In Progress", "bg-warning")}
+                  renderColumn("inProgress", "In Progress", "stat-progress")}
                 {(statusFilter === "all" || statusFilter === "done") &&
-                  renderColumn("done", "Done", "bg-success")}
+                  renderColumn("done", "Done", "stat-done")}
               </div>
             </div>
           </div>

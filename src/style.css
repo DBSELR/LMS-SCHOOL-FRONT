@@ -19,11 +19,14 @@ thead.dark-header th {
 
 /* AdminDashboard – lock the canvas to white (no grey) */
 .page.admin-dashboard,
-.page.admin-dashboard .section-body,
-.page.admin-dashboard .container-fluid {
+.page.admin-dashboard ,
+.page.admin-dashboard , .section-body  {
   background: #fff !important;
 }
 
+ /* .container-fluid{
+  background: #fff !important;
+} */
 
 
 @media (max-width: 992px) {
@@ -150,7 +153,7 @@ body:not(.sidebar-open) .page {
 
 /* AdminDashboardTabs css start */
 .nav-link, .nav-item {
-  padding: 0 3.5rem;
+  padding: 0 2.5rem;
 }
 
 /* AdminDashboardTabs css end */
@@ -231,9 +234,9 @@ body:not(.sidebar-open) .page {
 /* CoursesTab.css start*/
 
 /* ========= Container ========= */
-.container {
+/* .container {
   max-width: 900px;
-}
+} */
 
 /* ========= Glass Card ========= */
 .bg-glass {
@@ -392,7 +395,8 @@ button, .btn {
 
 /* ========= Base Layout ========= */
 .container {
-  max-width: 900px;
+  /* max-width: 900px; */
+  width: 100%;
   border-radius: 18px;
   padding: 0.5rem 0.75rem;
   /* border: 1px solid #dee2e6; */
@@ -2970,8 +2974,8 @@ background-size: cover; */
   border-left: 4px solid #0dcaf0;
 }
 .custom-filter-select.value-inprogress {
-  background: linear-gradient(135deg, #ffc107 5%, #ffffff 5%);
-  border-left: 4px solid #ffc107;
+  background: linear-gradient(135deg, #ffc1077d 5%, #ffffff 5%);
+  border-left: 4px solid #ffc1077d;
 }
 .custom-filter-select.value-done {
   background: linear-gradient(135deg, #198754 5%, #ffffff 5%);
@@ -2982,8 +2986,8 @@ background-size: cover; */
 .stat-box { border-radius: 8px; font-weight: bold; }
 .stat-total { background: #f8f9fa; }
 .stat-todo { background: #5a67d8; color: #fff; }
-.stat-progress { background: #ffc107; color: #000; }
-.stat-done { background: #28a745; color: #fff; }
+.stat-progress { background: #ffc1077d; color: #000; }
+.stat-done { background: #28a746bc; color: #fff; }
 
 /* ==== Progress height helper ==== */
 .progress-8 { height: 8px; }

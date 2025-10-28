@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { jwtDecode } from "jwt-decode";
 import HeaderTop from "../components/HeaderTop";
 import RightSidebar from "../components/RightSidebar";
@@ -9,14 +9,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Button, Modal, Collapse } from "react-bootstrap";
 import CalendarViewsAdminLiveClass from "../components/events/CalendarViewsAdminLiveClass";
-import { FaCalendar } from "react-icons/fa";
-import {
-  FaUsers,
-  FaBookOpen,
-  FaClock,
-  FaChevronDown,
-  FaChevronUp,
-} from "react-icons/fa";
+import { FaCalendar, FaUsers, FaBookOpen, FaClock, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import API_BASE_URL from "../config";
 
 const CountdownTimer = ({ startDateTime }) => {
@@ -41,10 +34,7 @@ const CountdownTimer = ({ startDateTime }) => {
   }, [startDateTime]);
 
   return (
-    <span
-      className="badge px-2 py-1 bg-secondary ms-2"
-      style={{ marginLeft: "15px" }}
-    >
+    <span className="badge px-2 py-1 bg-secondary ms-2" style={{ marginLeft: "15px" }}>
       Starts in: {timeLeft}
     </span>
   );
@@ -59,10 +49,18 @@ function InstructorLiveClassManage() {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  // tabs
   const [activeTab, setActiveTab] = useState("batch");
+
+  // collapse states
   const [openBatchGroups, setOpenBatchGroups] = useState({});
   const [openSubjectGroups, setOpenSubjectGroups] = useState({});
 
+  // "Are all expanded?" state for current tab
+  const [allOpen, setAllOpen] = useState(true);
+
+  // form state
   const [form, setForm] = useState({
     className: "",
     liveDate: "",
@@ -70,26 +68,81 @@ function InstructorLiveClassManage() {
     endTime: "",
     meetingLink: "",
     examinationID: "",
-    // semester: "",
     batchName: "",
   });
 
+  // auth data
   const token = localStorage.getItem("jwt");
   const decoded = jwtDecode(token);
   const instructorId = decoded["UserId"] || decoded.userId || decoded.nameid;
 
-  // Helper to construct DELETE API (falls back to localhost sample you provided)
+  // helper DELETE API
   const DELETE_API = (id) =>
     API_BASE_URL
       ? `${API_BASE_URL}/LiveClass/Delete/${id}`
       : `https://localhost:7099/api/LiveClass/Delete/${id}`;
 
+  // -------- group helpers (pure) --------
+  const groupByBatchSemester = (data) => {
+    const grouped = {};
+    data.forEach((cls) => {
+      const key = `${cls.batchName} `;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(cls);
+    });
+    return grouped;
+  };
+
+  const groupBySubject = (data) => {
+    const grouped = {};
+    data.forEach((cls) => {
+      const courseInfo = assignedCourses.find(
+        (c) => c.examinationID === cls.examinationID
+      );
+      let key = cls.className; // fallback
+      if (courseInfo) {
+        key = `Subject: ${courseInfo.paperCode} - ${courseInfo.paperName} (${courseInfo.semester} batch / ${
+          courseInfo.batchName || "N/A"
+        })`;
+      }
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(cls);
+    });
+    return grouped;
+  };
+
+  // memoize groups so we don't recompute on every render unnecessarily
+  const batchGroups = useMemo(() => groupByBatchSemester(classes), [classes]);
+  const subjectGroups = useMemo(() => groupBySubject(classes), [classes, assignedCourses]);
+
+  // fetch data
   useEffect(() => {
     console.clear();
     console.log("📥 Instructor ID:", instructorId);
     fetchClasses();
     fetchAssignedCourses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingId]);
+
+  // after classes or assignedCourses update, initialize expand/collapse maps
+  useEffect(() => {
+    // Build default open maps = all true
+    const newBatchOpen = {};
+    Object.keys(batchGroups).forEach((key) => {
+      newBatchOpen[key] = true;
+    });
+
+    const newSubjectOpen = {};
+    Object.keys(subjectGroups).forEach((key) => {
+      newSubjectOpen[key] = true;
+    });
+
+    setOpenBatchGroups(newBatchOpen);
+    setOpenSubjectGroups(newSubjectOpen);
+
+    // reset global allOpen to true because we just expanded them
+    setAllOpen(true);
+  }, [batchGroups, subjectGroups]);
 
   const fetchClasses = () => {
     fetch(`${API_BASE_URL}/LiveClass/Instructor/${instructorId}`, {
@@ -122,13 +175,34 @@ function InstructorLiveClassManage() {
       });
   };
 
+  // toggle all for current tab
+  const toggleAll = () => {
+    if (activeTab === "batch") {
+      // flip everything in batchGroups
+      const newVal = !allOpen;
+      const updated = {};
+      Object.keys(batchGroups).forEach((key) => {
+        updated[key] = newVal;
+      });
+      setOpenBatchGroups(updated);
+      setAllOpen(newVal);
+    } else if (activeTab === "subject") {
+      const newVal = !allOpen;
+      const updated = {};
+      Object.keys(subjectGroups).forEach((key) => {
+        updated[key] = newVal;
+      });
+      setOpenSubjectGroups(updated);
+      setAllOpen(newVal);
+    }
+  };
+
   const handleCourseChange = (e) => {
     const selectedValue = e.target.value;
     if (!selectedValue) {
       setForm((prevForm) => ({
         ...prevForm,
         examinationID: "",
-        //semester: "",
         batchName: "",
       }));
       return;
@@ -143,7 +217,6 @@ function InstructorLiveClassManage() {
       setForm((prevForm) => ({
         ...prevForm,
         examinationID: selectedId,
-        //  semester: selectedCourse.semester || "",
         batchName: selectedCourse.batchName || "",
       }));
     }
@@ -169,16 +242,12 @@ function InstructorLiveClassManage() {
       !form.startTime ||
       !form.endTime ||
       !form.examinationID
-      // !form.semester
     ) {
       toast.warning("⚠️ Please fill in all required fields.");
       return;
     }
 
     const examinationID = parseInt(form.examinationID);
-    // const semester = parseInt(form.semester);
-
-    //if (isNaN(examinationID) || isNaN(semester)) {
     if (isNaN(examinationID)) {
       toast.error("❌ Invalid course selection.");
       return;
@@ -203,7 +272,6 @@ function InstructorLiveClassManage() {
       ...form,
       instructorId: parseInt(instructorId),
       examinationID,
-      //semester,
       liveDate: start.toISOString(),
       startTime: normalizedStart,
       endTime: normalizedEnd,
@@ -248,7 +316,6 @@ function InstructorLiveClassManage() {
         endTime: "",
         meetingLink: "",
         examinationID: "",
-        // semester: "",
         batchName: "",
       });
 
@@ -270,7 +337,6 @@ function InstructorLiveClassManage() {
       endTime: cls.endTime,
       meetingLink: cls.meetingLink,
       examinationID: cls.examinationID,
-      //  semester: cls.semester,
       batchName: cls.batchName,
     });
     setEditingId(cls.liveClassId);
@@ -281,7 +347,6 @@ function InstructorLiveClassManage() {
     if (!deleteId) return;
 
     try {
-      // Uses provided localhost API when API_BASE_URL is undefined, otherwise uses your configured base URL
       const endpoint = DELETE_API(deleteId);
 
       const res = await fetch(endpoint, {
@@ -311,13 +376,7 @@ function InstructorLiveClassManage() {
     const [startHour, startMinute] = cls.startTime.split(":").map(Number);
     const [endHour, endMinute] = cls.endTime.split(":").map(Number);
 
-    const startDateTime = new Date(
-      year,
-      month - 1,
-      day,
-      startHour,
-      startMinute
-    );
+    const startDateTime = new Date(year, month - 1, day, startHour, startMinute);
     const endDateTime = new Date(year, month - 1, day, endHour, endMinute);
     const joinStartTime = new Date(startDateTime.getTime() - 10 * 60 * 1000);
 
@@ -329,12 +388,11 @@ function InstructorLiveClassManage() {
   const calendarEvents = classes.map((cls) => ({
     id: cls.liveClassId,
     title: cls.className,
-    start: `${cls.liveDate.split("T")[0]}T${cls.startTime}`, // no :00
+    start: `${cls.liveDate.split("T")[0]}T${cls.startTime}`,
     end: `${cls.liveDate.split("T")[0]}T${cls.endTime}`,
     extendedProps: {
       instructor: cls.instructorName,
       course: cls.courseName,
-      // semester: cls.semester,
       status: getClassStatus(cls),
       meetingLink: cls.meetingLink,
     },
@@ -372,7 +430,7 @@ function InstructorLiveClassManage() {
 
         if (response.ok) {
           toast.success("✅ Recording uploaded successfully!");
-          fetchClasses(); // refresh list to reflect new fileurl
+          fetchClasses();
         } else {
           const errText = await response.text();
           toast.error(`❌ Upload failed: ${errText}`);
@@ -385,49 +443,12 @@ function InstructorLiveClassManage() {
     fileInput.click();
   };
 
-  const groupByBatchSemester = (data) => {
-    const grouped = {};
-    data.forEach((cls) => {
-      //const key = `${cls.batchName} - Semester: ${cls.semester}`;
-      const key = `${cls.batchName} `;
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(cls);
-    });
-    return grouped;
-  };
-
-  const groupBySubject = (data) => {
-    const grouped = {};
-    data.forEach((cls) => {
-      const courseInfo = assignedCourses.find(
-        (c) => c.examinationID === cls.examinationID
-      );
-      let key = cls.className; // fallback
-
-      if (courseInfo) {
-        key = `Subject: ${courseInfo.paperCode} - ${courseInfo.paperName} (${
-          courseInfo.semester
-        } batch / ${courseInfo.batchName || "N/A"})`;
-      }
-
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(cls);
-    });
-    return grouped;
-  };
-
   const renderClassCard = (cls) => {
     const status = getClassStatus(cls);
     const [year, month, day] = cls.liveDate.split("T")[0].split("-");
     const [startHour, startMinute] = cls.startTime.split(":").map(Number);
     const [endHour, endMinute] = cls.endTime.split(":").map(Number);
-    const startDateTime = new Date(
-      year,
-      month - 1,
-      day,
-      startHour,
-      startMinute
-    );
+    const startDateTime = new Date(year, month - 1, day, startHour, startMinute);
 
     const courseInfo = assignedCourses.find(
       (c) => c.examinationID === cls.examinationID
@@ -457,7 +478,6 @@ function InstructorLiveClassManage() {
               {cls.className}
             </span>
 
-            {/* Top-right delete icon for quick access */}
             <button
               type="button"
               title="Delete Live Class"
@@ -561,7 +581,6 @@ function InstructorLiveClassManage() {
         .jiggle-effect {
           animation: jiggle 0.5s infinite;
         }
-        /* Ensure icon-buttons look clickable even if CSS resets */
         .btn.btn-outline-danger i.fa-trash { pointer-events: none; }
       `}</style>
 
@@ -591,31 +610,63 @@ function InstructorLiveClassManage() {
           ) : (
             <div></div>
           )}
+
           <div className="container-fluid mb-3">
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-between">
+              {(activeTab === "batch" || activeTab === "subject") && (
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={toggleAll}
+                  title={allOpen ? "Collapse all" : "Expand all"}
+                  aria-label={allOpen ? "Collapse all" : "Expand all"}
+                  style={{ marginLeft: "10px" }}
+                >
+                  {allOpen ? (
+                    <i className="fa-solid fa-minimize" />
+                  ) : (
+                    <i className="fa-solid fa-maximize" />
+                  )}
+                </button>
+              )}
+
               <Button variant="primary" onClick={() => setShowModal(true)}>
                 + Add New Live Class
               </Button>
             </div>
           </div>
+
           <div className="container-fluid">
-            <div
-              className="d-flex justify-content-center gap-3 mt-3 mb-3 flex-wrap tab-buttons-container"
-            >
+            <div className="d-flex justify-content-center gap-3 mt-3 mb-3 flex-wrap tab-buttons-container">
+              
+
               <button
                 className={`tab-btn ${activeTab === "batch" ? "active" : ""}`}
-                onClick={() => setActiveTab("batch")}
+                onClick={() => {
+                  setActiveTab("batch");
+                  // sync allOpen to reflect batch state
+                  const vals = Object.values(openBatchGroups);
+                  const everyOpen = vals.length === 0 ? true : vals.every(Boolean);
+                  setAllOpen(everyOpen);
+                }}
               >
                 <FaUsers className="me-1" style={{ marginRight: "10px" }} />{" "}
                 Batch wise
               </button>
+
               <button
                 className={`tab-btn ${activeTab === "subject" ? "active" : ""}`}
-                onClick={() => setActiveTab("subject")}
+                onClick={() => {
+                  setActiveTab("subject");
+                  const vals = Object.values(openSubjectGroups);
+                  const everyOpen =
+                    vals.length === 0 ? true : vals.every(Boolean);
+                  setAllOpen(everyOpen);
+                }}
               >
                 <FaBookOpen className="me-1" style={{ marginRight: "10px" }} />{" "}
                 Subject wise
               </button>
+
               <button
                 className={`tab-btn ${activeTab === "upcoming" ? "active" : ""}`}
                 onClick={() => setActiveTab("upcoming")}
@@ -623,6 +674,7 @@ function InstructorLiveClassManage() {
                 <FaClock className="me-1" style={{ marginRight: "10px" }} />{" "}
                 Upcoming
               </button>
+
               <button
                 className={`tab-btn ${activeTab === "calendar" ? "active" : ""}`}
                 onClick={() => setActiveTab("calendar")}
@@ -637,89 +689,100 @@ function InstructorLiveClassManage() {
               <>
                 {/* Batch wise */}
                 {activeTab === "batch" &&
-                  Object.entries(groupByBatchSemester(classes)).map(
-                    ([key, group]) => (
-                      <div key={key} className="mb-3 ">
-                        <div
-                          className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
-                          onClick={() =>
-                            setOpenBatchGroups((prev) => ({
+                  Object.entries(batchGroups).map(([key, group]) => (
+                    <div key={key} className="mb-3 ">
+                      <div
+                        className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
+                        onClick={() =>
+                          setOpenBatchGroups((prev) => {
+                            const next = {
                               ...prev,
                               [key]: !prev[key],
-                            }))
-                          }
-                          style={{ fontWeight: "600" }}
-                        >
-                          <span>
-                            {key} ({group.length} classes)
-                          </span>
-                          {openBatchGroups[key] ? (
-                            <FaChevronUp style={{ marginRight: "10px" }} />
-                          ) : (
-                            <FaChevronDown style={{ marginRight: "10px" }} />
-                          )}
-                        </div>
-
-                        <Collapse in={openBatchGroups[key]}>
-                          <div className="p-3">
-                            <div className="row">
-                              {group.map((cls) => (
-                                <div
-                                  key={cls.liveClassId}
-                                  className="col-lg-4 col-md-6 col-12"
-                                >
-                                  {renderClassCard(cls)}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </Collapse>
+                            };
+                            // update allOpen if any closed
+                            const vals = Object.values(next);
+                            const allTrue =
+                              vals.length === 0 ? true : vals.every(Boolean);
+                            setAllOpen(allTrue);
+                            return next;
+                          })
+                        }
+                        style={{ fontWeight: "600" }}
+                      >
+                        <span>
+                          {key} ({group.length} classes)
+                        </span>
+                        {openBatchGroups[key] ? (
+                          <FaChevronUp style={{ marginRight: "10px" }} />
+                        ) : (
+                          <FaChevronDown style={{ marginRight: "10px" }} />
+                        )}
                       </div>
-                    )
-                  )}
+
+                      <Collapse in={openBatchGroups[key]}>
+                        <div className="p-3">
+                          <div className="row">
+                            {group.map((cls) => (
+                              <div
+                                key={cls.liveClassId}
+                                className="col-lg-4 col-md-6 col-12"
+                              >
+                                {renderClassCard(cls)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </Collapse>
+                    </div>
+                  ))}
 
                 {/* Subject wise */}
                 {activeTab === "subject" &&
-                  Object.entries(groupBySubject(classes)).map(
-                    ([key, group]) => (
-                      <div key={key} className="mb-3">
-                        <div
-                          className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
-                          onClick={() =>
-                            setOpenSubjectGroups((prev) => ({
+                  Object.entries(subjectGroups).map(([key, group]) => (
+                    <div key={key} className="mb-3">
+                      <div
+                        className="semester-toggle-btn p-2 cursor-pointer d-flex justify-content-between align-items-center"
+                        onClick={() =>
+                          setOpenSubjectGroups((prev) => {
+                            const next = {
                               ...prev,
                               [key]: !prev[key],
-                            }))
-                          }
-                          style={{ fontWeight: "600" }}
-                        >
-                          <span>
-                            {key} ({group.length} classes)
-                          </span>
-                          {openSubjectGroups[key] ? (
-                            <FaChevronUp style={{ marginRight: "10px" }} />
-                          ) : (
-                            <FaChevronDown style={{ marginRight: "10px" }} />
-                          )}
-                        </div>
-                        <Collapse in={openSubjectGroups[key]}>
-                          <div className="p-3">
-                            <div className="row">
-                              {group.map((cls) => (
-                                <div
-                                  key={cls.liveClassId}
-                                  className="col-lg-4 col-md-6 col-12"
-                                  style={{ marginBottom: "5px" }}
-                                >
-                                  {renderClassCard(cls)}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </Collapse>
+                            };
+                            const vals = Object.values(next);
+                            const allTrue =
+                              vals.length === 0 ? true : vals.every(Boolean);
+                            setAllOpen(allTrue);
+                            return next;
+                          })
+                        }
+                        style={{ fontWeight: "600" }}
+                      >
+                        <span>
+                          {key} ({group.length} classes)
+                        </span>
+                        {openSubjectGroups[key] ? (
+                          <FaChevronUp style={{ marginRight: "10px" }} />
+                        ) : (
+                          <FaChevronDown style={{ marginRight: "10px" }} />
+                        )}
                       </div>
-                    )
-                  )}
+                      <Collapse in={openSubjectGroups[key]}>
+                        <div className="p-3">
+                          <div className="row">
+                            {group.map((cls) => (
+                              <div
+                                key={cls.liveClassId}
+                                className="col-lg-4 col-md-6 col-12"
+                                style={{ marginBottom: "5px" }}
+                              >
+                                {renderClassCard(cls)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </Collapse>
+                    </div>
+                  ))}
 
                 {/* Upcoming */}
                 {activeTab === "upcoming" && (
@@ -750,6 +813,7 @@ function InstructorLiveClassManage() {
                 )}
               </>
             )}
+
             {activeTab === "calendar" && (
               <CalendarViewsAdminLiveClass
                 events={calendarEvents}
@@ -757,6 +821,7 @@ function InstructorLiveClassManage() {
               />
             )}
           </div>
+
           <Footer />
         </div>
       </div>
@@ -817,7 +882,9 @@ function InstructorLiveClassManage() {
                 type="time"
                 className="form-control"
                 value={form.endTime}
-                onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, endTime: e.target.value })
+                }
               />
             </div>
             <div className="col-md-6 mt-2">
