@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Form, Button, Collapse } from "react-bootstrap";
+import { Form, Button } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import API_BASE_URL from "../../config";
 
 const DEBUG = true;
+
 const CoursesTab = ({ isActive }) => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState({});
 
   const [form, setForm] = useState({
     courseCode: "",
@@ -47,8 +46,6 @@ const CoursesTab = ({ isActive }) => {
     }
   };
 
-
-
   // ====== FIX 1: derive courseName from the selected courseCode (AP-Andhra Pradesh) ======
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,21 +71,19 @@ const CoursesTab = ({ isActive }) => {
   const handleEdit = (course) => {
     // Check if programmeCode already contains hyphen (combined format)
     let courseCodeForForm;
-    if (course.programmeCode.includes('-')) {
-      // Already in combined format, use as is
+    if (course.programmeCode.includes("-")) {
       courseCodeForForm = course.programmeCode;
     } else {
-      // Create combined format
       courseCodeForForm = `${course.programmeCode}-${course.programmeName}`;
     }
-    
+
     console.log("🔄 Editing course:", {
       original: course,
       courseCodeForForm,
       programmeCode: course.programmeCode,
-      programmeName: course.programmeName
+      programmeName: course.programmeName,
     });
-    
+
     setForm({
       courseCode: courseCodeForForm,
       courseName: course.programmeName ?? "",
@@ -130,7 +125,7 @@ const CoursesTab = ({ isActive }) => {
 
     // Split courseCode to get proper programmeCode and programmeName
     let finalProgrammeCode, finalProgrammeName;
-    
+
     if (courseCode.includes("-")) {
       const [code, name] = courseCode.split("-", 2);
       finalProgrammeCode = code?.trim() || "";
@@ -168,7 +163,7 @@ const CoursesTab = ({ isActive }) => {
 
       const res = await fetch(url, {
         method,
-        headers: {
+               headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
@@ -199,12 +194,11 @@ const CoursesTab = ({ isActive }) => {
     }
   };
 
-  const toggle = (id) => setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-
-
+  // compact cell padding style
+  const cellPad = { padding: "6px 8px" };
 
   return (
-    <div className="container py-0 pt-0 welcome-card animate-welcome" style={{width:'100%'}}>
+    <div className="container py-0 pt-0 welcome-card animate-welcome" style={{ width: "100%" }}>
       <div className="mb-0 bg-glass p-0">
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Boards</h5>
         <Form>
@@ -224,7 +218,7 @@ const CoursesTab = ({ isActive }) => {
                   <option value="">Select Board</option>
                   {[
                     "AP-Andhra Pradesh",
-                    "TG-Telangana", 
+                    "TG-Telangana",
                     "CB-Central Board",
                     "IC-International",
                   ].map((opt) => (
@@ -233,29 +227,22 @@ const CoursesTab = ({ isActive }) => {
                     </option>
                   ))}
                   {/* If form has a courseCode that doesn't match predefined options, add it */}
-                  {form.courseCode && 
-                   !["AP-Andhra Pradesh", "TG-Telangana", "CB-Central Board", "IC-International"].includes(form.courseCode) && (
-                    <option key={form.courseCode} value={form.courseCode}>
-                      {form.courseCode}
-                    </option>
-                  )}
+                  {form.courseCode &&
+                    ![
+                      "AP-Andhra Pradesh",
+                      "TG-Telangana",
+                      "CB-Central Board",
+                      "IC-International",
+                    ].includes(form.courseCode) && (
+                      <option key={form.courseCode} value={form.courseCode}>
+                        {form.courseCode}
+                      </option>
+                    )}
                 </Form.Control>
               </Form.Group>
             </div>
 
-            {/* Board Name field intentionally removed/commented; name is auto-derived */}
-            {/*
-            <div className="col-md-6">
-              <Form.Group>
-                <Form.Label>Board Name</Form.Label>
-                <Form.Control
-                  name="courseName"
-                  value={form.courseName}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
-            */}
+            {/* Board Name intentionally kept removed; auto-derived */}
 
             <div className="col-md-4">
               <Form.Group>
@@ -289,53 +276,55 @@ const CoursesTab = ({ isActive }) => {
         {loading ? (
           <p>Loading...</p>
         ) : (
-          courses.map((course) => (
-            <div key={course.programmeId} style={{ margin: "10px" }}>
-              <button
-                className="w-100 btn btn-dark text-start"
-                onClick={() => toggle(course.programmeId)}
-              >
-                {course.programmeCode} - {course.programmeName} | Fee: ₹{course.fee}
-                {open[course.programmeId] ? (
-                  <FaChevronUp className="float-end" />
+          <div className="table-responsive">
+            <table className="table table-sm table-hover table-bordered align-middle mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Board</th>
+                  <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Fee (₹)</th>
+                  <th style={{ ...cellPad, width: 140, whiteSpace: "nowrap" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courses.length === 0 ? (
+                  <tr>
+                    <td style={cellPad} colSpan={3} className="text-center text-muted">
+                      No boards found.
+                    </td>
+                  </tr>
                 ) : (
-                  <FaChevronDown className="float-end" />
+                  courses.map((course) => (
+                    <tr key={course.programmeId}>
+                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>
+                        {course.programmeCode}-{course.programmeName}
+                      </td>
+                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>₹{course.fee}</td>
+                      <td style={cellPad} className="text-end">
+                        <div className="d-flex gap-2 justify-content-end">
+                          <Button
+                            size="sm"
+                            variant="info"
+                            onClick={() => handleEdit(course)}
+                            title="Edit"
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleDelete(course.programmeId)}
+                            title="Delete"
+                          >
+                            <i className="fa-solid fa-trash"></i>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
-              </button>
-              <Collapse in={open[course.programmeId]}>
-                <div
-                  className="bg-white border p-3 course-row-grid"
-                  style={{ transition: "all 0.3s", minHeight: "60px" }}
-                >
-                  <div className="course-row-item">
-                    <strong>Code:</strong> {course.programmeCode}
-                  </div>
-                  <div className="course-row-item">
-                    <strong>Name:</strong> {course.programmeName}
-                  </div>
-                  <div className="course-row-item">
-                    <strong>Fee:</strong> ₹{course.fee}
-                  </div>
-                  <div className="course-row-item d-flex gap-2 justify-content-end">
-                    <Button
-                      size="sm"
-                      variant="info"
-                      onClick={() => handleEdit(course)}
-                    >
-                      <i className="fa-solid fa-pen-to-square" ></i>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => handleDelete(course.programmeId)}
-                    >
-                      <i className="fa-solid fa-trash"></i>
-                    </Button>
-                  </div>
-                </div>
-              </Collapse>
-            </div>
-          ))
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

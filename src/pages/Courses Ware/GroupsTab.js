@@ -162,7 +162,7 @@ const GroupsTab = ({ isActive }) => {
         (g) =>
           g.groupCode === groupCode &&
           String(g.programmeId) === String(programmeId) &&
-          // If you also want per-batch uniqueness, uncomment the next line:
+          // To enforce per-batch uniqueness too, include:
           // g.batchName === batchName &&
           g.groupId !== groupId
       );
@@ -253,13 +253,12 @@ const GroupsTab = ({ isActive }) => {
     // make sure courses list for dropdown is fresh
     await fetchCoursesByBatch();
 
-    // Detect "No-Group" using batchcourse (not the removed 'courses' state)
+    // Detect "No-Group" using batchcourse
     const matchedCourse = batchcourse.find(
       (c) => c.programmeId === g.programmeId && c.batchName === g.batchName
     );
     const isNoGrp = !!matchedCourse?.isNoGrp;
 
-    // Normalize the display name if you want a friendly one
     const normalizedName = isNoGrp ? "---" : g.groupName || g.groupCode || "";
 
     setForm({
@@ -276,6 +275,20 @@ const GroupsTab = ({ isActive }) => {
       isNoGrp,
     });
   };
+
+  // ===== Helpers for display =====
+  const codeToDisplay = (code) =>
+    CLASS_CODE_OPTIONS.find((o) => o.value === code)?.display || code || "";
+
+  const classDisplay = (g) => {
+    if (g.groupCode === "00" || g.groupName === "---") return "---";
+    // groupName in DB may be numeric; prioritize groupCode mapping
+    const disp = codeToDisplay(g.groupCode || g.groupName);
+    return `Class - ${disp}`;
+  };
+
+  // compact cell padding style
+  const cellPad = { padding: "6px 8px" };
 
   return (
     <div className="container py-0 pt-0 welcome-card animate-welcome">
@@ -341,7 +354,7 @@ const GroupsTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            {/* Save Button - Full width on small, auto width on large */}
+            {/* Save */}
             <div className="col-4 mt-4 d-flex gap-2 align-items-center">
               <Button
                 className="rounded-pill px-4 class-save-btn"
@@ -363,23 +376,59 @@ const GroupsTab = ({ isActive }) => {
         {groups.length === 0 ? (
           <p>No classes found.</p>
         ) : (
-          groups.map((g) => (
-            <div key={g.groupId} className="group-card mb-3">
-              <strong>{g.batchName}</strong> | {g.programmeCode} - {g.programmeName} |{" "}
-              Class - {g.groupName} | Fee: ₹{g.fee}
-              <div className="d-flex justify-content-end gap-2 mt-2">
-                <button className="btn btn-sm btn-outline-info" onClick={() => handleEdit(g)}>
-                  <i className="fa-solid fa-pen-to-square" ></i>
-                </button>
-                <button
-                  className="btn btn-sm btn-outline-danger"
-                  onClick={() => handleDelete(g.groupId)}
-                >
-                  <i className="fa-solid fa-trash"></i>
-                </button>
-              </div>
+          <>
+            {/* ===== New compact table view (below the list) ===== */}
+            <div className="table-responsive">
+              <table className="table table-sm table-hover table-bordered align-middle mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Board</th>
+                    <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Class</th>
+                    <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Fee (₹)</th>
+                    <th style={{ ...cellPad, width: 140, whiteSpace: "nowrap" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groups.map((g) => (
+                    <tr key={`tbl-${g.groupId}`}>
+                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>
+                        {g.programmeCode} - {g.programmeName}
+                      </td>
+                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>{classDisplay(g)}</td>
+                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>₹{g.fee}</td>
+                      <td style={{ ...cellPad }} className="text-end">
+                        <div className="d-flex gap-2 justify-content-end">
+                          <Button
+                            size="sm"
+                            variant="info"
+                            onClick={() => handleEdit(g)}
+                            title="Edit"
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleDelete(g.groupId)}
+                            title="Delete"
+                          >
+                            <i className="fa-solid fa-trash"></i>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {groups.length === 0 && (
+                    <tr>
+                      <td style={cellPad} colSpan={4} className="text-center text-muted">
+                        No classes found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          ))
+          </>
         )}
       </div>
     </div>
