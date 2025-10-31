@@ -625,10 +625,10 @@ const SubjectsBankTab = ({ isActive }) => {
             <div className="fw-bold">
               <span className="text-primary">Subject : {form.paperCode}</span> -{" "}
               <span className="text-primary">{form.paperName}</span>
-              {" ("}
+              {/* {" ("}
               <span className="text-primary">{form.batchName}</span>/
               <span className="text-primary">{form.semester}</span>
-              {")"}
+              {")"} */}
             </div>
           </div>
 
