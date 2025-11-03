@@ -268,7 +268,7 @@ function AdminCourseUploadPage() {
         </div>
       </div>
 
-      <Footer />
+       
     </div>
   );
 }

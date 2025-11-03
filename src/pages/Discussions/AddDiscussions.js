@@ -270,7 +270,7 @@ function AddDiscussions() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
       </div>
 

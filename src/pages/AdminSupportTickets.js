@@ -134,7 +134,7 @@ const AdminSupportTickets = () => {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

@@ -156,7 +156,7 @@ function AdminSubmissions() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
 
       {/* Review Modal */}

@@ -104,7 +104,7 @@ function normalizeFromArray(arr) {
   return { bid, batchName, startDate, endDate };
 }
 
-/* ⚠️ KEY FIX: capture programmeId (Pid/ProgrammeId/programmeid) and classId (Gid/GroupId/Groupid) */
+/* ⚠️ KEY FIX: capture programmeId and classId */
 function normalizeBatchDto(dto) {
   if (Array.isArray(dto)) return normalizeFromArray(dto);
   const get = ci(dto || {});
@@ -117,13 +117,11 @@ function normalizeBatchDto(dto) {
   const endDate =
     get(["EndDate", "endDate", "End", "EndDt", "End_Date", "ToDate", "To"]) ?? "";
 
-  // NEW: ids for dropdowns
   const programmeId =
     get(["ProgrammeId", "programmeid", "ProgrammeID", "Pid", "pid"]) ?? "";
   const classId =
     get(["GroupId", "groupid", "GroupID", "Gid", "gid"]) ?? "";
 
-  // NEW: display names for table
   const programmeName =
     get(["programmeName", "ProgrammeName", "programName", "ProgramName"]) ?? "";
   const groupName =
@@ -234,16 +232,14 @@ const BatchTab = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      // Normalize option values to strings for reliable matching in <select>
       const normalized = Array.isArray(data)
         ? data.map((b) => ({
             programmeId: b.programmeId != null ? String(b.programmeId) : "",
             programmeCode: b.programmeCode,
             programmeName: b.programmeName,
-            fee: b.fee || "", // Include fee information
+            fee: b.fee || "",
           }))
         : [];
-      
       console.log("📋 Boards loaded with fee data:", normalized);
       setBoards(normalized);
     } catch {
@@ -289,14 +285,12 @@ const BatchTab = () => {
     try {
       const token = localStorage.getItem("jwt");
       const rows = await getAllBatches(token);
-
       const normalized = rows.map(normalizeBatchDto).map((r, i) => {
         if (DEBUG && (!r.batchName || r.batchName === "")) {
           console.warn("⚠️ Row missing batchName, raw:", rows[i], "normalized:", r);
         }
         return r;
       });
-
       if (DEBUG) console.log("✅ Normalized batches:", normalized);
       setBatches(normalized);
     } catch (err) {
@@ -314,40 +308,32 @@ const BatchTab = () => {
   };
 
   const handleBoardChange = (e) => {
-    const programmeId = e.target.value; // string
-    
+    const programmeId = e.target.value;
     if (programmeId) {
-      // Find the selected board to get fee information
       const selectedBoard = boards.find(board => board.programmeId === programmeId);
       const boardFee = selectedBoard?.fee || "";
-      
       console.log("🔄 Board changed:", { programmeId, selectedBoard, boardFee });
-      
       setForm((prev) => ({ 
         ...prev, 
         programmeId, 
         classId: "",
-        fee: boardFee // Auto-populate fee from selected board
+        fee: boardFee
       }));
-      
       fetchClasses(programmeId);
     } else {
-      // Reset everything when no board is selected
       setForm((prev) => ({ 
         ...prev, 
         programmeId: "", 
         classId: "",
-        fee: "" // Clear fee when no board selected
+        fee: ""
       }));
       setClasses([]);
     }
   };
 
-  /* ⚠️ KEY FIX: when editing, set programmeId/classId and trigger fetchClasses(programmeId) */
   const handleEdit = (row) => {
     const programmeId = row.programmeId ? String(row.programmeId) : "";
     const classId = row.classId ? String(row.classId) : "";
-
     setForm({
       batchName: row.batchName || "",
       startDate: toInputDate(row.startDate),
@@ -357,15 +343,11 @@ const BatchTab = () => {
       classId,
       fee: row.fee || "",
     });
-
-    // Populate classes for this programme so the Class dropdown has the option selected
     if (programmeId) {
       fetchClasses(programmeId).then(() => {
-        // Ensure classId remains set after classes load
         setForm((prev) => ({ ...prev, classId }));
       });
     }
-
     toast.info("✏️ Edit mode");
   };
 
@@ -407,7 +389,7 @@ const BatchTab = () => {
       BatchName: batchName,
       StartDate: toIsoMidnight(startDate),
       EndDate: toIsoMidnight(endDate),
-      Pid: Number(programmeId), // backend expects numeric
+      Pid: Number(programmeId),
       Gid: Number(classId),
       Fee: fee ? Number(fee) : 0,
     };
@@ -434,9 +416,8 @@ const BatchTab = () => {
         <h5 className="mb-3 text-primary">Add / Edit Batch</h5>
         <Form onSubmit={(e) => e.preventDefault()}>
           <div className="row g-3">
-
             {/* Select Board */}
-            <div className="col-12 col-lg-6 select-batch">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>Select Board</Form.Label>
                 <Form.Control
@@ -457,7 +438,7 @@ const BatchTab = () => {
             </div>
 
             {/* Class */}
-            <div className="col-12 col-lg-6 select-batch">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>Class</Form.Label>
                 <Form.Control
@@ -478,7 +459,7 @@ const BatchTab = () => {
             </div>
 
             {/* Batch */}
-            <div className="col-12 col-lg-6 input-batch">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>Batch</Form.Label>
                 <Form.Control
@@ -491,7 +472,7 @@ const BatchTab = () => {
             </div>
 
             {/* Total Fee */}
-            <div className="col-12 col-lg-6 input-batch">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>Fee</Form.Label>
                 <Form.Control
@@ -505,7 +486,7 @@ const BatchTab = () => {
             </div>
 
             {/* Start Date */}
-            <div className="col-12 col-md-6 col-lg-4 input-batch">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>Start Date</Form.Label>
                 <Form.Control
@@ -518,7 +499,7 @@ const BatchTab = () => {
             </div>
 
             {/* End Date */}
-            <div className="col-12 col-md-6 col-lg-4 input-batch">
+            <div className="col-12 col-md-6 col-lg-4">
               <Form.Group>
                 <Form.Label>End Date</Form.Label>
                 <Form.Control
@@ -530,35 +511,38 @@ const BatchTab = () => {
               </Form.Group>
             </div>
 
-            {/* Save Button - Full width on small, auto width on large */}
-            <div className="col-12 col-md-6 col-lg-4 d-flex align-items-center mt-4 gap-2">
-              <Button
-                className="rounded-pill px-4 batch-save-btn"
-                variant={isEditMode ? "warning" : "success"}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleSave();
-                }}
-              >
-                {saving
-                  ? isEditMode
-                    ? "Updating..."
-                    : "Saving..."
-                  : isEditMode
-                  ? "Update"
-                  : "Save"}
-              </Button>
-
-              {isEditMode && (
+            {/* Actions (Save / Cancel) */}
+            <div className="col-12 col-md-6 col-lg-4 d-flex align-items-end">
+              <div className="d-grid d-lg-flex gap-2 w-100">
                 <Button
-                  variant="outline-secondary"
-                  className="w-100 w-lg-auto px-4"
-                  onClick={handleCancelEdit}
+                  className="rounded-pill px-4"
+                  variant={isEditMode ? "warning" : "success"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSave();
+                  }}
                   disabled={saving}
                 >
-                  Cancel
+                  {saving
+                    ? isEditMode
+                      ? "Updating..."
+                      : "Saving..."
+                    : isEditMode
+                    ? "Update"
+                    : "Save"}
                 </Button>
-              )}
+
+                {isEditMode && (
+                  <Button
+                    variant="outline-secondary"
+                    className="px-4"
+                    onClick={handleCancelEdit}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </Form>
@@ -625,22 +609,26 @@ const BatchTab = () => {
                         <td data-label="Fee" className="text-end">
                           {b.fee ? `₹${b.fee}` : <em>(no fee)</em>}
                         </td>
-                        <td data-label="Actions" className="d-flex gap-2" style={{margin:'auto', alignItems:'center',textAlign:'center', justifyContent:'center'}}>
+                        <td
+                          data-label="Actions"
+                          className="d-flex gap-2"
+                          style={{ margin: "auto", alignItems: "center", textAlign: "center", justifyContent: "center" }}
+                        >
                           <Button
                             size="sm"
                             variant="outline-info"
                             onClick={() => handleEdit(b)}
                             type="button"
-                            style={{marginTop:'0px', marginBottom:'0px'}}
+                            style={{ marginTop: "0px", marginBottom: "0px" }}
                           >
-                            <i className="fa-solid fa-pen-to-square" ></i>
+                            <i className="fa-solid fa-pen-to-square"></i>
                           </Button>
                           <Button
                             size="sm"
                             variant="outline-danger"
                             onClick={() => handleDelete(b)}
                             type="button"
-                            style={{marginTop:'0px', marginBottom:'0px'}}
+                            style={{ marginTop: "0px", marginBottom: "0px" }}
                           >
                             <i className="fa-solid fa-trash"></i>
                           </Button>

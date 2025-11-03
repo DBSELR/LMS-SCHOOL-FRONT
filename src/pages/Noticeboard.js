@@ -46,7 +46,7 @@ function Noticeboard() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

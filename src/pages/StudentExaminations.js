@@ -124,7 +124,7 @@ function StudentExaminations() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

@@ -57,7 +57,7 @@ function IndexPage() {
         <>
           <HeroSection />
           <FeatureCards />
-          <Footer />
+           
         </>
       );
     }

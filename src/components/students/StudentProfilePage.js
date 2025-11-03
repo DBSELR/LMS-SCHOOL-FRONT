@@ -399,7 +399,7 @@ const StudentProfilePage = ({ studentId }) => {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

@@ -300,7 +300,7 @@ function AdminUsers() {
           </div>
         </div>
 
-        <Footer />
+         
 
         <RoleAssignModal
           isOpen={isRoleModalOpen}

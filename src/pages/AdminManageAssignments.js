@@ -389,7 +389,7 @@ function AdminManageAssignments() {
         </Modal.Footer>
       </Modal>
 
-      <Footer />
+       
     </div>
   );
 }

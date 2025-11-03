@@ -146,7 +146,7 @@ function StudentQuestions() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

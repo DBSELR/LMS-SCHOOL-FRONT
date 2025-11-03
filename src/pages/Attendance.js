@@ -41,7 +41,7 @@ function Attendance() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

@@ -96,7 +96,7 @@ function AppCompose() {
         </div>
 
         {/* Footer */}
-        <Footer />
+         
       </div>
     </div>
   );

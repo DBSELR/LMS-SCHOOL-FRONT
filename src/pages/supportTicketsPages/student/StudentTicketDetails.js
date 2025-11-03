@@ -113,7 +113,7 @@ const StudentTicketDetails = () => {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

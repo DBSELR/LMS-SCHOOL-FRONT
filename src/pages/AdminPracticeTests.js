@@ -361,7 +361,7 @@
 //         </Modal.Footer>
 //       </Modal>
 
-//       <Footer />
+//        
 //     </div>
 //   );
 // }

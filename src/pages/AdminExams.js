@@ -314,7 +314,7 @@ function AdminExams() {
           </div>
         </div>
 
-         <Footer />
+          
       </div>
       </div>
 

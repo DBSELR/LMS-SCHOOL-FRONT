@@ -109,7 +109,7 @@ function StudentAssignmentSubmit() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

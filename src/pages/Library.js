@@ -186,7 +186,7 @@ function Library() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
 
       </div>

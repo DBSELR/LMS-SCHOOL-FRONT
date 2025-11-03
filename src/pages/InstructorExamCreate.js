@@ -523,7 +523,7 @@
 //           </div>
 //         </div>
 
-//         <Footer />
+//          
 //       </div>
 
 //       <ConfirmationPopup
@@ -1095,7 +1095,7 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
       </div>
 

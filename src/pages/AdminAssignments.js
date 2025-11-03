@@ -208,7 +208,7 @@ const groupedAssignments = filteredAssignments.reduce((acc, a) => {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
 
       {showModal && (

@@ -618,7 +618,7 @@ function TaskboardPage() {
               </div>
             </div>
           </div>
-          <Footer />
+           
         </div>
       </div>
 

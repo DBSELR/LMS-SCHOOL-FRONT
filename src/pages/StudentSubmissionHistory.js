@@ -214,7 +214,7 @@ function StudentSubmissionHistory() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
       </div>
     </div>

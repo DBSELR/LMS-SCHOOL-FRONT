@@ -201,7 +201,7 @@ function ReportsStudentAdmission() {
           </div>
         </div>
 
-        <Footer />
+         
    
     </div>
   );

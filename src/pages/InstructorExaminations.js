@@ -83,7 +83,7 @@ function InstructorExaminations() {
             </Table>
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

@@ -253,7 +253,7 @@ function ViewDiscussions() {
         </div>
       </div>
 
-      <Footer />
+       
     </div>
   );
 }

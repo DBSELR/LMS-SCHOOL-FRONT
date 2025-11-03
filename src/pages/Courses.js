@@ -209,7 +209,7 @@ function Courses() {
             </div>
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

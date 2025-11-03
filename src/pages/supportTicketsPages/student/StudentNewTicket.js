@@ -18,7 +18,7 @@ const StudentNewTicket = () => {
           <p className="text-muted">Please fill out the form to submit your query.</p>
         </div>
         <TicketForm role="student" />
-        <Footer />
+         
       </div>
     </div>
   );

@@ -441,7 +441,7 @@ function AdminStudentOverview() {
             </div>
           </div>
         </div>
-        <Footer />
+         
       </div>
 
       </div>

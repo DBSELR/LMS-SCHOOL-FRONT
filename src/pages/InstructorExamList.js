@@ -331,7 +331,7 @@ function InstructorExamList() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
       <ConfirmationPopup

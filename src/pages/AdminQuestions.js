@@ -189,7 +189,7 @@ function AdminQuestions() {
           </div>
         </div>
 
-        <Footer />
+         
 
         {/* Question Form Modal */}
         {showModal && (

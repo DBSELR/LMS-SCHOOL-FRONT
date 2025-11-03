@@ -208,7 +208,7 @@ function InstructorQuestions() {
           </div>
         </div>
 
-        <Footer />
+         
 
         {showModal && (
           <QuestionFormModal

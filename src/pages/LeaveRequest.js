@@ -159,7 +159,7 @@ function LeaveRequest() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

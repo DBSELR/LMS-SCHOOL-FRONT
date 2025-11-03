@@ -213,7 +213,7 @@ const SubmitTicket = () => {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

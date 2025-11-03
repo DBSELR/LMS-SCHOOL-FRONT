@@ -40,7 +40,7 @@ function CaseStudy() {
           </div>
            </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

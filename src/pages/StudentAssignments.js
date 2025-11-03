@@ -126,7 +126,7 @@ function StudentAssignments() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

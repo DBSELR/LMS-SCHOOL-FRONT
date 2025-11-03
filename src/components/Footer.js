@@ -1,23 +1,18 @@
 import React from "react";
+import "./Footer.css";
 
 function Footer() {
   return (
-    <div className="section-body">
-      <footer className="footer">
-        <div className="container-fluid">
-          <div className="row">
-            {/* Left side copyright */}
-            <div className="col-md-6 col-sm-12">
-              Copyright © 2025
-              .
-            </div>
-
-            {/* Right side links */}
-         
+    <footer className="footer fixed-footer">
+      <div className="container-fluid">
+        <div className="row justify-content-center">
+          <div className="col-auto text-center">
+            Powered by
+            <span className="d-none d-md-inline"> - D Base Solutions Private Limited (DBS)</span>
           </div>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
   );
 }
 

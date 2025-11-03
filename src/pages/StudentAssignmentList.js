@@ -122,7 +122,7 @@ function StudentAssignmentList() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

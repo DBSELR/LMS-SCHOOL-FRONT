@@ -112,7 +112,7 @@ function InstructorExamAttachQuestions() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

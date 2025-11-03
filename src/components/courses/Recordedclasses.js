@@ -403,7 +403,7 @@ const Recordedclasses = () => {
             </div>
           </div>
 
-          <Footer />
+           
         </div>
       </div>
 

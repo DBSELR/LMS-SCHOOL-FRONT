@@ -147,7 +147,7 @@ function UsersDashboard() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

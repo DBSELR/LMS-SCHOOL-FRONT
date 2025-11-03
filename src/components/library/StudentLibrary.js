@@ -56,7 +56,7 @@ function StudentLibrary() {
               </div>
             </div>
 
-            <Footer />
+             
           </div>
          </div>
         </>

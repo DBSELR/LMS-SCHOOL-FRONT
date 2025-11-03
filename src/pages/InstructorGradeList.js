@@ -78,7 +78,7 @@ function InstructorGradeList() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
       </div>
     </div>

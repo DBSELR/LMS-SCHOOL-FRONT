@@ -102,7 +102,7 @@ function StudentAssignmentSubmittedList() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

@@ -124,7 +124,7 @@
 //             </div>
 //           </div>
 //         </div>
-//         <Footer />
+//          
 //       </div>
 //     </div>
 //   );
@@ -286,7 +286,7 @@ function InstructorEnterMarks() {
             </div>
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

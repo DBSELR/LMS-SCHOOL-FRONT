@@ -998,7 +998,7 @@ function ProfilePage() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
 
       {/* PASSWORD MODAL */}

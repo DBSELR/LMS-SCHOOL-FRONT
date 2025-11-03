@@ -634,7 +634,7 @@ function RoleMenuMapping() {
             </div>
           </div>
         </div>
-        <Footer />
+         
       </div>
 
       </div>

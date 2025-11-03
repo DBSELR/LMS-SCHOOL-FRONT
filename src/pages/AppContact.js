@@ -76,7 +76,7 @@ function AppContact() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

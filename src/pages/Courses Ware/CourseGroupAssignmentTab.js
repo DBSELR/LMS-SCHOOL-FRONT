@@ -32,24 +32,24 @@ const CourseGroupAssignmentTab = () => {
     try {
       const token = localStorage.getItem("jwt");
       const res = await fetch(
-        "https://localhost:7099/api/Programme/GetAllBatch",
+        "https://localhost:7099/api/Programme/GetUniqueBatches",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("📤 GetAllBatch REQUEST");
-      console.log("URL: https://localhost:7099/api/Programme/GetAllBatch");
+      console.log("📤 GetUniqueBatches REQUEST");
+      console.log("URL: https://localhost:7099/api/Programme/GetUniqueBatches");
       console.log("Method: GET");
       console.log("Headers:", { Authorization: `Bearer ${token}` });
 
       const data = await res.json();
-      console.log("📥 GetAllBatch RESPONSE:", data);
+      console.log("📥 GetUniqueBatches RESPONSE:", data);
 
-      // Store both batch and bid in batchList
-      setBatchList(data.map((p) => ({ batch: p.batch, bid: p.bid })));
+      // Store both batch and batch in batchList
+      setBatchList(data.map((p) => ({ batch: p.batch, batch: p.batch })));
       console.log(
         "✅ Extracted batchList:",
-        data.map((p) => ({ batch: p.batch, bid: p.bid }))
+        data.map((p) => ({ batch: p.batch, batch: p.batch }))
       );
     } catch (error) {
       console.error("❌ Error fetching batches:", error);
@@ -60,11 +60,11 @@ const CourseGroupAssignmentTab = () => {
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (selectedBatch) {
-      console.log("🔍 Selected Batch (bid):", selectedBatch); // Log selectedBatch for debugging
+      console.log("🔍 Selected Batch (batch):", selectedBatch); // Log selectedBatch for debugging
 
-      // Fetch programmes for the selected batch using bid
+      // Fetch programmes for the selected batch using batch
       fetch(
-        `https://localhost:7099/api/Programme/GetProgrammesByBatch?bid=${selectedBatch}`,
+        `https://localhost:7099/api/Programme/GetProgrammesByBatchName?batch=${selectedBatch}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -146,7 +146,7 @@ const CourseGroupAssignmentTab = () => {
     if (selectedBatch && selectedCourse && selectedGroup && selectedSemester) {
       const course = courseList.find((c) => c.programmeName === selectedCourse);
       const programmeId = course?.programmeid;
-      const batch = batchList.find((b) => b.bid == selectedBatch);
+      const batch = batchList.find((b) => b.batch == selectedBatch);
       const batchName = batch?.batch;
 
       if (!programmeId || !batchName) return;
@@ -267,7 +267,7 @@ const CourseGroupAssignmentTab = () => {
     }));
 
     if (mergedSubjects.length > 0) {
-      const batch = batchList.find((b) => b.bid == selectedBatch);
+      const batch = batchList.find((b) => b.batch == selectedBatch);
       const batchName = batch?.batch;
 
       const payload = {
@@ -343,7 +343,7 @@ const CourseGroupAssignmentTab = () => {
               >
                 <option value="">Select Batch</option>
                 {batchList.map((b, i) => (
-                  <option key={i} value={b.bid}>
+                  <option key={i} value={b.batch}>
                     {b.batch}
                   </option>
                 ))}

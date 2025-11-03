@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import API_BASE_URL from "../../config";
 
+
 const CLASS_CODE_OPTIONS = [
   { display: "VI", value: "06" },
   { display: "VII", value: "07" },
@@ -22,7 +23,6 @@ const GroupsTab = ({ isActive }) => {
     groupName: "",
     batchName: "",
     courseValue: "",
-    // hidden/derived
     programmeId: "",
     programmeName: "",
     numberOfSemesters: 1,
@@ -68,16 +68,13 @@ const GroupsTab = ({ isActive }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "fee") {
       setForm((prev) => ({ ...prev, fee: value }));
       return;
     }
-
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Class Code dropdown -> derive a readable name unless No-Group
   const handleGroupCodeChange = (e) => {
     const code = e.target.value;
     const display = CLASS_CODE_OPTIONS.find((opt) => opt.value === code)?.display;
@@ -88,10 +85,8 @@ const GroupsTab = ({ isActive }) => {
     }));
   };
 
-  // When board changes, derive hidden values from selected course
   const handleCourseChange = (e) => {
     const selected = e.target.value;
-
     if (selected) {
       const [programmeId, batchName] = selected.split("||");
       const course = batchcourse.find(
@@ -157,13 +152,10 @@ const GroupsTab = ({ isActive }) => {
         return;
       }
 
-      // ✅ Duplicate check scoped to same programme (and batch if you want)
       const isDuplicate = groups.some(
         (g) =>
           g.groupCode === groupCode &&
           String(g.programmeId) === String(programmeId) &&
-          // To enforce per-batch uniqueness too, include:
-          // g.batchName === batchName &&
           g.groupId !== groupId
       );
       if (isDuplicate) {
@@ -182,7 +174,7 @@ const GroupsTab = ({ isActive }) => {
 
     const payload = {
       groupCode: isNoGrp ? "00" : groupCode,
-      groupName: isNoGrp ? "---" : groupCode, // keep numeric as stored name per your current approach
+      groupName: isNoGrp ? "---" : groupCode,
       programmeId,
       programmeName,
       numberOfSemesters: Number(numberOfSemesters),
@@ -250,15 +242,11 @@ const GroupsTab = ({ isActive }) => {
   };
 
   const handleEdit = async (g) => {
-    // make sure courses list for dropdown is fresh
     await fetchCoursesByBatch();
-
-    // Detect "No-Group" using batchcourse
     const matchedCourse = batchcourse.find(
       (c) => c.programmeId === g.programmeId && c.batchName === g.batchName
     );
     const isNoGrp = !!matchedCourse?.isNoGrp;
-
     const normalizedName = isNoGrp ? "---" : g.groupName || g.groupCode || "";
 
     setForm({
@@ -276,29 +264,27 @@ const GroupsTab = ({ isActive }) => {
     });
   };
 
-  // ===== Helpers for display =====
   const codeToDisplay = (code) =>
     CLASS_CODE_OPTIONS.find((o) => o.value === code)?.display || code || "";
 
   const classDisplay = (g) => {
     if (g.groupCode === "00" || g.groupName === "---") return "---";
-    // groupName in DB may be numeric; prioritize groupCode mapping
     const disp = codeToDisplay(g.groupCode || g.groupName);
     return `Class - ${disp}`;
   };
 
-  // compact cell padding style
   const cellPad = { padding: "6px 8px" };
 
   return (
     <div className="container py-0 pt-0 welcome-card animate-welcome">
       <div className="mb-0 bg-glass p-0 border">
         <h5 className="mb-0 mt-0 text-primary">Add / Edit Class</h5>
+
         <Form>
-          <div className="row g-3">
+          <div className="groups-form-row">
             {/* Select Board */}
-            <div className="col-12 col-lg-6">
-              <Form.Group>
+            <div className="groups-form-col">
+              <Form.Group className="mb-0">
                 <Form.Label>Select Board</Form.Label>
                 <Form.Control
                   as="select"
@@ -320,9 +306,9 @@ const GroupsTab = ({ isActive }) => {
               </Form.Group>
             </div>
 
-            {/* Class (dropdown) */}
-            <div className="col-12 col-lg-6">
-              <Form.Group>
+            {/* Class */}
+            <div className="groups-form-col">
+              <Form.Group className="mb-0">
                 <Form.Label>Class</Form.Label>
                 <Form.Control
                   as="select"
@@ -342,8 +328,8 @@ const GroupsTab = ({ isActive }) => {
             </div>
 
             {/* Total Fee */}
-            <div className="col-12 col-lg-6">
-              <Form.Group>
+            <div className="groups-form-col">
+              <Form.Group className="mb-0">
                 <Form.Label>Total Fee</Form.Label>
                 <Form.Control
                   name="fee"
@@ -355,7 +341,7 @@ const GroupsTab = ({ isActive }) => {
             </div>
 
             {/* Save */}
-            <div className="col-4 mt-4 d-flex gap-2 align-items-center">
+            <div className="groups-form-col groups-form-save">
               <Button
                 className="rounded-pill px-4 class-save-btn"
                 variant="success"
@@ -376,59 +362,56 @@ const GroupsTab = ({ isActive }) => {
         {groups.length === 0 ? (
           <p>No classes found.</p>
         ) : (
-          <>
-            {/* ===== New compact table view (below the list) ===== */}
-            <div className="table-responsive">
-              <table className="table table-sm table-hover table-bordered align-middle mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Board</th>
-                    <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Class</th>
-                    <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Fee (₹)</th>
-                    <th style={{ ...cellPad, width: 140, whiteSpace: "nowrap" }}>Actions</th>
+          <div className="table-responsive">
+            <table className="table table-sm table-hover table-bordered align-middle mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Board</th>
+                  <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Class</th>
+                  <th style={{ ...cellPad, whiteSpace: "nowrap" }}>Fee (₹)</th>
+                  <th style={{ ...cellPad, width: 140, whiteSpace: "nowrap" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map((g) => (
+                  <tr key={`tbl-${g.groupId}`}>
+                    <td style={{ ...cellPad, whiteSpace: "nowrap" }}>
+                      {g.programmeCode} - {g.programmeName}
+                    </td>
+                    <td style={{ ...cellPad, whiteSpace: "nowrap" }}>{classDisplay(g)}</td>
+                    <td style={{ ...cellPad, whiteSpace: "nowrap" }}>₹{g.fee}</td>
+                    <td style={{ ...cellPad }} className="text-end">
+                      <div className="d-flex gap-2 justify-content-end">
+                        <Button
+                          size="sm"
+                          variant="info"
+                          onClick={() => handleEdit(g)}
+                          title="Edit"
+                        >
+                          <FaEdit />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => handleDelete(g.groupId)}
+                          title="Delete"
+                        >
+                          <FaTrash />
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {groups.map((g) => (
-                    <tr key={`tbl-${g.groupId}`}>
-                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>
-                        {g.programmeCode} - {g.programmeName}
-                      </td>
-                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>{classDisplay(g)}</td>
-                      <td style={{ ...cellPad, whiteSpace: "nowrap" }}>₹{g.fee}</td>
-                      <td style={{ ...cellPad }} className="text-end">
-                        <div className="d-flex gap-2 justify-content-end">
-                          <Button
-                            size="sm"
-                            variant="info"
-                            onClick={() => handleEdit(g)}
-                            title="Edit"
-                          >
-                            <i className="fa-solid fa-pen-to-square"></i>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleDelete(g.groupId)}
-                            title="Delete"
-                          >
-                            <i className="fa-solid fa-trash"></i>
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {groups.length === 0 && (
-                    <tr>
-                      <td style={cellPad} colSpan={4} className="text-center text-muted">
-                        No classes found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
+                ))}
+                {groups.length === 0 && (
+                  <tr>
+                    <td style={cellPad} colSpan={4} className="text-center text-muted">
+                      No classes found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

@@ -44,7 +44,7 @@ function AppEmail() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

@@ -586,7 +586,7 @@ function AddObjectiveSubjectiveAssignment() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
       </div>
       <ConfirmationPopup

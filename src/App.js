@@ -157,6 +157,10 @@ import CaseStudy from "./pages/CaseStudy";
 import Recordedclasses from "./components/courses/Recordedclasses";
  import API_BASE_URL from "./config";
 import BusinessExecutiveDashboard from "./pages/BusinessExecutiveDashboard";
+// at the top of App.jsx
+import Footer from "./components/Footer"; // adjust path if your Footer.jsx lives elsewhere
+
+
 
 function App() {
   const loggedInStudentId = 1;
@@ -513,6 +517,11 @@ function App() {
         <Route path="/casestudy" element={<ProtectedRoute><CaseStudy /></ProtectedRoute>} />
 
       </Routes>
+
+      {/* ✅ Global footer */}
+    <Footer />
+
+    
       {/* ✅ Place this once globally */}
       <ToastContainer
         position="bottom-center"

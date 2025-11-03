@@ -334,7 +334,7 @@ function StudentDashboard() {
             </div>
           </div>
 
-          <Footer />
+           
         </div>
       </div>
 

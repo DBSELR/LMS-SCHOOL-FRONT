@@ -135,7 +135,7 @@ function AdminCourseViewPage() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

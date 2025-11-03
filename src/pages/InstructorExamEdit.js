@@ -152,7 +152,7 @@ function InstructorExamEdit() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

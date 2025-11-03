@@ -202,7 +202,7 @@ console.log("cous:",courses)
             </div>
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

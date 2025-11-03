@@ -47,7 +47,7 @@ function CourseDetails() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ function Unauthorized() {
         </div>
       </div>
 
-      <Footer />
+       
     </div>
   );
 }

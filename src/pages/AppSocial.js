@@ -52,7 +52,7 @@ function AppSocial() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

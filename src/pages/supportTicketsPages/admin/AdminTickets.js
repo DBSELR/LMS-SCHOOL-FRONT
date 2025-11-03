@@ -246,7 +246,7 @@ const AdminTickets = () => {
             </table>
           )}
         </div>
-        <Footer />
+         
       </div>
 
       {/* View Modal */}

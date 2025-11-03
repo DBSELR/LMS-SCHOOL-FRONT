@@ -144,7 +144,7 @@ function InboxPage() {
           </div>
         )}
 
-        <Footer />
+         
       </div>
       </div>
     </div>

@@ -925,7 +925,7 @@ function StudentsPage() {
               </div>
             </div>
           )}
-          <Footer />
+           
         </div>
       </div>
     </div>

@@ -99,7 +99,7 @@ function InstructorMeetingsPage() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

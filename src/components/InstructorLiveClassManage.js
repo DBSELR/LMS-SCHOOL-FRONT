@@ -822,7 +822,7 @@ function InstructorLiveClassManage() {
             )}
           </div>
 
-          <Footer />
+           
         </div>
       </div>
 

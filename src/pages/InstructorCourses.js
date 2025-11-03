@@ -186,7 +186,7 @@ function InstructorCourses() {
           </div>
         </div>
         </div>
-        <Footer />
+         
       </div>
 
       </div>

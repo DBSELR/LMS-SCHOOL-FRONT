@@ -43,7 +43,7 @@ function OurCentres() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

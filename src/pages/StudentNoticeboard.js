@@ -78,7 +78,7 @@ function StudentNoticeboard() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

@@ -93,7 +93,7 @@ function CourseContentPage() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

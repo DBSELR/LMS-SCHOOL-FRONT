@@ -313,7 +313,7 @@ setSelectedVideoUrl(fullUrl);
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

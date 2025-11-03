@@ -106,7 +106,7 @@ function AdminQuestions() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
 
       {showModal && (

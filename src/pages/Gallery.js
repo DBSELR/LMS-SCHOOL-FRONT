@@ -51,7 +51,7 @@ function Gallery() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

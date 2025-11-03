@@ -234,7 +234,7 @@ function InstructorAssignmentEdit() {
             </button>
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

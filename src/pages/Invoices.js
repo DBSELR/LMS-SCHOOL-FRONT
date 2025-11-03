@@ -50,7 +50,7 @@ function Invoices() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

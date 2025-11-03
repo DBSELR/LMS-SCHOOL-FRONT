@@ -211,7 +211,7 @@ function InstructorAttendanceView() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

@@ -340,7 +340,7 @@ function MentorAssign() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
       </div>
 

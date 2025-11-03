@@ -58,7 +58,7 @@ function AppFileManager() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

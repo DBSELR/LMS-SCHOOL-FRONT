@@ -111,7 +111,7 @@ function AdminLiveClasses() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
 
       {showModal && (

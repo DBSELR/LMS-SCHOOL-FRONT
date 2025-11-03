@@ -109,7 +109,7 @@ function AppEmailView() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

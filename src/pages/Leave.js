@@ -54,7 +54,7 @@ function Leave() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

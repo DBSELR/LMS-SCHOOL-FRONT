@@ -186,7 +186,7 @@ function InstructorAssignmentList() {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

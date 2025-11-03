@@ -199,7 +199,7 @@ function AdminViewAllMarks() {
             </div>
           </Container>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

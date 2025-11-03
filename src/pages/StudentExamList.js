@@ -426,7 +426,7 @@ const guidelinesBlock = showGuidelines && (
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
 

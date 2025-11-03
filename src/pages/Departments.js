@@ -213,7 +213,7 @@ function Departments() {
           </div>
         </div>
 
-        <Footer />
+         
 
         {showModal && (
           <DepartmentFormModal

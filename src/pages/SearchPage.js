@@ -105,7 +105,7 @@ function SearchPage() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

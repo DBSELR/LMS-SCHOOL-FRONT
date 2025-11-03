@@ -191,7 +191,7 @@ function ReportsFeeDetails() {
           </div>
         </div>
 
-        <Footer />
+         
 
     </div>
   );

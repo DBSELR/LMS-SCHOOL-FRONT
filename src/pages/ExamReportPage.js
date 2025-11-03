@@ -206,7 +206,7 @@ function ExamReportPage() {
             </div>
           )}
 
-          <Footer />
+           
         </div>
       </div>
     </div>

@@ -233,7 +233,7 @@ const calendarEvents = classes.map((cls) => ({
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

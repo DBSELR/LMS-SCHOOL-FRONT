@@ -167,7 +167,7 @@ function SRODashboard() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

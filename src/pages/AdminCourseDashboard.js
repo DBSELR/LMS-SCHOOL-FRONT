@@ -97,7 +97,7 @@ function AdminCourseDashboard() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

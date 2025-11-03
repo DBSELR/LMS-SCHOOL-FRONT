@@ -251,7 +251,7 @@ function AdminMeetingsPage() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

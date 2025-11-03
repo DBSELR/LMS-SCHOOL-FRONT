@@ -334,7 +334,7 @@ const handleAdd = async (payload) => {
           />
         )}
 
-        <Footer />
+         
       </div>
       </div>
     </div>

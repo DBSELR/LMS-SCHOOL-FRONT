@@ -218,7 +218,7 @@ const StudentTickets = () => {
             </table>
           )}
         </div>
-        <Footer />
+         
       </div>
       </div>
 

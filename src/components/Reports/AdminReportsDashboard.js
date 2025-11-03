@@ -94,7 +94,7 @@ function AdminReportsDashboard() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
       </div>
     </div>

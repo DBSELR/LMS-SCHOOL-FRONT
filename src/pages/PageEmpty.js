@@ -39,7 +39,7 @@ function PageEmpty() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

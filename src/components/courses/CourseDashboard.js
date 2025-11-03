@@ -118,7 +118,7 @@ function CourseDashboard() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

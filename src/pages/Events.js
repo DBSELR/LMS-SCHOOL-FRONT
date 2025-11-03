@@ -194,7 +194,7 @@ function Events() {
             </div>
           </div>
         </div>
-        <Footer />
+         
       </div>
       </div>
     </div>

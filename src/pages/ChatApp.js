@@ -93,7 +93,7 @@ function ChatApp() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
     </div>
   );

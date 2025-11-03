@@ -191,7 +191,7 @@ function AdminSemesters() {
           </div>
         </div>
 
-        <Footer />
+         
 
         {/* Semester Modal */}
         {showModal && (

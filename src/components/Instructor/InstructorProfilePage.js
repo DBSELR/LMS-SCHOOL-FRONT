@@ -249,7 +249,7 @@ const InstructorProfilePage = ({ instructorId }) => {
             )}
           </div>
         </div>
-        <Footer />
+         
       </div>
     </div>
   );

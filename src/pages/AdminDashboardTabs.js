@@ -98,7 +98,7 @@ function AdminDashboardTabs() {
             </div>
           </div>
 
-          <Footer />
+           
         </div>
       </div>
     </div>

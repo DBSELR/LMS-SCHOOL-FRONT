@@ -356,7 +356,7 @@ const InstructorTickets = () => {
             </tbody>
           </table>
         </div>
-        <Footer />
+         
       </div>
 
       </div>

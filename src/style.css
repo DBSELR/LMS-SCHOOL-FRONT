@@ -205,7 +205,7 @@ body:not(.sidebar-open) .page {
 @media (max-width: 375px) {
   h5 { font-size: 16px; }
   .subject-body input.form-control, .subject-body .react-select__control { font-size: 14px; padding: 6px; }
-  .actions-cell .btn { font-size: 13px; padding: .35rem .5rem; }
+  .actions-cell .btn { font-size: 13px; padding: .35rem .5rem; margin: auto;align-items: center;justify-content: center;text-align: center; }
 }
 
 /* SubjectBank CSS End */
@@ -489,6 +489,89 @@ button, .btn {
   }
 }
 
+/* Grid wrapper for the form row */
+.groups-form-row {
+  display: grid;
+  grid-template-columns: 1fr;          /* phones */
+  gap: 12px;
+  margin: auto;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+}
+
+/* ≥576px (SM - tablets portrait) -> 2 columns */
+@media (min-width: 576px) {
+  .groups-form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: auto;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+  }
+}
+
+/* ≥992px (LG - laptops) -> 3 columns */
+@media (min-width: 992px) {
+  .groups-form-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    margin: auto;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+  }
+}
+
+/* ≥1200px (XL - large desktops) -> 3 inputs + dedicated Save column (side-by-side) */
+@media (min-width: 1200px) {
+  .groups-form-row {
+    grid-template-columns: 1.2fr 1fr 1fr auto;
+    align-items: end;
+    margin: auto;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+  }
+}
+
+/* Each cell */
+.groups-form-col {
+  min-width: 0;
+}
+
+/* Keep form groups tight so rows don't look gappy */
+.groups-form-col .form-group,
+.groups-form-col .form-group.mb-0 {
+  margin-bottom: 0;
+}
+
+/* Save cell */
+.groups-form-save {
+  display: flex;
+  align-items: end;
+  justify-content: flex-start;   /* left on small screens */
+  gap: 8px;
+}
+
+/* On larger screens push Save to the right to visually balance */
+@media (min-width: 1200px) {
+  .groups-form-save {
+    justify-content: flex-end;
+  }
+}
+
+/* Make sure Save button is not cramped and has breathing room */
+.class-save-btn {
+  white-space: nowrap;
+  height: 38px;               /* matches typical .form-control height */
+  line-height: 1;
+}
+
+/* Optional: tighter table look */
+.table td, .table th {
+  vertical-align: middle;
+}
 
 /* GroupsTab.css end */
 
@@ -872,18 +955,36 @@ table td, table th {
 /* Batch Save btn CSS Start */
 @media (max-width:480px){
    .input-batch input.form-control{
-    width: 50% !important;
-    margin-left: 120px !important;
+    line-height: 1.2;
+    background-color: #fff;
+    color: #333;
+    width: 90%;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 
    }
 
   .select-batch select.form-control{
-    width: 50% !important;
-    margin-left: 120px !important;
+    line-height: 1.2;
+    background-color: #fff;
+    color: #333;
+    width: 90%;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
   .batch-save-btn{
-    width: 50% !important;
-    margin-left: 120px !important;
+    line-height: 1.2;
+    background-color: #fff;
+    color: #333;
+    width: 90%;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
   .class-save-btn{
@@ -1721,11 +1822,6 @@ button.btn-sm {
     font-size: 1.2rem;
   }
 
-  .btn {
-    margin-left: 10px;
-    width: 100%;
-    /* margin-bottom: 0.5rem; */
-  }
 }
 
 
@@ -2799,35 +2895,44 @@ background-size: cover; */
   }
 
   select.form-control {
-    font-size: 13px;
-    padding: 6px 10px;
-    line-height: 1.4;
-    max-width: 100%;
+    /* font-size: 12px; */
+    /* padding: 5px 8px; */
+    line-height: 1.2;
+    background-color: #fff;
+    color: #333;
+    width: 90%;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 }
 
 @media (max-width: 480px) {
   select.form-control option {
-    font-size: 12px;
-    padding: 5px 8px;
+    /* font-size: 12px; */
+    /* padding: 5px 8px; */
     line-height: 1.2;
     background-color: #fff;
     color: #333;
+    width: 90%;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
-  select.form-control {
-    width: 60%;
-    margin-left: 70px;
-    font-size: 12px;
-    padding: 5px 8px;
-    line-height: 1.3;
-  }
+  
 }
 
 @media (max-width: 480px){
   input.form-control{
-    width: 60%;
+    width: 90%;
     margin-left: 70px;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 }
 

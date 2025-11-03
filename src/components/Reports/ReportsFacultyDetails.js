@@ -193,7 +193,7 @@ function ReportsFacultyDetails() {
           </div>
         </div>
 
-        <Footer />
+         
       
     </div>
   );

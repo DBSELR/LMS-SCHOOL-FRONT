@@ -129,7 +129,7 @@ function AdminFees() {
           </div>
         </div>
 
-        <Footer />
+         
       </div>
 
       {editModal && (

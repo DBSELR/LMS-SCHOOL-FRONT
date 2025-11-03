@@ -237,7 +237,7 @@ function InstructorDashboard() {
               {/* /Grading Summary */}
             </div>
           </div>
-          <Footer />
+           
         </div>
       </div>
     </div>

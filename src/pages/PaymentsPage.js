@@ -152,7 +152,7 @@ function PaymentsPage() {
 
           </div>
         </div>
-        <Footer />
+         
       </div>
 
       </div>
