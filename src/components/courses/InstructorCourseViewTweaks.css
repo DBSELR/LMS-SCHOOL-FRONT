@@ -1,0 +1,237 @@
+/* InstructorCourseViewTweaks.css */
+
+/* --- Variables --- */
+:root {
+    --ict-primary: #4e73df;
+    --ict-secondary: #858796;
+    --ict-success: #1cc88a;
+    --ict-info: #36b9cc;
+    --ict-warning: #f6c23e;
+    --ict-danger: #e74a3b;
+    --ict-light: #f8f9fc;
+    --ict-dark: #5a5c69;
+    --ict-bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --ict-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --ict-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --ict-radius: 12px;
+}
+
+/* --- Jumbotron / Header --- */
+.jumbotron.welcome-card {
+    background: var(--ict-bg-gradient) !important;
+    color: white !important;
+    border-radius: var(--ict-radius) !important;
+    border: none !important;
+    box-shadow: var(--ict-shadow-md) !important;
+    position: relative;
+    overflow: hidden;
+    padding: 2rem !important;
+}
+
+.jumbotron.welcome-card::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    transform: rotate(30deg);
+    pointer-events: none;
+}
+
+.jumbotron.welcome-card .page-title {
+    color: white !important;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.jumbotron.welcome-card .text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.jumbotron.welcome-card .btn-outline-primary {
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.jumbotron.welcome-card .btn-outline-primary:hover {
+    background: white !important;
+    color: var(--ict-primary) !important;
+}
+
+/* --- Unit Tabs --- */
+.unit-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding-bottom: 1rem;
+}
+
+.unit-tab {
+    background: white;
+    border: 1px solid #e3e6f0;
+    color: var(--ict-dark);
+    padding: 0.6rem 1.4rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.unit-tab::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--ict-bg-gradient);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+}
+
+.unit-tab:hover {
+    transform: translateY(-2px);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 12px rgba(78, 115, 223, 0.25);
+}
+
+.unit-tab:hover::before {
+    opacity: 1;
+}
+
+.unit-tab.active {
+    background: var(--ict-bg-gradient);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(78, 115, 223, 0.4);
+    transform: translateY(-1px);
+}
+
+.unit-tab.active::before {
+    opacity: 1;
+}
+
+/* --- Section Cards --- */
+.section-card {
+    border: none !important;
+    border-radius: var(--ict-radius) !important;
+    box-shadow: var(--ict-shadow-md) !important;
+    overflow: hidden;
+    background: white;
+}
+
+.section-card .card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1rem 1.5rem !important;
+}
+
+.section-card .card-header h6 {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+/* --- Resource Cards (Inner Cards) --- */
+.resource-card {
+    border: 1px solid #f0f0f0;
+    border-radius: var(--ict-radius);
+    background: white;
+    transition: all 0.3s ease;
+    height: 100%;
+    padding: 0 !important;
+    /* Reset padding to let card-body handle it */
+    overflow: hidden;
+}
+
+.resource-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--ict-shadow-md);
+    border-color: rgba(78, 115, 223, 0.2);
+}
+
+.resource-card .card-body {
+    padding: 1.25rem;
+}
+
+.resource-card h6.fw-bold {
+    color: var(--ict-dark);
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+}
+
+.resource-card .text-muted {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* --- Buttons in Cards --- */
+.resource-card .btn {
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.4rem 1rem;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.resource-card .btn-outline-info {
+    color: var(--ict-info);
+    border-color: var(--ict-info);
+}
+
+.resource-card .btn-outline-info:hover {
+    background-color: var(--ict-info);
+    color: white;
+}
+
+.resource-card .btn-outline-primary {
+    color: var(--ict-primary);
+    border-color: var(--ict-primary);
+}
+
+.resource-card .btn-outline-primary:hover {
+    background-color: var(--ict-primary);
+    color: white;
+}
+
+/* --- Delete Button --- */
+.delete-btn {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn:hover {
+    opacity: 1;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Empty State --- */
+.text-muted.text-center.py-3 {
+    background: #f8f9fc;
+    border-radius: var(--ict-radius);
+    border: 1px dashed #e3e6f0;
+    margin: 1rem 0;
+}

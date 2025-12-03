@@ -52,7 +52,7 @@ function normalizeUrl(raw) {
 /* =========================
    Watermark helpers
    ========================= */
-   // Live clock (ticks every second)
+// Live clock (ticks every second)
 function useLiveClock({ timeZone = 'Asia/Kolkata', intervalMs = 1000 } = {}) {
   const [now, setNow] = React.useState(() => new Date());
   React.useEffect(() => {
@@ -195,7 +195,7 @@ function InstructorCourseViewPage() {
   const examId = location.state?.examinationID || "Unknown examination ID";
   const className = location.state?.class || "Unknown Class";
 
-   // NEW: keep raw content and a unit -> title map
+  // NEW: keep raw content and a unit -> title map
   const [rawContent, setRawContent] = useState([]);
   const [unitTitleByUnit, setUnitTitleByUnit] = useState({});
 
@@ -203,13 +203,7 @@ function InstructorCourseViewPage() {
   const [materials, setMaterials] = useState([]);
   const [ebooks, setEBOOKS] = useState([]);
   const [webresources, setwebresources] = useState([]);
-  const [faq, setfaq] = useState([]);
-  const [misconceptions, setmisconceptions] = useState([]);
-  const [practiceassignment, setpracticeassignment] = useState([]);
-  const [studyguide, setstudyguide] = useState([]);
   const [videos, setVideos] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [exams, setExams] = useState([]); // kept in case you map exams later
   const [liveClasses, setLiveClasses] = useState([]);
 
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -231,15 +225,11 @@ function InstructorCourseViewPage() {
   const sectionRefs = {
     ebooks: useRef(null),
     videos: useRef(null),
-    faq: useRef(null),
-    misconceptions: useRef(null),
-    practiceassignment: useRef(null),
-    studyguide: useRef(null),
     webresources: useRef(null),
   };
 
   const lastLoggedVideoPct = useRef(-1);
-  
+
   // Watermark refs and displayText
   // Watermark refs and displayText (live ticking time)
   const { role: wmRole, userId: wmUserId } = useMemo(() => getIdentityFromToken("jwt"), []);
@@ -257,7 +247,7 @@ function InstructorCourseViewPage() {
     lastT: 0,
     nextJitterAt: 0,
   });
-  
+
   const pdfWmStateRef = useRef({
     x: 50,
     y: 50,
@@ -266,7 +256,7 @@ function InstructorCourseViewPage() {
     lastT: 0,
     nextJitterAt: 0,
   });
-  
+
   const apiOrigin = getApiOrigin();
 
   // === Delete helpers ===
@@ -288,10 +278,6 @@ function InstructorCourseViewPage() {
     setEBOOKS((p) => drop(p));
     setVideos((p) => drop(p));
     setwebresources((p) => drop(p));
-    setfaq((p) => drop(p));
-    setmisconceptions((p) => drop(p));
-    setpracticeassignment((p) => drop(p));
-    setstudyguide((p) => drop(p));
     setMaterials((p) => drop(p));
   }
 
@@ -326,12 +312,8 @@ function InstructorCourseViewPage() {
           `video-progress-${playableUrl}`,
           `ebook-progress-${fileUrlAbs}`,
           `webresource-progress-${fileUrlAbs}`,
-          `faq-progress-${fileUrlAbs}`,
-          `misconception-progress-${fileUrlAbs}`,
-          `practiceassignment-progress-${fileUrlAbs}`,
-          `studyguide-progress-${fileUrlAbs}`,
         ].forEach((k) => localStorage.removeItem(k));
-      } catch {}
+      } catch { }
 
       removeContentLocallyById(id);
       alert("✅ Content deleted successfully.");
@@ -347,14 +329,14 @@ function InstructorCourseViewPage() {
   useEffect(() => {
     const root = document.getElementById("main_content");
     if (!root) return;
-    
+
     // Prevent right-click context menu
     const preventCtx = (e) => {
       e.preventDefault();
       e.stopPropagation();
       return false;
     };
-    
+
     // Prevent common developer shortcuts
     const preventDevTools = (e) => {
       // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+Shift+C
@@ -368,7 +350,7 @@ function InstructorCourseViewPage() {
         return false;
       }
     };
-    
+
     // Prevent text selection
     const preventSelection = (e) => {
       if (e.ctrlKey && e.key === 'a') {
@@ -376,16 +358,16 @@ function InstructorCourseViewPage() {
         return false;
       }
     };
-    
+
     // Add event listeners
     root.addEventListener("contextmenu", preventCtx);
     document.addEventListener("keydown", preventDevTools);
     document.addEventListener("keydown", preventSelection);
-    
+
     // Disable drag and drop
     root.addEventListener("dragstart", preventCtx);
     root.addEventListener("drop", preventCtx);
-    
+
     return () => {
       root.removeEventListener("contextmenu", preventCtx);
       document.removeEventListener("keydown", preventDevTools);
@@ -398,7 +380,7 @@ function InstructorCourseViewPage() {
   // Watermark animation effect
   useEffect(() => {
     let rafId = null;
-    
+
     const animateWatermark = (wmRef, stateRef, containerId) => {
       const wm = wmRef.current;
       const container = document.querySelector(containerId);
@@ -505,7 +487,7 @@ function InstructorCourseViewPage() {
     document.addEventListener("selectstart", preventAll, true);
     document.addEventListener("dragstart", preventAll, true);
     document.addEventListener("keydown", preventDevToolsStrict, true);
-    
+
     // Disable print screen
     document.addEventListener("keyup", (e) => {
       if (e.key === "PrintScreen") {
@@ -804,16 +786,11 @@ function InstructorCourseViewPage() {
     (async () => {
       try {
         console.time("[ICVP] GET Content bundle");
-        const [content, allAssignments, allLiveClasses] = await Promise.all([
+        const [content, allLiveClasses] = await Promise.all([
           safeFetchJson(
             `${API_BASE_URL}/Content/Course/${courseId}`,
             { headers, signal: ac.signal },
             { label: "Content/Course", retries: 1 }
-          ),
-          safeFetchJson(
-            `${API_BASE_URL}/Assignment/GetAllAssignments`,
-            { headers, signal: ac.signal },
-            { label: "Assignments", retries: 1 }
           ),
           safeFetchJson(
             `${API_BASE_URL}/LiveClass/All`,
@@ -823,7 +800,7 @@ function InstructorCourseViewPage() {
         ]);
         console.timeEnd("[ICVP] GET Content bundle");
 
-         // ★ Keep the raw list for unit tabs (even when contentType is null)
+        // ★ Keep the raw list for unit tabs (even when contentType is null)
         setRawContent(Array.isArray(content) ? content : []);
 
         // ---- case-insensitive contentType filter
@@ -831,14 +808,9 @@ function InstructorCourseViewPage() {
         setEBOOKS(content.filter((c) => ci(c.contentType) === "ebook"));
         setVideos(content.filter((c) => ci(c.contentType) === "video"));
         setwebresources(content.filter((c) => ci(c.contentType) === "webresources"));
-        setfaq(content.filter((c) => ci(c.contentType) === "faq"));
-        setmisconceptions(content.filter((c) => ci(c.contentType) === "misconceptions"));
-        setpracticeassignment(content.filter((c) => ci(c.contentType) === "practiceassignment"));
-        setstudyguide(content.filter((c) => ci(c.contentType) === "studyguide"));
         setMaterials(content.filter((c) => ci(c.contentType) === "pdf"));
 
         const cid = parseInt(courseId);
-        setAssignments((allAssignments || []).filter((a) => a.examinationid === cid));
         setLiveClasses((allLiveClasses || []).filter((lc) => lc.examinationID === cid));
       } catch (err) {
         console.error("[ICVP] Content bundle load failed", err);
@@ -850,67 +822,67 @@ function InstructorCourseViewPage() {
   }, [courseId]);
 
   // NEW: Build unit tabs from rawContent (keeps units even with null content)
- // Build unit tabs from the raw content (handles Title/title casing)
-// and keep a map of unit -> title for display (even if some rows are null)
-useEffect(() => {
-  const toStr = (v) => (v == null ? "" : String(v).trim());
+  // Build unit tabs from the raw content (handles Title/title casing)
+  // and keep a map of unit -> title for display (even if some rows are null)
+  useEffect(() => {
+    const toStr = (v) => (v == null ? "" : String(v).trim());
 
-  // be liberal about keys coming from the API
-  const getUnit = (it) => toStr(it.unit ?? it.Unit);
-  const getTitle = (it) =>
-    toStr(
-      it.title ??
-      it.Title ??
-      it.unitTitle ??
-      it.UnitTitle
-    );
+    // be liberal about keys coming from the API
+    const getUnit = (it) => toStr(it.unit ?? it.Unit);
+    const getTitle = (it) =>
+      toStr(
+        it.title ??
+        it.Title ??
+        it.unitTitle ??
+        it.UnitTitle
+      );
 
-  const unitSet = new Set();
-  const titleMap = {};
+    const unitSet = new Set();
+    const titleMap = {};
 
-  for (const it of rawContent || []) {
-    const u = getUnit(it);
-    if (!u) continue;
-
-    unitSet.add(u);
-
-    const t = getTitle(it);
-    // remember the first non-empty title we see for this unit
-    if (t && !titleMap[u]) titleMap[u] = t;
-  }
-
-  // If a unit still has no title, try a second pass:
-  // pick any non-empty title from any row that shares the same unit number (defensive)
-  if (unitSet.size > 0) {
-    const byUnit = {};
     for (const it of rawContent || []) {
       const u = getUnit(it);
       if (!u) continue;
-      (byUnit[u] ||= []).push(it);
+
+      unitSet.add(u);
+
+      const t = getTitle(it);
+      // remember the first non-empty title we see for this unit
+      if (t && !titleMap[u]) titleMap[u] = t;
     }
-    for (const u of unitSet) {
-      if (!titleMap[u]) {
-        const firstWithTitle = (byUnit[u] || []).find((x) => getTitle(x));
-        if (firstWithTitle) titleMap[u] = getTitle(firstWithTitle);
+
+    // If a unit still has no title, try a second pass:
+    // pick any non-empty title from any row that shares the same unit number (defensive)
+    if (unitSet.size > 0) {
+      const byUnit = {};
+      for (const it of rawContent || []) {
+        const u = getUnit(it);
+        if (!u) continue;
+        (byUnit[u] ||= []).push(it);
+      }
+      for (const u of unitSet) {
+        if (!titleMap[u]) {
+          const firstWithTitle = (byUnit[u] || []).find((x) => getTitle(x));
+          if (firstWithTitle) titleMap[u] = getTitle(firstWithTitle);
+        }
       }
     }
-  }
 
-  // Sort "Unit-3" before "Unit-10"
-  const num = (u) => {
-    const m = /(\d+)$/.exec(u.replace(/\s+/g, ""));
-    return m ? parseInt(m[1], 10) : 0;
-  };
-  const sortedUnits = Array.from(unitSet).sort((a, b) => num(a) - num(b));
+    // Sort "Unit-3" before "Unit-10"
+    const num = (u) => {
+      const m = /(\d+)$/.exec(u.replace(/\s+/g, ""));
+      return m ? parseInt(m[1], 10) : 0;
+    };
+    const sortedUnits = Array.from(unitSet).sort((a, b) => num(a) - num(b));
 
-  setAllUnits(sortedUnits);
-  setUnitTitleByUnit(titleMap);
+    setAllUnits(sortedUnits);
+    setUnitTitleByUnit(titleMap);
 
-  if (!activeUnit && sortedUnits.length > 0) {
-    setActiveUnit(sortedUnits[0]);
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [rawContent]);
+    if (!activeUnit && sortedUnits.length > 0) {
+      setActiveUnit(sortedUnits[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawContent]);
 
 
   // // Scroll to section when loaded
@@ -959,407 +931,393 @@ useEffect(() => {
   const filteredEbooks = filteredByUnit(ebooks);
   const filteredVideos = filteredByUnit(videos);
   const filteredWebResources = filteredByUnit(webresources);
-  const filteredFAQ = filteredByUnit(faq);
-  const filteredMisconceptions = filteredByUnit(misconceptions);
-  const filteredPracticeAssignment = filteredByUnit(practiceassignment);
-  const filteredStudyGuide = filteredByUnit(studyguide);
 
   return (
-    <div 
-      id="main_content" 
+    <div
+      id="main_content"
       className="font-muli theme-blush"
       onContextMenu={(e) => e.preventDefault()}
       onSelectStart={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
-      style={{userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'}}
+      style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
     >
-      
+
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar role="Instructor" />
-      
+
       <div className="section-wrapper">
-      <div className="page admin-dashboard pt-0">
-        <div className="section-body mt-3 pt-0">
-          <div className="container-fluid">
-          <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <div style={{ width: "150px" }}></div>
-              <h2 className="page-title text-primary pt-0 dashboard-hero-title">View Course Content</h2>
-              <a href="/my-courseware" className="btn btn-outline-primary mt-3 mt-md-0">
-                <i className="fa fa-arrow-left mr-1"></i> Back to Courseware
-              </a>
+        <div className="page admin-dashboard pt-0">
+          <div className="section-body mt-3 pt-0">
+            <div className="container-fluid">
+              <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <div style={{ width: "150px" }}></div>
+                  <h2 className="page-title text-primary pt-0 dashboard-hero-title">View Course Content</h2>
+                  <a href="/my-courseware" className="btn btn-outline-primary mt-3 mt-md-0">
+                    <i className="fa fa-arrow-left mr-1"></i> Back to Courseware
+                  </a>
+                </div>
+                <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
+                  <strong>{`${batchName} - ${className} - ${courseCode} - ${courseName} `}</strong>
+
+
+                </h5>
+              </div>
             </div>
-            <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
-              <strong>{`${batchName} - ${className} - ${courseCode} - ${courseName} `}</strong>
 
+            {/* Unit Tabs */}
+            <div className="unit-tabs mb-4">
+              {allUnits.map((unit) => {
+                const titleForUnit = unitTitleByUnit[unit] || "No title found";
+                // const titleForUnit =
+                //   (ebooks.find((ebook) => ebook.unit?.trim() === unit)?.title) ||
+                //   (videos.find((v) => v.unit?.trim() === unit)?.title) ||
+                //   "No title found";
 
-            </h5>
-          </div>
-          </div>
-
-          {/* Unit Tabs */}
-          <div className="unit-tabs mb-4">
-            {allUnits.map((unit) => {
-              const titleForUnit = unitTitleByUnit[unit] || "No title found";
-              // const titleForUnit =
-              //   (ebooks.find((ebook) => ebook.unit?.trim() === unit)?.title) ||
-              //   (videos.find((v) => v.unit?.trim() === unit)?.title) ||
-              //   "No title found";
-
-              return (
-                <button
-                  key={unit}
-                  className={`unit-tab ${activeUnit === unit ? "active" : ""}`}
-                  onClick={() => {
-                    log("Unit tab clicked", { from: activeUnit, to: unit });
-                    setActiveUnit(unit);
-                  }}
-                  title={`${titleForUnit}`}
-                >
-                  {unit}
-                </button>
-              );
-            })}
-
-            {/* Pass both examinationId and unitId */}
-            <Link
-              to="/discussionforum"
-              state={{
-                examinationId: parseInt(courseId),
-                unitId: activeUnit ? Number(activeUnit.split("-")[1]) : null,
-              }}
-            >
-              <button className="unit-tab">Discussion Forum</button>
-            </Link>
-
-         
-
-            <Link to="/recorded-classes">
-              <button className="unit-tab">Recorded classes</button>
-            </Link>
-          </div>
-
-          {activeUnit && (
-            <div className="d-flex justify-content-between align-items-center mb-3 px-1">
-              <h5 className="mb-0">
-                <i className="fa fa-book text-primary me-2 mr-2"></i> Unit Title:{" "}
-                 {unitTitleByUnit[activeUnit] || "No title found"}
-                {/* {filteredEbooks[0]?.title || filteredVideos[0]?.title || "No title found"} */}
-              </h5>
-              {role !== "Student" && (
-                <Link
-                  to="/add-objective-subjective-assignment"
-                  state={{
-                    unitId: activeUnit,
-                    batchName,
-                    semester,
-                    courseCode,
-                    courseName,
-                    examinationID: examId,
-                  }}
-                >
-                  <button className="btn btn-outline-primary">
-                    <i className="fa fa-plus me-1"></i> Add Practice Test
+                return (
+                  <button
+                    key={unit}
+                    className={`unit-tab ${activeUnit === unit ? "active" : ""}`}
+                    onClick={() => {
+                      log("Unit tab clicked", { from: activeUnit, to: unit });
+                      setActiveUnit(unit);
+                    }}
+                    title={`${titleForUnit}`}
+                  >
+                    {unit}
                   </button>
-                </Link>
-              )}
+                );
+              })}
+
+              {/* Pass both examinationId and unitId */}
+              <Link
+                to="/discussionforum"
+                state={{
+                  examinationId: parseInt(courseId),
+                  unitId: activeUnit ? Number(activeUnit.split("-")[1]) : null,
+                }}
+              >
+                <button className="unit-tab">Discussion Forum</button>
+              </Link>
+
+
+
+              <Link to="/recorded-classes">
+                <button className="unit-tab">Recorded classes</button>
+              </Link>
             </div>
+
+            {activeUnit && (
+              <div className="d-flex justify-content-between align-items-center mb-3 px-1">
+                <h5 className="mb-0">
+                  <i className="fa fa-book text-primary me-2 mr-2"></i> Unit Title:{" "}
+                  {unitTitleByUnit[activeUnit] || "No title found"}
+                  {/* {filteredEbooks[0]?.title || filteredVideos[0]?.title || "No title found"} */}
+                </h5>
+                {role !== "Student" && (
+                  <Link
+                    to="/add-objective-subjective-assignment"
+                    state={{
+                      unitId: activeUnit,
+                      batchName,
+                      semester,
+                      courseCode,
+                      courseName,
+                      examinationID: examId,
+                    }}
+                  >
+                    <button className="btn btn-outline-primary">
+                      <i className="fa fa-plus me-1"></i> Add Practice Test
+                    </button>
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* If you want an always-mounted watermark layer, keep your component here */}
+            {/* <VimeoWithWatermark tokenStorageKey="jwt" opacity={0.16} speed={35} /> */}
+
+            {/* Section Mapping */}
+            {[
+              { title: "Videos", key: "videos", data: filteredVideos, ref: sectionRefs.videos, color: "info", icon: "fas fa-video" },
+              { title: "EBOOK Materials", key: "ebooks", data: filteredEbooks, ref: sectionRefs.ebooks, color: "primary", icon: "fas fa-file-pdf" },
+              { title: "Web Resources Materials", key: "webresources", data: filteredWebResources, ref: sectionRefs.webresources, color: "primary", icon: "fas fa-file-pdf" },
+            ].map((section, idx) => (
+              <div key={section.key} ref={section.ref} className={`card shadow-sm mb-4 section-card animate-section border-${section.color}`}>
+                <div className={`card-header bg-${section.color} text-white`}>
+                  <h6 className="mb-0">
+                    <i className={`${section.icon} me-2 mr-2`}></i>
+                    {section.title}
+                  </h6>
+                </div>
+                <div className="card-body">
+                  {section.data.length === 0 ? (
+                    renderEmptyMessage(section.title)
+                  ) : (
+                    <div className="row">
+                      {section.data.map((item, idx2) => {
+                        // Decide a storage key based on final absolute URL (for consistent progress)
+                        const playableUrl =
+                          section.key === "videos"
+                            ? getPlayableVideoUrl(item)
+                            : toAbsoluteLocal(apiOrigin, item.fileUrl);
+
+                        const idKey =
+                          item.id ?? item.contentId ?? item.examid ?? playableUrl ?? idx2;
+
+                        let progressKey = "";
+                        if (section.key === "videos") progressKey = `video-progress-${playableUrl}`;
+                        else if (section.key === "ebooks") progressKey = `ebook-progress-${playableUrl}`;
+                        else if (section.key === "webresources") progressKey = `webresource-progress-${playableUrl}`;
+                        else if (section.key === "liveclass") progressKey = `liveclass-progress-${playableUrl}`;
+                        else if (section.key === "discussionforum") progressKey = `discussion-progress-${playableUrl}`;
+
+                        const progress = parseInt(localStorage.getItem(progressKey)) || 0;
+                        const progressColor =
+                          progress < 30 ? "#e74c3c" : progress < 70 ? "#f39c12" : "#27ae60";
+
+                        const thisItemId = (item.id ?? item.contentId ?? item.Id ?? item.ContentId);
+
+                        return (
+                          <div className="col-md-6 col-lg-4 mb-3" key={idKey}>
+                            <div className="resource-card welcome-card animate-welcome h-100" style={{ position: "relative" }}>
+                              {/* Delete icon (only for non-students) */}
+                              {role !== "Student" && (
+                                <button
+                                  type="button"
+                                  className="delete-btn text-danger btn btn-link p-0"
+                                  title="Delete content"
+                                  onClick={(e) => handleDeleteContent(item, e)}
+                                  disabled={deletingId === thisItemId}
+                                  aria-label="Delete content"
+                                  style={{ lineHeight: 0 }}
+                                >
+                                  <i className="fa fa-trash" aria-hidden="true"></i>
+                                </button>
+                              )}
+
+                              <div className="card-body d-flex flex-column">
+                                <h6 className="fw-bold">{item.title}</h6>
+                                <p className="text-muted flex-grow-1">{item.description}</p>
+
+                                {section.key === "videos" ? (
+                                  <button
+                                    className="btn btn-sm btn-outline-info mt-auto"
+                                    onClick={() => handleWatchVideo(item)}
+                                  >
+                                    Watch Video
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="btn btn-sm btn-outline-primary mt-auto"
+                                    onClick={() => handleViewFile(item.fileUrl)}
+                                  >
+                                    View File
+                                  </button>
+                                )}
+
+
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {role === "Student" ? (
+            <div className="container-fluid">
+              <div className="card shadow-sm mb-5 section-card animate-section border-info">
+                <div className="card-header bg-info text-white">
+                  <h6 className="mb-0">
+                    <i className="fa fa-tools me-2 mr-2"></i> Student Practice Exams
+                  </h6>
+                </div>
+
+                <div className="card-body">
+                  {practiceExams.length === 0 ? (
+                    <div className="text-muted text-center py-3">No practice exams available.</div>
+                  ) : (
+                    <div className="row">
+                      {practiceExams.map((exam) => {
+                        const isSubjective = exam.examType?.toUpperCase() === "DP";
+                        const isAttendStatus = exam.examStatus?.toLowerCase() === "attendexam";
+                        const isMCQ = exam.examType === "MP";
+
+                        return (
+                          <div className="col-md-6 col-lg-4 mb-3" key={exam.examid}>
+                            <div className="resource-card welcome-card animate-welcome h-100">
+                              <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
+                                <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                                  <i className="fa fa-book text-primary mr-2"></i>
+                                  {exam.title}
+                                </h6>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-calendar-plus me-2 mr-2 text-success"></i>
+                                  <strong>Created At:</strong> {new Date(exam.createdAt).toLocaleString()}
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-clock me-2 mr-2 text-primary"></i>
+                                  <strong>Duration:</strong> {exam.durationMinutes} min
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-star me-2 mr-2 text-warning"></i>
+                                  <strong>Marks:</strong> {exam.totmrk} | <strong>Pass:</strong> {exam.passmrk}
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
+                                  <strong>Unit:</strong> {exam.unitId}
+                                </p>
+
+                                {exam.fileurl ? (
+                                  <a
+                                    href={toAbsoluteLocal(apiOrigin, exam.fileurl)}
+                                    className="btn btn-sm btn-outline-primary"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={() =>
+                                      log("Opening exam attachment", { url: toAbsoluteLocal(apiOrigin, exam.fileurl) })
+                                    }
+                                  >
+                                    📄 View Attachment
+                                  </a>
+                                ) : !isMCQ ? (
+                                  <button className="btn btn-sm btn-outline-secondary" disabled>
+                                    🚫 No Attachment
+                                  </button>
+                                ) : null}
+
+                                {isMCQ && isAttendStatus && (
+                                  <Link to={`/practice-exam/${exam.examid}`} state={{ exam }} className="mt-2">
+                                    <button className="btn btn-sm btn-success w-100">📝 Attend Practice Exam</button>
+                                  </Link>
+                                )}
+
+                                {isSubjective && isAttendStatus && (
+                                  <input
+                                    type="file"
+                                    accept=".pdf"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f && userId) submitSubjectivePracticeExam(exam.examid, userId, f);
+                                    }}
+                                    className="form-control mt-2"
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            
+              <div className="card shadow-sm mb-5 section-card animate-section border-info">
+                <div className="card-header bg-info text-white">
+                  <h6 className="mb-0">
+                    <i className="fa fa-tools me-2 mr-2"></i> View Practice Tests
+                  </h6>
+                </div>
+
+                <div className="card-body">
+                  {adminPracticeTests.length === 0 ? (
+                    <div className="text-muted text-center py-3">No practice test records found.</div>
+                  ) : (
+                    <div className="row">
+                      {adminPracticeTests.map((test) => {
+                        const isObjective = (test.PracticeExamType || "").toLowerCase() === "objective";
+                        const isSubjective = (test.PracticeExamType || "").toLowerCase() === "subjective";
+
+                        const typeBadge = isObjective ? (
+                          <span className="badge bg-primary text-white px-2 py-1 rounded-pill">
+                            <i className="fa fa-list me-1"></i> Objective
+                          </span>
+                        ) : isSubjective ? (
+                          <span className="badge bg-warning text-dark px-2 py-1 rounded-pill">
+                            <i className="fa fa-file-alt me-1"></i> Subjective
+                          </span>
+                        ) : (
+                          <span className="badge bg-secondary text-white px-2 py-1 rounded-pill">
+                            {test.PracticeExamType}
+                          </span>
+                        );
+
+                        return (
+                          <div className="col-md-6 col-lg-4 mb-3" key={test.examid}>
+                            <div className="resource-card welcome-card animate-welcome h-100">
+                              <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
+                                <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                                  <i className="fa fa-book text-primary"></i>
+                                  {test.AssignmentTitle}
+                                </h6>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-user me-2 mr-2 text-dark"></i>
+                                  {test.pname}
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
+                                  <strong>Unit:</strong> {activeUnit}
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-clock me-2 mr-2 text-primary"></i>
+                                  <strong>Duration:</strong> {test.Duration} min
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-star me-2 mr-2 text-warning"></i>
+                                  <strong>Marks:</strong> {test.totmrk} | <strong>Pass:</strong> {test.passmrk}
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-check-circle me-2 mr-2 text-success"></i>
+                                  <strong>Attempted:</strong> {test.attempted ? "Yes" : "No"}
+                                </p>
+
+                                <p className="mb-2">
+                                  <i className="fa fa-calendar-alt me-2 mr-2 text-danger"></i>
+                                  <strong>From:</strong> {new Date(test.StartDate).toLocaleDateString()} -{" "}
+                                  {new Date(test.EndDate).toLocaleDateString()}
+                                </p>
+
+                                <div className="mt-auto text-end">{typeBadge}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            
           )}
 
-          {/* If you want an always-mounted watermark layer, keep your component here */}
-          {/* <VimeoWithWatermark tokenStorageKey="jwt" opacity={0.16} speed={35} /> */}
-
-          {/* Section Mapping */}
-          {[
-            { title: "Videos", key: "videos", data: filteredVideos, ref: sectionRefs.videos, color: "info", icon: "fas fa-video" },
-            { title: "EBOOK Materials", key: "ebooks", data: filteredEbooks, ref: sectionRefs.ebooks, color: "primary", icon: "fas fa-file-pdf" },
-            { title: "Web Resources Materials", key: "webresources", data: filteredWebResources, ref: sectionRefs.webresources, color: "primary", icon: "fas fa-file-pdf" },
-            { title: "Pre-Learning : FAQ", key: "faq", data: filteredFAQ, ref: sectionRefs.faq, color: "primary", icon: "fas fa-file-pdf" },
-            { title: "Pre-Learning : Misconceptions", key: "misconceptions", data: filteredMisconceptions, ref: sectionRefs.misconceptions, color: "primary", icon: "fas fa-file-pdf" },
-            { title: "Practice Assignment", key: "practiceassignment", data: filteredPracticeAssignment, ref: sectionRefs.practiceassignment, color: "primary", icon: "fas fa-file-pdf" },
-            { title: "Study Guide", key: "studyguide", data: filteredStudyGuide, ref: sectionRefs.studyguide, color: "primary", icon: "fas fa-file-pdf" },
-          ].map((section, idx) => (
-            <div key={section.key} ref={section.ref} className={`card shadow-sm mb-4 section-card animate-section border-${section.color}`}>
-              <div className={`card-header bg-${section.color} text-white`}>
-                <h6 className="mb-0">
-                  <i className={`${section.icon} me-2 mr-2`}></i>
-                  {section.title}
-                </h6>
-              </div>
-              <div className="card-body">
-                {section.data.length === 0 ? (
-                  renderEmptyMessage(section.title)
-                ) : (
-                  <div className="row">
-                    {section.data.map((item, idx2) => {
-                      // Decide a storage key based on final absolute URL (for consistent progress)
-                      const playableUrl =
-                        section.key === "videos"
-                          ? getPlayableVideoUrl(item)
-                          : toAbsoluteLocal(apiOrigin, item.fileUrl);
-
-                      const idKey =
-                        item.id ?? item.contentId ?? item.examid ?? playableUrl ?? idx2;
-
-                      let progressKey = "";
-                      if (section.key === "videos") progressKey = `video-progress-${playableUrl}`;
-                      else if (section.key === "ebooks") progressKey = `ebook-progress-${playableUrl}`;
-                      else if (section.key === "webresources") progressKey = `webresource-progress-${playableUrl}`;
-                      else if (section.key === "faq") progressKey = `faq-progress-${playableUrl}`;
-                      else if (section.key === "misconceptions") progressKey = `misconception-progress-${playableUrl}`;
-                      else if (section.key === "practiceassignment") progressKey = `practiceassignment-progress-${playableUrl}`;
-                      else if (section.key === "studyguide") progressKey = `studyguide-progress-${playableUrl}`;
-                      else if (section.key === "liveclass") progressKey = `liveclass-progress-${playableUrl}`;
-                      else if (section.key === "assignments") progressKey = `assignment-progress-${playableUrl}`;
-                      else if (section.key === "exams") progressKey = `exam-progress-${playableUrl}`;
-                      else if (section.key === "discussionforum") progressKey = `discussion-progress-${playableUrl}`;
-
-                      const progress = parseInt(localStorage.getItem(progressKey)) || 0;
-                      const progressColor =
-                        progress < 30 ? "#e74c3c" : progress < 70 ? "#f39c12" : "#27ae60";
-
-                      const thisItemId = (item.id ?? item.contentId ?? item.Id ?? item.ContentId);
-
-                      return (
-                        <div className="col-md-6 col-lg-4 mb-3" key={idKey}>
-                          <div className="resource-card welcome-card animate-welcome h-100" style={{ position: "relative" }}>
-                            {/* Delete icon (only for non-students) */}
-                            {role !== "Student" && (
-                              <button
-                                type="button"
-                                className="delete-btn text-danger btn btn-link p-0"
-                                title="Delete content"
-                                onClick={(e) => handleDeleteContent(item, e)}
-                                disabled={deletingId === thisItemId}
-                                aria-label="Delete content"
-                                style={{ lineHeight: 0 }}
-                              >
-                                <i className="fa fa-trash" aria-hidden="true"></i>
-                              </button>
-                            )}
-
-                            <div className="card-body d-flex flex-column">
-                              <h6 className="fw-bold">{item.title}</h6>
-                              <p className="text-muted flex-grow-1">{item.description}</p>
-
-                              {section.key === "videos" ? (
-                                <button
-                                  className="btn btn-sm btn-outline-info mt-auto"
-                                  onClick={() => handleWatchVideo(item)}
-                                >
-                                  Watch Video
-                                </button>
-                              ) : (
-                                <button
-                                  className="btn btn-sm btn-outline-primary mt-auto"
-                                  onClick={() => handleViewFile(item.fileUrl)}
-                                >
-                                  View File
-                                </button>
-                              )}
-
-                              
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
-
-        {role === "Student" ? (
-          <div className="container-fluid">
-            <div className="card shadow-sm mb-5 section-card animate-section border-info">
-              <div className="card-header bg-info text-white">
-                <h6 className="mb-0">
-                  <i className="fa fa-tools me-2 mr-2"></i> Student Practice Exams
-                </h6>
-              </div>
-
-              <div className="card-body">
-                {practiceExams.length === 0 ? (
-                  <div className="text-muted text-center py-3">No practice exams available.</div>
-                ) : (
-                  <div className="row">
-                    {practiceExams.map((exam) => {
-                      const isSubjective = exam.examType?.toUpperCase() === "DP";
-                      const isAttendStatus = exam.examStatus?.toLowerCase() === "attendexam";
-                      const isMCQ = exam.examType === "MP";
-
-                      return (
-                        <div className="col-md-6 col-lg-4 mb-3" key={exam.examid}>
-                          <div className="resource-card welcome-card animate-welcome h-100">
-                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
-                              <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                                <i className="fa fa-book text-primary mr-2"></i>
-                                {exam.title}
-                              </h6>
-
-                              <p className="mb-2">
-                                <i className="fa fa-calendar-plus me-2 mr-2 text-success"></i>
-                                <strong>Created At:</strong> {new Date(exam.createdAt).toLocaleString()}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-clock me-2 mr-2 text-primary"></i>
-                                <strong>Duration:</strong> {exam.durationMinutes} min
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                                <strong>Marks:</strong> {exam.totmrk} | <strong>Pass:</strong> {exam.passmrk}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
-                                <strong>Unit:</strong> {exam.unitId}
-                              </p>
-
-                              {exam.fileurl ? (
-                                <a
-                                  href={toAbsoluteLocal(apiOrigin, exam.fileurl)}
-                                  className="btn btn-sm btn-outline-primary"
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={() =>
-                                    log("Opening exam attachment", { url: toAbsoluteLocal(apiOrigin, exam.fileurl) })
-                                  }
-                                >
-                                  📄 View Attachment
-                                </a>
-                              ) : !isMCQ ? (
-                                <button className="btn btn-sm btn-outline-secondary" disabled>
-                                  🚫 No Attachment
-                                </button>
-                              ) : null}
-
-                              {isMCQ && isAttendStatus && (
-                                <Link to={`/practice-exam/${exam.examid}`} state={{ exam }} className="mt-2">
-                                  <button className="btn btn-sm btn-success w-100">📝 Attend Practice Exam</button>
-                                </Link>
-                              )}
-
-                              {isSubjective && isAttendStatus && (
-                                <input
-                                  type="file"
-                                  accept=".pdf"
-                                  onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f && userId) submitSubjectivePracticeExam(exam.examid, userId, f);
-                                  }}
-                                  className="form-control mt-2"
-                                />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="container-fluid">
-            <div className="card shadow-sm mb-5 section-card animate-section border-info">
-              <div className="card-header bg-info text-white">
-                <h6 className="mb-0">
-                  <i className="fa fa-tools me-2 mr-2"></i> View Practice Tests
-                </h6>
-              </div>
-
-              <div className="card-body">
-                {adminPracticeTests.length === 0 ? (
-                  <div className="text-muted text-center py-3">No practice test records found.</div>
-                ) : (
-                  <div className="row">
-                    {adminPracticeTests.map((test) => {
-                      const isObjective = (test.PracticeExamType || "").toLowerCase() === "objective";
-                      const isSubjective = (test.PracticeExamType || "").toLowerCase() === "subjective";
-
-                      const typeBadge = isObjective ? (
-                        <span className="badge bg-primary text-white px-2 py-1 rounded-pill">
-                          <i className="fa fa-list me-1"></i> Objective
-                        </span>
-                      ) : isSubjective ? (
-                        <span className="badge bg-warning text-dark px-2 py-1 rounded-pill">
-                          <i className="fa fa-file-alt me-1"></i> Subjective
-                        </span>
-                      ) : (
-                        <span className="badge bg-secondary text-white px-2 py-1 rounded-pill">
-                          {test.PracticeExamType}
-                        </span>
-                      );
-
-                      return (
-                        <div className="col-md-6 col-lg-4 mb-3" key={test.examid}>
-                          <div className="resource-card welcome-card animate-welcome h-100">
-                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
-                              <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                                <i className="fa fa-book text-primary"></i>
-                                {test.AssignmentTitle}
-                              </h6>
-
-                              <p className="mb-2">
-                                <i className="fa fa-user me-2 mr-2 text-dark"></i>
-                                {test.pname}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
-                                <strong>Unit:</strong> {activeUnit}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-clock me-2 mr-2 text-primary"></i>
-                                <strong>Duration:</strong> {test.Duration} min
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                                <strong>Marks:</strong> {test.totmrk} | <strong>Pass:</strong> {test.passmrk}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-check-circle me-2 mr-2 text-success"></i>
-                                <strong>Attempted:</strong> {test.attempted ? "Yes" : "No"}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-calendar-alt me-2 mr-2 text-danger"></i>
-                                <strong>From:</strong> {new Date(test.StartDate).toLocaleDateString()} -{" "}
-                                {new Date(test.EndDate).toLocaleDateString()}
-                              </p>
-
-                              <div className="mt-auto text-end">{typeBadge}</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-       
-      </div>
       </div>
 
-      
+
 
       {/* VIDEO MODAL */}
-      <Modal 
-        show={showVideoModal} 
-        onHide={handleCloseVideo} 
-        centered 
+      <Modal
+        show={showVideoModal}
+        onHide={handleCloseVideo}
+        centered
         size="lg"
         onContextMenu={(e) => e.preventDefault()}
         onSelectStart={(e) => e.preventDefault()}
@@ -1368,11 +1326,11 @@ useEffect(() => {
         <Modal.Header closeButton onContextMenu={(e) => e.preventDefault()}>
           <Modal.Title>Video Playback</Modal.Title>
         </Modal.Header>
-        <Modal.Body 
+        <Modal.Body
           onContextMenu={(e) => e.preventDefault()}
           onSelectStart={(e) => e.preventDefault()}
           onDragStart={(e) => e.preventDefault()}
-          style={{userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'}}
+          style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
         >
           <div className="relative-wrap">
             {/* If Vimeo/YouTube URL -> iframe; else HTML5 video */}
@@ -1448,7 +1406,7 @@ useEffect(() => {
                   </div>
                 </div>
 
-                
+
               </>
             )}
           </div>
@@ -1456,10 +1414,10 @@ useEffect(() => {
       </Modal>
 
       {/* FILE MODAL */}
-      <Modal 
-        show={showFileModal} 
-        onHide={handleCloseFile} 
-        centered 
+      <Modal
+        show={showFileModal}
+        onHide={handleCloseFile}
+        centered
         size="lg"
         onContextMenu={(e) => e.preventDefault()}
         onSelectStart={(e) => e.preventDefault()}
@@ -1468,11 +1426,11 @@ useEffect(() => {
         <Modal.Header closeButton onContextMenu={(e) => e.preventDefault()}>
           <Modal.Title>View PDF</Modal.Title>
         </Modal.Header>
-        <Modal.Body 
+        <Modal.Body
           onContextMenu={(e) => e.preventDefault()}
           onSelectStart={(e) => e.preventDefault()}
           onDragStart={(e) => e.preventDefault()}
-          style={{userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'}}
+          style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
         >
           <div className="relative-wrap">
             <Document
@@ -1517,10 +1475,10 @@ useEffect(() => {
             </div>
           )}
 
-          
+
         </Modal.Body>
       </Modal>
-      
+
     </div>
   );
 }

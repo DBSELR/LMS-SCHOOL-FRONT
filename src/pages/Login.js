@@ -169,21 +169,21 @@ function Login() {
             </div> */}
 
             <div className="form-item">
-        <input
-          type="text"
-          className="form-control mb-2"
-          id="email"
+              <input
+                type="text"
+                className="form-control mb-2"
+                id="email"
                 name="email"
                 // placeholder="Enter your username"
                 value={form.email}
                 onChange={handleChange}
                 required
                 autoComplete="username"
-          /* use defaultValue to keep it uncontrolled */
-        />
-        <label htmlFor="username">Username</label>
-        </div>
-            
+              /* use defaultValue to keep it uncontrolled */
+              />
+              <label htmlFor="username">Username</label>
+            </div>
+
 
             {/* <div className="form-group mb-4">
               <label htmlFor="password" className="font-weight-semibold">
@@ -204,20 +204,20 @@ function Login() {
             </div> */}
 
             <div className="form-item">
-        <input
-          type="password"
-          className="form-control mb-2"
-          id="password"
+              <input
+                type="password"
+                className="form-control mb-2"
+                id="password"
                 name="password"
                 // placeholder="Enter your password"
                 value={form.password}
                 onChange={handleChange}
                 required
                 autoComplete="current-password"
-          /* use defaultValue to keep it uncontrolled */
-        />
-        <label htmlFor="password">Password</label>
-        </div>
+              /* use defaultValue to keep it uncontrolled */
+              />
+              <label htmlFor="password">Password</label>
+            </div>
 
             <div className="d-flex align-items-center mb-3 remember-me">
               <input
