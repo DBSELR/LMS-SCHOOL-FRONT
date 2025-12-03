@@ -159,6 +159,7 @@ import Recordedclasses from "./components/courses/Recordedclasses";
 import BusinessExecutiveDashboard from "./pages/BusinessExecutiveDashboard";
 // at the top of App.jsx
 import Footer from "./components/Footer"; // adjust path if your Footer.jsx lives elsewhere
+import PaymentStatus from "./pages/PaymentStatus";
 
 
 
@@ -515,6 +516,9 @@ function App() {
         <Route path="/discussionforum" element={<ProtectedRoute><DiscussionForum /></ProtectedRoute>} />
         <Route path="/viewdiscussions" element={<ProtectedRoute><ViewDiscussions /></ProtectedRoute>} />
         <Route path="/casestudy" element={<ProtectedRoute><CaseStudy /></ProtectedRoute>} />
+
+
+        <Route path="/payment-status" element={<ProtectedRoute><PaymentStatus /></ProtectedRoute>} />
 
       </Routes>
 
