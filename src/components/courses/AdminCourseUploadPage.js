@@ -19,15 +19,20 @@ function AdminCourseUploadPage() {
   const semester = location.state?.semester || "Unknown Semester";
 
   const [showUploadModal, setShowUploadModal] = useState(true);
+
   const [form, setForm] = useState({
     title: "",
     description: "",
-    contentType: "EBOOK",
-    vurl: "",            // <-- NEW
+    contentType: "EBOOK", // default
+    vurl: "",
   });
+
   const [file, setFile] = useState(null);
   const [units, setUnits] = useState([]);
   const [selectedUnitId, setSelectedUnitId] = useState("");
+
+  // 'S' = Student, 'O' = Others
+  const [userType, setUserType] = useState("");
 
   // Fetch units
   useEffect(() => {
@@ -55,12 +60,23 @@ function AdminCourseUploadPage() {
     }
   }, [selectedUnitId, units]);
 
+  // Checkbox handler for Student / Others (mutually exclusive)
+  const handleUserTypeChange = (type) => {
+    setUserType((prev) => (prev === type ? "" : type));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validation: must have a unit
     if (!selectedUnitId) {
       alert("Please select a unit");
+      return;
+    }
+
+    // Validation: must choose Student or Others
+    if (!userType) {
+      alert("Please select Student or Others");
       return;
     }
 
@@ -77,9 +93,9 @@ function AdminCourseUploadPage() {
     fd.append("description", form.description || "");
     fd.append("contentType", form.contentType || "");
     fd.append("unitId", Number(selectedUnitId));
-    fd.append("vurl", form.vurl || ""); // <-- ALWAYS APPEND
+    fd.append("vurl", form.vurl || "");
+    fd.append("userType", userType); // 'S' or 'O'
 
-    // Debug: show what we're about to send (without file bytes)
     const debugPayload = {
       courseId,
       unitId: Number(selectedUnitId),
@@ -89,6 +105,7 @@ function AdminCourseUploadPage() {
       hasFile: !!file,
       fileName: file?.name || null,
       vurl: form.vurl || "",
+      userType,
     };
     console.log("📤 Uploading payload (debug):", debugPayload);
 
@@ -105,9 +122,10 @@ function AdminCourseUploadPage() {
 
       if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
 
-      // Try to parse JSON if possible
       let json = null;
-      try { json = JSON.parse(responseText); } catch {}
+      try {
+        json = JSON.parse(responseText);
+      } catch {}
       console.log("✅ Parsed response JSON:", json);
 
       alert("✅ Content uploaded successfully");
@@ -115,6 +133,7 @@ function AdminCourseUploadPage() {
       setForm({ title: "", description: "", contentType: "EBOOK", vurl: "" });
       setFile(null);
       setSelectedUnitId("");
+      setUserType("");
       setShowUploadModal(false);
       navigate("/my-courseware");
     } catch (err) {
@@ -202,7 +221,7 @@ function AdminCourseUploadPage() {
                   </select>
                 </div>
 
-                {/* (Optional) Title is auto-filled from Unit */}
+                {/* Optional: title auto-filled from unit */}
                 {/* <div className="form-group">
                   <label>Title</label>
                   <div className="form-control bg-light" style={{ minHeight: "38px" }}>
@@ -215,7 +234,9 @@ function AdminCourseUploadPage() {
                   <textarea
                     className="form-control"
                     value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, description: e.target.value })
+                    }
                   />
                 </div>
 
@@ -224,16 +245,59 @@ function AdminCourseUploadPage() {
                   <select
                     className="form-control"
                     value={form.contentType}
-                    onChange={(e) => setForm({ ...form, contentType: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, contentType: e.target.value })
+                    }
                   >
                     <option value="EBOOK">EBOOK</option>
                     <option value="WebResources">Web Resources</option>
-                    <option value="FAQ">Pre-Learning : FAQ</option>
-                    <option value="Misconceptions">Pre-Learning : Misconceptions</option>
-                    <option value="PracticeAssignment">Practice Assignment</option>
-                    <option value="StudyGuide">Study Guide</option>
                     <option value="Video">Video</option>
                   </select>
+                </div>
+
+                {/* Student / Others checkboxes */}
+                <div className="form-group">
+                  <label>
+                    Visible To <span className="text-danger">*</span>
+                  </label>
+                  <div className="d-flex align-items-center">
+                    <div className="form-check mr-4">
+                      <input
+                        type="checkbox"
+                        id="chkStudent"
+                        className="form-check-input"
+                        checked={userType === "S"}
+                        disabled={userType === "O"}
+                        onChange={() => handleUserTypeChange("S")}
+                      />
+                      <label
+                        htmlFor="chkStudent"
+                        className="form-check-label"
+                      >
+                        Students
+                      </label>
+                    </div>
+
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        id="chkOthers"
+                        className="form-check-input"
+                        checked={userType === "O"}
+                        disabled={userType === "S"}
+                        onChange={() => handleUserTypeChange("O")}
+                      />
+                      <label
+                        htmlFor="chkOthers"
+                        className="form-check-label"
+                      >
+                        Others
+                      </label>
+                    </div>
+                  </div>
+                  <small className="text-muted d-block mt-1">
+                    Choose exactly one: Students (S) or Others (O).
+                  </small>
                 </div>
 
                 <div className="form-group">
@@ -252,7 +316,9 @@ function AdminCourseUploadPage() {
                     className="form-control"
                     placeholder="https://… (YouTube/Vimeo/Drive/Any link)"
                     value={form.vurl}
-                    onChange={(e) => setForm({ ...form, vurl: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, vurl: e.target.value })
+                    }
                   />
                   <small className="text-muted">
                     Provide at least a File or a URL.
@@ -268,11 +334,9 @@ function AdminCourseUploadPage() {
         </div>
       </div>
 
-       
+      <Footer />
     </div>
   );
 }
 
 export default AdminCourseUploadPage;
-
-

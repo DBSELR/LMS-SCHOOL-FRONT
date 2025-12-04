@@ -17,6 +17,7 @@ function InstructorCourses() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
+  const [userId, setUserId] = useState(null); // <-- store userId
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -27,20 +28,25 @@ function InstructorCourses() {
 
         const role =
           decoded[
-          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
           ] || decoded.role;
         setUserRole(role);
-        const instructorId = decoded.UserId || decoded.userId;
-        console.log("👨‍🏫 Instructor ID:", instructorId);
+
+        const decodedId = decoded.UserId || decoded.userId;
+        setUserId(decodedId); // <-- keep userId in state
+        const instructorId = decodedId;
+
+        console.log("👨‍🏫 User ID:", decodedId);
         console.log("🎓 Role:", role);
 
         const res = await fetch(
-          `${API_BASE_URL}/course/by-instructor/${instructorId}`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`, // ✅ Attach JWT token here
-          },
-        }
+          `${API_BASE_URL}/course/by-instructor/${instructorId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`, // ✅ Attach JWT token here
+            },
+          }
         );
         const data = await res.json();
         console.log("📚 Fetched courses:", data);
@@ -135,7 +141,6 @@ function InstructorCourses() {
                       )}
                     </button>
 
-
                     <input
                       type="text"
                       className="form-control form-control-sm"
@@ -161,66 +166,190 @@ function InstructorCourses() {
                         aria-expanded={!!openSemesters[key]}
                       >
                         <span>
-                          <FaBookOpen className="me-2" /> {key} ({filtered.length} Subjects)
+                          <FaBookOpen className="me-2" /> {key} (
+                          {filtered.length} Subjects)
                         </span>
                         {openSemesters[key] ? <FaChevronUp /> : <FaChevronDown />}
                       </button>
 
                       <Collapse in={openSemesters[key]}>
                         {/* 👇 give the opened panel its own scroll */}
-                        <div id={`collapse-${key}`} className="p-3 mt-2 semester-panel-body" tabIndex={-1}>
+                        <div
+                          id={`collapse-${key}`}
+                          className="p-3 mt-2 semester-panel-body"
+                          tabIndex={-1}
+                        >
                           {filtered.map((course) => (
                             <CourseCard
                               key={course.courseId}
                               course={course}
                               navigate={navigate}
                               role={userRole}
+                              userId={userId} // <-- pass userId to card
                             />
                           ))}
                         </div>
                       </Collapse>
                     </div>
-
                   );
                 })}
               </div>
             </div>
           </div>
-
         </div>
-
       </div>
+
+      <Footer />
     </div>
   );
 }
 
-function CourseCard({ course, navigate, role }) {
+function CourseCard({ course, navigate, role, userId }) {
   const [details, setDetails] = useState({});
+
+  const isStudent = role === "Student";
+
+  // Small helper: safely read count keys
+  const getCount = (obj, keys, fallback = 0) => {
+    for (const k of keys) {
+      if (obj && obj[k] != null) return obj[k];
+    }
+    return fallback;
+  };
 
   useEffect(() => {
     const load = async () => {
       try {
+        if (!userId) return; // wait until userId available
+
         const token = localStorage.getItem("jwt");
-        const res = await fetch(
-          `${API_BASE_URL}/Content/stats/${course.examinationID}`,
-          {
-            method: "GET",
-            headers: {
-              "Authorization": `Bearer ${token}`, // ✅ Attach JWT token here
-            },
-          }
-        );
+        // ✅ Pass userId to stats API
+        const url = `${API_BASE_URL}/Content/stats/${course.examinationID}?userId=${userId}`;
+
+        console.log("📊 Loading stats:", { url });
+
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (res.ok) {
           const data = await res.json();
           setDetails(data);
-          console.log("📊 Course stats for", course.examinationID, ":", data);
+          console.log(
+            "📊 Course stats for",
+            course.examinationID,
+            ":",
+            data
+          );
+        } else {
+          console.warn("⚠ Stats request not OK", res.status);
         }
       } catch (err) {
         console.error("❌ Error loading course details:", err);
       }
     };
     load();
-  }, [course.examinationID]);
+  }, [course.examinationID, userId]);
+
+  // ===== Stat configuration (video separated) =====
+  const statsToRender = [];
+
+  if (isStudent) {
+    // 👉 Student: show ONLY single Video box
+    const videoCount = getCount(details, ["videoCount", "VideoCount"]);
+    statsToRender.push({
+      key: "video",
+      label: "Video",
+      count: videoCount,
+    });
+  } else {
+    // 👉 Non-students: split only Video into S_Video & O_Video
+    const sVideoCount = getCount(
+      details,
+      ["sVideoCount", "SVideoCount", "studentVideoCount", "s_videoCount"]
+    );
+    const oVideoCount = getCount(
+      details,
+      ["oVideoCount", "OVideoCount", "otherVideoCount", "o_videoCount"]
+    );
+
+    statsToRender.push({
+      key: "s_video",
+      label: "S_Video",
+      count: sVideoCount,
+    });
+    statsToRender.push({
+      key: "o_video",
+      label: "O_Video",
+      count: oVideoCount,
+    });
+
+    // ⭐ Remaining stats "as usual"
+    statsToRender.push({
+      key: "ebook",
+      label: "E-Book",
+      count: getCount(details, ["ebookCount", "EBookCount"]),
+    });
+    statsToRender.push({
+      key: "web",
+      label: "Web Resource",
+      count: getCount(details, ["webCount", "webResourceCount"]),
+    });
+    statsToRender.push({
+      key: "pa",
+      label: "Practice Test",
+      count: getCount(details, ["paCount", "practiceTestCount"]),
+    });
+    statsToRender.push({
+      key: "live",
+      label: "Live Class",
+      count: getCount(details, ["livecount", "liveCount"]),
+    });
+    statsToRender.push({
+      key: "disc",
+      label: "Discussions",
+      count: getCount(details, ["discussionCount"]),
+    });
+  }
+
+  // ===== Inline styles for nice stat boxes =====
+  const statContainerStyle = {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "12px",
+  };
+
+  const statItemStyle = {
+    flex: "1 1 120px",
+    minWidth: "120px",
+    maxWidth: "150px",
+    background: "#f8f9ff",
+    borderRadius: "10px",
+    padding: "10px 8px",
+    textAlign: "center",
+    boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
+    border: "1px solid #e2e8f0",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+  };
+
+  const statCountStyle = {
+    fontSize: "1.25rem",
+    fontWeight: 700,
+    color: "#1d4ed8",
+    marginBottom: "4px",
+  };
+
+  const statLabelStyle = {
+    fontSize: "0.78rem",
+    fontWeight: 500,
+    color: "#4b5563",
+    textTransform: "uppercase",
+    letterSpacing: "0.03em",
+  };
 
   return (
     <div className="course-card welcome-card animate-welcome">
@@ -239,7 +368,7 @@ function CourseCard({ course, navigate, role }) {
               window.scrollTo({ top: 0, behavior: "smooth" });
               navigate(`/view-course-content/${course.examinationID}`, {
                 state: {
-                  examinationID: course.examinationID, // ✅ Add this line
+                  examinationID: course.examinationID,
                   paperCode: course.paperCode,
                   paperName: course.paperName,
                   batchName: course.batchName,
@@ -284,16 +413,33 @@ function CourseCard({ course, navigate, role }) {
             <h6 className="course-info-title mb-3">
               <i className="fas fa-book-open me-2"></i>Courseware
             </h6>
-            <div className="course-stats-container">
-              {renderCourseStat("Video", details.videoCount)}
-              {renderCourseStat("E-Book", details.ebookCount)}
-              {renderCourseStat("Web Resource", details.webCount)}
-              {renderCourseStat("Practice Test", details.paCount)}
-              {/* {renderCourseStat("Study Guide", details.sgCount)} */}
-              {renderCourseStat("Live Class", details.livecount)}
-              {renderCourseStat("Discussions", details.discussionCount)}
-            </div>
 
+            {/* ⭐ Neatly aligned stat boxes */}
+            <div
+              className="course-stats-container"
+              style={statContainerStyle}
+            >
+              {statsToRender.map((stat) => (
+                <div
+                  key={stat.key}
+                  className="course-stat-item"
+                  style={statItemStyle}
+                >
+                  <div
+                    className="course-stat-count"
+                    style={statCountStyle}
+                  >
+                    {stat.count || 0}
+                  </div>
+                  <div
+                    className="course-stat-label"
+                    style={statLabelStyle}
+                  >
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -355,19 +501,6 @@ function CourseCard({ course, navigate, role }) {
             )}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function renderCourseStat(label, count) {
-  return (
-    <div className="course-stat-item">
-      <div className="course-stat-count">
-        {count || 0}
-      </div>
-      <div className="course-stat-label">
-        {label}
       </div>
     </div>
   );

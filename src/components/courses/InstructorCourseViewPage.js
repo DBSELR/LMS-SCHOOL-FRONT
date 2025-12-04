@@ -199,7 +199,6 @@ function InstructorCourseViewPage() {
   const [rawContent, setRawContent] = useState([]);
   const [unitTitleByUnit, setUnitTitleByUnit] = useState({});
 
-
   const [materials, setMaterials] = useState([]);
   const [ebooks, setEBOOKS] = useState([]);
   const [webresources, setwebresources] = useState([]);
@@ -230,7 +229,6 @@ function InstructorCourseViewPage() {
 
   const lastLoggedVideoPct = useRef(-1);
 
-  // Watermark refs and displayText
   // Watermark refs and displayText (live ticking time)
   const { role: wmRole, userId: wmUserId } = useMemo(() => getIdentityFromToken("jwt"), []);
   const liveTime = useLiveClock({ timeZone: 'Asia/Kolkata', intervalMs: 1000 });
@@ -776,19 +774,31 @@ function InstructorCourseViewPage() {
     fetchAdminPracticeTests();
   }, [userId, activeUnit, examId]);
 
-  // Fetch content bundle (stable, with abort + retries)
+  /* =========================
+     Fetch content bundle (user-specific)
+     ========================= */
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !userId) {
+      warn("Skipping content fetch: missing courseId or userId", { courseId, userId });
+      return;
+    }
     const token = localStorage.getItem("jwt");
     const headers = { Authorization: `Bearer ${token}` };
     const ac = new AbortController();
+
+    const contentUrl = `${API_BASE_URL}/Content/Course/${courseId}?userId=${userId}`;
+
+    group("Fetch Content Bundle – Payload", {
+      contentUrl,
+      headers: { Authorization: `Bearer ${mask(token)}` },
+    });
 
     (async () => {
       try {
         console.time("[ICVP] GET Content bundle");
         const [content, allLiveClasses] = await Promise.all([
           safeFetchJson(
-            `${API_BASE_URL}/Content/Course/${courseId}`,
+            contentUrl,
             { headers, signal: ac.signal },
             { label: "Content/Course", retries: 1 }
           ),
@@ -800,10 +810,10 @@ function InstructorCourseViewPage() {
         ]);
         console.timeEnd("[ICVP] GET Content bundle");
 
-        // ★ Keep the raw list for unit tabs (even when contentType is null)
+        // Keep the raw list for unit tabs
         setRawContent(Array.isArray(content) ? content : []);
 
-        // ---- case-insensitive contentType filter
+        // case-insensitive contentType filter
         const ci = (v) => String(v || "").toLowerCase();
         setEBOOKS(content.filter((c) => ci(c.contentType) === "ebook"));
         setVideos(content.filter((c) => ci(c.contentType) === "video"));
@@ -814,16 +824,13 @@ function InstructorCourseViewPage() {
         setLiveClasses((allLiveClasses || []).filter((lc) => lc.examinationID === cid));
       } catch (err) {
         console.error("[ICVP] Content bundle load failed", err);
-        // Optional: show a toast or set an error state
       }
     })();
 
     return () => ac.abort();
-  }, [courseId]);
+  }, [courseId, userId]); // ⬅ now depends on userId too
 
-  // NEW: Build unit tabs from rawContent (keeps units even with null content)
-  // Build unit tabs from the raw content (handles Title/title casing)
-  // and keep a map of unit -> title for display (even if some rows are null)
+  // Build unit tabs from rawContent (handles Title/title casing)
   useEffect(() => {
     const toStr = (v) => (v == null ? "" : String(v).trim());
 
@@ -847,12 +854,9 @@ function InstructorCourseViewPage() {
       unitSet.add(u);
 
       const t = getTitle(it);
-      // remember the first non-empty title we see for this unit
       if (t && !titleMap[u]) titleMap[u] = t;
     }
 
-    // If a unit still has no title, try a second pass:
-    // pick any non-empty title from any row that shares the same unit number (defensive)
     if (unitSet.size > 0) {
       const byUnit = {};
       for (const it of rawContent || []) {
@@ -868,7 +872,6 @@ function InstructorCourseViewPage() {
       }
     }
 
-    // Sort "Unit-3" before "Unit-10"
     const num = (u) => {
       const m = /(\d+)$/.exec(u.replace(/\s+/g, ""));
       return m ? parseInt(m[1], 10) : 0;
@@ -883,44 +886,6 @@ function InstructorCourseViewPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawContent]);
-
-
-  // // Scroll to section when loaded
-  // useEffect(() => {
-  //   const scrollTo = location.state?.scrollTo;
-  //   if (scrollTo && sectionRefs[scrollTo]?.current) {
-  //     log("Scrolling to section", scrollTo);
-  //     setTimeout(() => {
-  //       sectionRefs[scrollTo].current.scrollIntoView({ behavior: "smooth", block: "start" });
-  //     }, 500);
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [ebooks, videos, faq, misconceptions, practiceassignment, studyguide, webresources]);
-
-  // // Compute units (from any content type, not only ebooks)
-  // useEffect(() => {
-  //   const gatherUnits = (arr) => arr.map((item) => item.unit?.trim()).filter(Boolean);
-  //   const all = [
-  //     ...gatherUnits(ebooks),
-  //     ...gatherUnits(videos),
-  //     ...gatherUnits(webresources),
-  //     ...gatherUnits(faq),
-  //     ...gatherUnits(misconceptions),
-  //     ...gatherUnits(practiceassignment),
-  //     ...gatherUnits(studyguide),
-  //   ];
-  //   const uniqueUnits = Array.from(new Set(all)).sort((a, b) => {
-  //     const getUnitNumber = (u) => parseInt(u?.split("-")[1]) || 0;
-  //     return getUnitNumber(a) - getUnitNumber(b);
-  //   });
-
-  //   log("Units computed", { uniqueUnits });
-  //   setAllUnits(uniqueUnits);
-  //   if (uniqueUnits.length > 0 && !activeUnit) {
-  //     log("Setting initial activeUnit", uniqueUnits[0]);
-  //     setActiveUnit(uniqueUnits[0]);
-  //   }
-  // }, [ebooks, videos, webresources, faq, misconceptions, practiceassignment, studyguide]); // include videos etc.
 
   const renderEmptyMessage = (label) => (
     <div className="text-muted text-center py-3">No {label} available.</div>
@@ -960,8 +925,6 @@ function InstructorCourseViewPage() {
                 </div>
                 <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
                   <strong>{`${batchName} - ${className} - ${courseCode} - ${courseName} `}</strong>
-
-
                 </h5>
               </div>
             </div>
@@ -970,10 +933,6 @@ function InstructorCourseViewPage() {
             <div className="unit-tabs mb-4">
               {allUnits.map((unit) => {
                 const titleForUnit = unitTitleByUnit[unit] || "No title found";
-                // const titleForUnit =
-                //   (ebooks.find((ebook) => ebook.unit?.trim() === unit)?.title) ||
-                //   (videos.find((v) => v.unit?.trim() === unit)?.title) ||
-                //   "No title found";
 
                 return (
                   <button
@@ -1001,8 +960,6 @@ function InstructorCourseViewPage() {
                 <button className="unit-tab">Discussion Forum</button>
               </Link>
 
-
-
               <Link to="/recorded-classes">
                 <button className="unit-tab">Recorded classes</button>
               </Link>
@@ -1013,7 +970,6 @@ function InstructorCourseViewPage() {
                 <h5 className="mb-0">
                   <i className="fa fa-book text-primary me-2 mr-2"></i> Unit Title:{" "}
                   {unitTitleByUnit[activeUnit] || "No title found"}
-                  {/* {filteredEbooks[0]?.title || filteredVideos[0]?.title || "No title found"} */}
                 </h5>
                 {role !== "Student" && (
                   <Link
@@ -1035,9 +991,6 @@ function InstructorCourseViewPage() {
               </div>
             )}
 
-            {/* If you want an always-mounted watermark layer, keep your component here */}
-            {/* <VimeoWithWatermark tokenStorageKey="jwt" opacity={0.16} speed={35} /> */}
-
             {/* Section Mapping */}
             {[
               { title: "Videos", key: "videos", data: filteredVideos, ref: sectionRefs.videos, color: "info", icon: "fas fa-video" },
@@ -1057,7 +1010,6 @@ function InstructorCourseViewPage() {
                   ) : (
                     <div className="row">
                       {section.data.map((item, idx2) => {
-                        // Decide a storage key based on final absolute URL (for consistent progress)
                         const playableUrl =
                           section.key === "videos"
                             ? getPlayableVideoUrl(item)
@@ -1116,8 +1068,6 @@ function InstructorCourseViewPage() {
                                     View File
                                   </button>
                                 )}
-
-
                               </div>
                             </div>
                           </div>
@@ -1224,7 +1174,7 @@ function InstructorCourseViewPage() {
               </div>
             </div>
           ) : (
-            
+
               <div className="card shadow-sm mb-5 section-card animate-section border-info">
                 <div className="card-header bg-info text-white">
                   <h6 className="mb-0">
@@ -1305,13 +1255,11 @@ function InstructorCourseViewPage() {
                   )}
                 </div>
               </div>
-            
+
           )}
 
         </div>
       </div>
-
-
 
       {/* VIDEO MODAL */}
       <Modal
@@ -1405,8 +1353,6 @@ function InstructorCourseViewPage() {
                     </div>
                   </div>
                 </div>
-
-
               </>
             )}
           </div>
@@ -1474,15 +1420,12 @@ function InstructorCourseViewPage() {
               </button>
             </div>
           )}
-
-
         </Modal.Body>
       </Modal>
 
+      <Footer />
     </div>
   );
 }
-
-
 
 export default InstructorCourseViewPage;
