@@ -28,7 +28,7 @@ function InstructorCourses() {
 
         const role =
           decoded[
-            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
           ] || decoded.role;
         setUserRole(role);
 
@@ -285,34 +285,34 @@ function CourseCard({ course, navigate, role, userId }) {
       label: "O_Video",
       count: oVideoCount,
     });
-
-    // ⭐ Remaining stats "as usual"
-    statsToRender.push({
-      key: "ebook",
-      label: "E-Book",
-      count: getCount(details, ["ebookCount", "EBookCount"]),
-    });
-    statsToRender.push({
-      key: "web",
-      label: "Web Resource",
-      count: getCount(details, ["webCount", "webResourceCount"]),
-    });
-    statsToRender.push({
-      key: "pa",
-      label: "Practice Test",
-      count: getCount(details, ["paCount", "practiceTestCount"]),
-    });
-    statsToRender.push({
-      key: "live",
-      label: "Live Class",
-      count: getCount(details, ["livecount", "liveCount"]),
-    });
-    statsToRender.push({
-      key: "disc",
-      label: "Discussions",
-      count: getCount(details, ["discussionCount"]),
-    });
   }
+
+  // ⭐ Remaining stats "as usual" - NOW VISIBLE FOR ALL ROLES
+  statsToRender.push({
+    key: "ebook",
+    label: "E-Book",
+    count: getCount(details, ["ebookCount", "EBookCount"]),
+  });
+  statsToRender.push({
+    key: "web",
+    label: "Web Resource",
+    count: getCount(details, ["webCount", "webResourceCount"]),
+  });
+  statsToRender.push({
+    key: "pa",
+    label: "Practice Test",
+    count: getCount(details, ["paCount", "practiceTestCount"]),
+  });
+  statsToRender.push({
+    key: "live",
+    label: "Live Class",
+    count: getCount(details, ["livecount", "liveCount"]),
+  });
+  statsToRender.push({
+    key: "disc",
+    label: "Discussions",
+    count: getCount(details, ["discussionCount"]),
+  });
 
   // ===== Inline styles for nice stat boxes =====
   const statContainerStyle = {

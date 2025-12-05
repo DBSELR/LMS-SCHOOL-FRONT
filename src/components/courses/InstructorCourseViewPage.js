@@ -1081,180 +1081,178 @@ function InstructorCourseViewPage() {
           </div>
 
           {role === "Student" ? (
-            <div className="container-fluid">
-              <div className="card shadow-sm mb-5 section-card animate-section border-info">
-                <div className="card-header bg-info text-white">
-                  <h6 className="mb-0">
-                    <i className="fa fa-tools me-2 mr-2"></i> Student Practice Exams
-                  </h6>
-                </div>
+            <div className="card shadow-sm mb-5 section-card animate-section border-info">
+              <div className="card-header bg-info text-white">
+                <h6 className="mb-0">
+                  <i className="fa fa-tools me-2 mr-2"></i> Student Practice Exams
+                </h6>
+              </div>
 
-                <div className="card-body">
-                  {practiceExams.length === 0 ? (
-                    <div className="text-muted text-center py-3">No practice exams available.</div>
-                  ) : (
-                    <div className="row">
-                      {practiceExams.map((exam) => {
-                        const isSubjective = exam.examType?.toUpperCase() === "DP";
-                        const isAttendStatus = exam.examStatus?.toLowerCase() === "attendexam";
-                        const isMCQ = exam.examType === "MP";
+              <div className="card-body">
+                {practiceExams.length === 0 ? (
+                  <div className="text-muted text-center py-3">No practice exams available.</div>
+                ) : (
+                  <div className="row">
+                    {practiceExams.map((exam) => {
+                      const isSubjective = exam.examType?.toUpperCase() === "DP";
+                      const isAttendStatus = exam.examStatus?.toLowerCase() === "attendexam";
+                      const isMCQ = exam.examType === "MP";
 
-                        return (
-                          <div className="col-md-6 col-lg-4 mb-3" key={exam.examid}>
-                            <div className="resource-card welcome-card animate-welcome h-100">
-                              <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
-                                <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                                  <i className="fa fa-book text-primary mr-2"></i>
-                                  {exam.title}
-                                </h6>
+                      return (
+                        <div className="col-md-6 col-lg-4 mb-3" key={exam.examid}>
+                          <div className="resource-card welcome-card animate-welcome h-100">
+                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
+                              <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                                <i className="fa fa-book text-primary mr-2"></i>
+                                {exam.title}
+                              </h6>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-calendar-plus me-2 mr-2 text-success"></i>
-                                  <strong>Created At:</strong> {new Date(exam.createdAt).toLocaleString()}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-calendar-plus me-2 mr-2 text-success"></i>
+                                <strong>Created At:</strong> {new Date(exam.createdAt).toLocaleString()}
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-clock me-2 mr-2 text-primary"></i>
-                                  <strong>Duration:</strong> {exam.durationMinutes} min
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-clock me-2 mr-2 text-primary"></i>
+                                <strong>Duration:</strong> {exam.durationMinutes} min
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                                  <strong>Marks:</strong> {exam.totmrk} | <strong>Pass:</strong> {exam.passmrk}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-star me-2 mr-2 text-warning"></i>
+                                <strong>Marks:</strong> {exam.totmrk} | <strong>Pass:</strong> {exam.passmrk}
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
-                                  <strong>Unit:</strong> {exam.unitId}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
+                                <strong>Unit:</strong> {exam.unitId}
+                              </p>
 
-                                {exam.fileurl ? (
-                                  <a
-                                    href={toAbsoluteLocal(apiOrigin, exam.fileurl)}
-                                    className="btn btn-sm btn-outline-primary"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={() =>
-                                      log("Opening exam attachment", { url: toAbsoluteLocal(apiOrigin, exam.fileurl) })
-                                    }
-                                  >
-                                    📄 View Attachment
-                                  </a>
-                                ) : !isMCQ ? (
-                                  <button className="btn btn-sm btn-outline-secondary" disabled>
-                                    🚫 No Attachment
-                                  </button>
-                                ) : null}
+                              {exam.fileurl ? (
+                                <a
+                                  href={toAbsoluteLocal(apiOrigin, exam.fileurl)}
+                                  className="btn btn-sm btn-outline-primary"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={() =>
+                                    log("Opening exam attachment", { url: toAbsoluteLocal(apiOrigin, exam.fileurl) })
+                                  }
+                                >
+                                  📄 View Attachment
+                                </a>
+                              ) : !isMCQ ? (
+                                <button className="btn btn-sm btn-outline-secondary" disabled>
+                                  🚫 No Attachment
+                                </button>
+                              ) : null}
 
-                                {isMCQ && isAttendStatus && (
-                                  <Link to={`/practice-exam/${exam.examid}`} state={{ exam }} className="mt-2">
-                                    <button className="btn btn-sm btn-success w-100">📝 Attend Practice Exam</button>
-                                  </Link>
-                                )}
+                              {isMCQ && isAttendStatus && (
+                                <Link to={`/practice-exam/${exam.examid}`} state={{ exam }} className="mt-2">
+                                  <button className="btn btn-sm btn-success w-100" style={{ marginLeft: "0px" }}>📝 Attend Practice Exam</button>
+                                </Link>
+                              )}
 
-                                {isSubjective && isAttendStatus && (
-                                  <input
-                                    type="file"
-                                    accept=".pdf"
-                                    onChange={(e) => {
-                                      const f = e.target.files?.[0];
-                                      if (f && userId) submitSubjectivePracticeExam(exam.examid, userId, f);
-                                    }}
-                                    className="form-control mt-2"
-                                  />
-                                )}
-                              </div>
+                              {isSubjective && isAttendStatus && (
+                                <input
+                                  type="file"
+                                  accept=".pdf"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f && userId) submitSubjectivePracticeExam(exam.examid, userId, f);
+                                  }}
+                                  className="form-control mt-2"
+                                />
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
 
-              <div className="card shadow-sm mb-5 section-card animate-section border-info">
-                <div className="card-header bg-info text-white">
-                  <h6 className="mb-0">
-                    <i className="fa fa-tools me-2 mr-2"></i> View Practice Tests
-                  </h6>
-                </div>
+            <div className="card shadow-sm mb-5 section-card animate-section border-info">
+              <div className="card-header bg-info text-white">
+                <h6 className="mb-0">
+                  <i className="fa fa-tools me-2 mr-2"></i> View Practice Tests
+                </h6>
+              </div>
 
-                <div className="card-body">
-                  {adminPracticeTests.length === 0 ? (
-                    <div className="text-muted text-center py-3">No practice test records found.</div>
-                  ) : (
-                    <div className="row">
-                      {adminPracticeTests.map((test) => {
-                        const isObjective = (test.PracticeExamType || "").toLowerCase() === "objective";
-                        const isSubjective = (test.PracticeExamType || "").toLowerCase() === "subjective";
+              <div className="card-body">
+                {adminPracticeTests.length === 0 ? (
+                  <div className="text-muted text-center py-3">No practice test records found.</div>
+                ) : (
+                  <div className="row">
+                    {adminPracticeTests.map((test) => {
+                      const isObjective = (test.PracticeExamType || "").toLowerCase() === "objective";
+                      const isSubjective = (test.PracticeExamType || "").toLowerCase() === "subjective";
 
-                        const typeBadge = isObjective ? (
-                          <span className="badge bg-primary text-white px-2 py-1 rounded-pill">
-                            <i className="fa fa-list me-1"></i> Objective
-                          </span>
-                        ) : isSubjective ? (
-                          <span className="badge bg-warning text-dark px-2 py-1 rounded-pill">
-                            <i className="fa fa-file-alt me-1"></i> Subjective
-                          </span>
-                        ) : (
-                          <span className="badge bg-secondary text-white px-2 py-1 rounded-pill">
-                            {test.PracticeExamType}
-                          </span>
-                        );
+                      const typeBadge = isObjective ? (
+                        <span className="badge bg-primary text-white px-2 py-1 rounded-pill">
+                          <i className="fa fa-list me-1"></i> Objective
+                        </span>
+                      ) : isSubjective ? (
+                        <span className="badge bg-warning text-dark px-2 py-1 rounded-pill">
+                          <i className="fa fa-file-alt me-1"></i> Subjective
+                        </span>
+                      ) : (
+                        <span className="badge bg-secondary text-white px-2 py-1 rounded-pill">
+                          {test.PracticeExamType}
+                        </span>
+                      );
 
-                        return (
-                          <div className="col-md-6 col-lg-4 mb-3" key={test.examid}>
-                            <div className="resource-card welcome-card animate-welcome h-100">
-                              <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
-                                <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                                  <i className="fa fa-book text-primary"></i>
-                                  {test.AssignmentTitle}
-                                </h6>
+                      return (
+                        <div className="col-md-6 col-lg-4 mb-3" key={test.examid}>
+                          <div className="resource-card welcome-card animate-welcome h-100">
+                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
+                              <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                                <i className="fa fa-book text-primary"></i>
+                                {test.AssignmentTitle}
+                              </h6>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-user me-2 mr-2 text-dark"></i>
-                                  {test.pname}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-user me-2 mr-2 text-dark"></i>
+                                {test.pname}
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
-                                  <strong>Unit:</strong> {activeUnit}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
+                                <strong>Unit:</strong> {activeUnit}
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-clock me-2 mr-2 text-primary"></i>
-                                  <strong>Duration:</strong> {test.Duration} min
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-clock me-2 mr-2 text-primary"></i>
+                                <strong>Duration:</strong> {test.Duration} min
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                                  <strong>Marks:</strong> {test.totmrk} | <strong>Pass:</strong> {test.passmrk}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-star me-2 mr-2 text-warning"></i>
+                                <strong>Marks:</strong> {test.totmrk} | <strong>Pass:</strong> {test.passmrk}
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-check-circle me-2 mr-2 text-success"></i>
-                                  <strong>Attempted:</strong> {test.attempted ? "Yes" : "No"}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-check-circle me-2 mr-2 text-success"></i>
+                                <strong>Attempted:</strong> {test.attempted ? "Yes" : "No"}
+                              </p>
 
-                                <p className="mb-2">
-                                  <i className="fa fa-calendar-alt me-2 mr-2 text-danger"></i>
-                                  <strong>From:</strong> {new Date(test.StartDate).toLocaleDateString()} -{" "}
-                                  {new Date(test.EndDate).toLocaleDateString()}
-                                </p>
+                              <p className="mb-2">
+                                <i className="fa fa-calendar-alt me-2 mr-2 text-danger"></i>
+                                <strong>From:</strong> {new Date(test.StartDate).toLocaleDateString()} -{" "}
+                                {new Date(test.EndDate).toLocaleDateString()}
+                              </p>
 
-                                <div className="mt-auto text-end">{typeBadge}</div>
-                              </div>
+                              <div className="mt-auto text-end">{typeBadge}</div>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
+            </div>
 
           )}
 
