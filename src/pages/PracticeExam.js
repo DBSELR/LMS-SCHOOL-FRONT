@@ -174,7 +174,7 @@ const handleSubmit = async (auto = false) => {
                         htmlFor={`q${current.qid}-${opt}`}
                         style={{
                           fontWeight: "600",
-                          color: checked ? "#5a67d8" : "#333",
+                          color: checked ? "#1f69b9" : "#333",
                         }}
                       >
                         {value}

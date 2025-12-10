@@ -292,7 +292,7 @@ const guidelinesBlock = showGuidelines && (
           gap: 6px; transition: all 0.3s;
         }
         .tab-btn:hover { background-color: #e2e6ea; color: #000; }
-        .tab-btn.active { background-color: #5a67d8; color: #fff; border-color: #5a67d8;}
+        .tab-btn.active { background-color: #1f69b9; color: #fff; border-color: #1f69b9;}
         @media (max-width: 768px) {
           .tab-btn { padding: 0.5rem 1rem; font-size: 14px;}
         }

@@ -872,7 +872,7 @@ $(function() {
         height: '30px',
         barSpacing: 5,
         barWidth: 5,
-        barColor: '#5a67d8',        
+        barColor: '#1f69b9',        
     });
     $('.sale_Monthly').sparkline('html', {
         type: 'bar',
@@ -938,9 +938,9 @@ $(function() {
             series: {
                 regions: [{
                     values: {
-                        "US": '#5a67d8',
+                        "US": '#1f69b9',
                         "SA": '#28a745',
-                        "AU": '#5a67d8',
+                        "AU": '#1f69b9',
                         "IN": '#fd9644',
                         "GB": '#a55eea',
                     },

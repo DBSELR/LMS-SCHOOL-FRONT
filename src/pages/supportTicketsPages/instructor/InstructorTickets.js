@@ -639,7 +639,7 @@ const InstructorTickets = () => {
       >
         <Modal.Header
           style={{
-            background: "linear-gradient(to bottom right, #5a67d8, #f8ceec)",
+            background: "linear-gradient(to bottom right, #1f69b9, #f8ceec)",
             borderBottom: "none",
             justifyContent: "flex-end",
             borderTopLeftRadius: "20px",
@@ -657,7 +657,7 @@ const InstructorTickets = () => {
         <Modal.Body
           className="text-center p-5"
           style={{
-            background: "linear-gradient(to bottom right, #5a67d8, #f8ceec)",
+            background: "linear-gradient(to bottom right, #1f69b9, #f8ceec)",
             color: "#fff",
             borderBottomLeftRadius: "20px",
             borderBottomRightRadius: "20px",

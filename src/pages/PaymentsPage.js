@@ -69,7 +69,7 @@ function PaymentsPage() {
                       className={`nav-link fw-bold text-dark border-0 ${activeTab === "fees-list" ? "active" : ""}`}
                       href="#fees-list"
                       onClick={(e) => { e.preventDefault(); setActiveTab("fees-list"); }}
-                      style={activeTab === "fees-list" ? { borderBottom: "3px solid #5a67d8" } : {}}
+                      style={activeTab === "fees-list" ? { borderBottom: "3px solid #1f69b9" } : {}}
                     >
                       <i className="fa fa-list mr-1 text-primary"></i> Fee List
                     </a>
@@ -80,7 +80,7 @@ function PaymentsPage() {
                       className={`nav-link fw-bold text-dark border-0 ${activeTab === "fees-receipt" ? "active" : ""}`}
                       href="#fees-receipt"
                       onClick={(e) => { e.preventDefault(); setActiveTab("fees-receipt"); }}
-                      style={activeTab === "fees-receipt" ? { borderBottom: "3px solid #5a67d8" } : {}}
+                      style={activeTab === "fees-receipt" ? { borderBottom: "3px solid #1f69b9" } : {}}
                     >
                       <i className="fa fa-file-text-o mr-1 text-primary"></i> Fee Receipts
                     </a>
@@ -92,7 +92,7 @@ function PaymentsPage() {
                       className={`nav-link fw-bold text-dark border-0 ${activeTab === "fees-add" ? "active" : ""}`}
                       href="#fees-add"
                       onClick={(e) => { e.preventDefault(); setActiveTab("fees-add"); }}
-                      style={activeTab === "fees-add" ? { borderBottom: "3px solid #5a67d8" } : {}}
+                      style={activeTab === "fees-add" ? { borderBottom: "3px solid #1f69b9" } : {}}
                     >
                       <i className="fa fa-plus mr-1 text-primary"></i> Add Fee
                     </a>
@@ -103,7 +103,7 @@ function PaymentsPage() {
                       className={`nav-link fw-bold text-dark border-0 ${activeTab === "fee-template" ? "active" : ""}`}
                       href="#fee-template"
                       onClick={(e) => { e.preventDefault(); setActiveTab("fee-template"); }}
-                      style={activeTab === "fee-template" ? { borderBottom: "3px solid #5a67d8" } : {}}
+                      style={activeTab === "fee-template" ? { borderBottom: "3px solid #1f69b9" } : {}}
                     >
                       <i className="fa fa-cogs mr-1 text-primary"></i> Fee Templates
                     </a>

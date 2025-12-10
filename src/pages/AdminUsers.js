@@ -163,7 +163,7 @@ function AdminUsers() {
             </div>
             <div
                 className="card-header text-white d-flex justify-content-between align-items-center mb-3"
-                style={{ backgroundColor: "#5a67d8", borderRadius: "18px" }}
+                style={{ backgroundColor: "#1f69b9", borderRadius: "18px" }}
               >
                 <h6 className="mb-0">Users List</h6>
             </div>

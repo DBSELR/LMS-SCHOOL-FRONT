@@ -243,7 +243,7 @@ function AdminStudentOverview() {
                       >
                         <div
                           style={{
-                            backgroundColor: "#5a67d8",
+                            backgroundColor: "#1f69b9",
                             color: "white",
                             padding: "10px 20px",
                             borderTopLeftRadius: "6px",

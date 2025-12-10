@@ -51,7 +51,7 @@ function AdminReportsDashboard() {
                     <a
                       className={`nav-link fw-bold text-dark border-0 ${activeTab === "admission" ? "active" : ""}`}
                       onClick={() => setActiveTab("admission")}
-                      style={activeTab === "admission" ? { borderBottom: "3px solid #5a67d8" } : {}}
+                      style={activeTab === "admission" ? { borderBottom: "3px solid #1f69b9" } : {}}
                     >
                       Admission Details
                     </a>
@@ -60,7 +60,7 @@ function AdminReportsDashboard() {
                     <a
                       className={`nav-link fw-bold text-dark border-0 ${activeTab === "fee" ? "active" : ""}`}
                       onClick={() => setActiveTab("fee")}
-                      style={activeTab === "fee" ? { borderBottom: "3px solid #5a67d8" } : {}}
+                      style={activeTab === "fee" ? { borderBottom: "3px solid #1f69b9" } : {}}
                     >
                       Fee Details
                     </a>
@@ -69,7 +69,7 @@ function AdminReportsDashboard() {
                     <a
                       className={`nav-link fw-bold text-dark border-0 ${activeTab === "faculty" ? "active" : ""}`}
                       onClick={() => setActiveTab("faculty")}
-                      style={activeTab === "faculty" ? { borderBottom: "3px solid #5a67d8" } : {}}
+                      style={activeTab === "faculty" ? { borderBottom: "3px solid #1f69b9" } : {}}
                     >
                       Faculty Details
                     </a>

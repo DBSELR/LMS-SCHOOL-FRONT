@@ -135,7 +135,7 @@ function AdminNoticeboardPage() {
                   <li className="nav-item">
                     <button
                       className={`nav-link text-dark fw-bold border-0 ${activeTab === "list" ? "active" : ""}`}
-                      style={{ borderBottom: activeTab === "list" ? "3px solid #5a67d8" : "", backgroundColor: "transparent" }}
+                      style={{ borderBottom: activeTab === "list" ? "3px solid #1f69b9" : "", backgroundColor: "transparent" }}
                       onClick={() => setActiveTab("list")}
                     >
                       <i className="fa fa-bullhorn mr-1 text-primary"></i> All Notices
@@ -144,7 +144,7 @@ function AdminNoticeboardPage() {
                   <li className="nav-item">
                     <button
                       className={`nav-link text-dark fw-bold border-0 ${activeTab === "create" ? "active" : ""}`}
-                      style={{ borderBottom: activeTab === "create" ? "3px solid #5a67d8" : "", backgroundColor: "transparent" }}
+                      style={{ borderBottom: activeTab === "create" ? "3px solid #1f69b9" : "", backgroundColor: "transparent" }}
                       onClick={() => setActiveTab("create")}
                     >
                       <i className="fa fa-plus mr-1 text-primary"></i> {editingId ? "Update Notice" : "Create Notice"}
