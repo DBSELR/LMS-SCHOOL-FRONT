@@ -246,7 +246,7 @@ function ProfilePage() {
 
     setUpdateLoading(true);
 
-    const putUrl = `https://5mapi.dbasesolutions.in/api/User/${userId}`;
+    const putUrl = `https://localhost:7099/api/User/${userId}`;
     const bodyPayload = {
       Role: editProfile.role,
       Status: "Active", // or real status

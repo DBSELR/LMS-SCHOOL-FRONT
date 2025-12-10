@@ -80,7 +80,7 @@ function InstructorLiveClassManage() {
   const DELETE_API = (id) =>
     API_BASE_URL
       ? `${API_BASE_URL}/LiveClass/Delete/${id}`
-      : `https://5mapi.dbasesolutions.in/api/LiveClass/Delete/${id}`;
+      : `https://localhost:7099/api/LiveClass/Delete/${id}`;
 
   // -------- group helpers (pure) --------
   const groupByBatchSemester = (data) => {

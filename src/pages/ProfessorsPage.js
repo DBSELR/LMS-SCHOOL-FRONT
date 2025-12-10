@@ -153,8 +153,8 @@ const handleAdd = async (payload) => {
 
   // if base already ends with /api, use it; otherwise add /api
   const url = /\/api$/i.test(base)
-    ? `${base}/Professor`        // e.g., https://5mapi.dbasesolutions.in/api/Professor
-    : `${base}/api/Professor`;   // e.g., https://5mapi.dbasesolutions.in/api/Professor
+    ? `${base}/Professor`        // e.g., https://localhost:7099/api/Professor
+    : `${base}/api/Professor`;   // e.g., https://localhost:7099/api/Professor
 
   const res = await fetch(url, {
     method: "POST",
