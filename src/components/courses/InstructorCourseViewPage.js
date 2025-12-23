@@ -933,14 +933,14 @@ function InstructorCourseViewPage() {
         let videosFiltered = content.filter((c) => ci(c.contentType) === "video");
         const webresourcesFiltered = content.filter((c) => ci(c.contentType) === "webresources");
         const materialsFiltered = content.filter((c) => ci(c.contentType) === "pdf");
-        
+
         // Filter videos based on role and utype
         // Admin: sees all (O and S) - will be separated in UI
         // Faculty/Instructor: sees only 'O' (Other) videos
         // Student: sees only 'S' (Student) videos - handled by backend but we double-check
         const currentRole = role || "";
         const roleUpper = currentRole.toUpperCase();
-        
+
         if (roleUpper === "FACULTY" || roleUpper === "INSTRUCTOR") {
           videosFiltered = videosFiltered.filter((v) => {
             const utype = String(v.utype || "").toUpperCase();
@@ -957,7 +957,7 @@ function InstructorCourseViewPage() {
           log("Admin role: showing all videos (O and S)", { count: videosFiltered.length });
           // Admin sees all - no filtering
         }
-        
+
         log("Content filtered by type", {
           ebooks: ebooksFiltered.length,
           videos: videosFiltered.length,
@@ -965,7 +965,7 @@ function InstructorCourseViewPage() {
           materials: materialsFiltered.length,
           role: currentRole
         });
-        
+
         setEBOOKS(ebooksFiltered);
         setVideos(videosFiltered);
         setwebresources(webresourcesFiltered);
@@ -1032,8 +1032,8 @@ function InstructorCourseViewPage() {
     };
     const sortedUnits = Array.from(unitSet).sort((a, b) => num(a) - num(b));
 
-    log("Unit tabs built", { 
-      totalUnits: sortedUnits.length, 
+    log("Unit tabs built", {
+      totalUnits: sortedUnits.length,
       units: sortedUnits,
       titleMap,
       willSetActiveUnit: !activeUnit && sortedUnits.length > 0
@@ -1062,21 +1062,56 @@ function InstructorCourseViewPage() {
   const filteredEbooks = filteredByUnit(ebooks);
   const filteredVideos = filteredByUnit(videos);
   const filteredWebResources = filteredByUnit(webresources);
-  
+
   // For Admin: separate videos by utype
   const isAdmin = role?.toUpperCase() === "ADMIN";
   const studentVideos = isAdmin ? filteredVideos.filter(v => String(v.utype || "").toUpperCase() === "S") : [];
   const otherVideos = isAdmin ? filteredVideos.filter(v => String(v.utype || "").toUpperCase() === "O") : [];
-  
-  log("Content filtered for active unit", { 
-    activeUnit, 
-    ebooks: filteredEbooks.length, 
+
+  log("Content filtered for active unit", {
+    activeUnit,
+    ebooks: filteredEbooks.length,
     videos: filteredVideos.length,
     studentVideos: studentVideos.length,
     otherVideos: otherVideos.length,
     webresources: filteredWebResources.length,
     isAdmin
   });
+
+  // Styles for Tabs
+  const unitTabContainerStyle = {
+    display: 'flex',
+    gap: '10px',
+    flexWrap: 'wrap',
+    padding: '8px 4px',
+    marginBottom: '20px',
+    alignItems: 'center'
+  };
+
+  const getUnitTabStyle = (isActive) => ({
+    flex: '0 0 auto',
+    padding: '8px 16px', // Compact padding
+    borderRadius: '50px',
+    border: isActive ? 'none' : '1px solid rgba(0,0,0,0.08)',
+    background: isActive ? 'linear-gradient(135deg, #1f69b9 0%, #4a90e2 100%)' : 'rgba(255,255,255,0.7)',
+    color: isActive ? '#fff' : '#555',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: isActive ? '0 3px 8px rgba(31, 105, 185, 0.25)' : '0 2px 4px rgba(0,0,0,0.03)',
+    outline: 'none',
+    fontSize: '0.8rem' // Creating a smaller/compact look
+  });
+
+  const getGradientForColor = (color) => {
+    switch (color) {
+      case 'success': return ['#28a745', '#218838'];
+      case 'info': return ['#17a2b8', '#138496'];
+      case 'warning': return ['#ffc107', '#e0a800'];
+      case 'danger': return ['#dc3545', '#c82333'];
+      default: return ['#1f69b9', '#4a90e2']; // primary
+    }
+  };
 
   // Helper function to render video sections
   const renderVideoSection = (title, key, data, color, icon) => {
@@ -1097,13 +1132,21 @@ function InstructorCourseViewPage() {
               {data.map((item, idx) => {
                 const playableUrl = getPlayableVideoUrl(item);
                 const idKey = item.id ?? item.contentId ?? item.examid ?? playableUrl ?? idx;
-                const progressKey = `video-progress-${playableUrl}`;
-                const progress = parseInt(localStorage.getItem(progressKey)) || 0;
                 const thisItemId = item.id ?? item.contentId ?? item.Id ?? item.ContentId;
 
                 return (
-                  <div className="col-md-6 col-lg-4 mb-3" key={idKey}>
-                    <div className="resource-card welcome-card animate-welcome h-100" style={{ position: "relative" }}>
+                  <div className="col-md-6 col-lg-4 col-xl-3 mb-4" key={idKey}>
+                    <div
+                      className="card h-100 border-0"
+                      style={{
+                        borderRadius: "16px",
+                        background: "linear-gradient(135deg, #eaf2fb, #ffffff)",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+                        backdropFilter: "blur(16px)",
+                        WebkitBackdropFilter: "blur(16px)",
+                        position: 'relative'
+                      }}
+                    >
                       {/* Delete icon (only for non-students) */}
                       {role !== "Student" && (
                         <button
@@ -1112,24 +1155,32 @@ function InstructorCourseViewPage() {
                           title="Delete content"
                           onClick={(e) => handleDeleteContent(item, e)}
                           disabled={deletingId === thisItemId}
-                          aria-label="Delete content"
-                          style={{ lineHeight: 0 }}
+                          style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}
                         >
-                          <i className="fa fa-trash" aria-hidden="true"></i>
+                          <i className="fa fa-trash" />
                         </button>
                       )}
 
-                      <div className="card-body d-flex flex-column">
+                      <div className="card-body p-3 d-flex flex-column">
                         {item.utype && (
-                          <span className={`badge ${item.utype?.toUpperCase() === 'S' ? 'bg-success' : 'bg-info'} text-white mb-2`} style={{width:"40%"}}>
-                            {item.utype?.toUpperCase() === 'S' ? 'Student' : 'Faculty'} Content
+                          <span
+                            className={`badge ${item.utype?.toUpperCase() === 'S' ? 'bg-success' : 'bg-info'} text-white mb-2 align-self-start`}
+                            style={{ fontSize: "0.6rem", borderRadius: "10px", padding: "4px 8px" }}
+                          >
+                            {item.utype?.toUpperCase() === 'S' ? 'Student' : 'Faculty'}
                           </span>
                         )}
-                        <h6 className="fw-bold">{item.title}</h6>
-                        <p className="text-muted flex-grow-1">{item.description}</p>
-                        
+
+                        <h6 className="font-weight-bold text-dark mb-1" style={{ fontSize: "0.95rem", lineHeight: "1.3" }}>
+                          {item.title}
+                        </h6>
+                        <p className="text-muted flex-grow-1 mb-3" style={{ fontSize: "0.80rem" }}>
+                          {item.description}
+                        </p>
+
                         <button
-                          className="btn btn-sm btn-outline-info mt-auto"
+                          className="btn btn-sm btn-outline-info rounded-pill w-100 mt-auto"
+                          style={{ fontSize: "0.8rem", fontWeight: "600" }}
                           onClick={() => handleWatchVideo(item)}
                         >
                           Watch Video
@@ -1145,6 +1196,30 @@ function InstructorCourseViewPage() {
       </div>
     );
   };
+
+  // Reusable styles for stats grid
+  const statContainerStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "3px",
+    marginTop: "8px",
+    marginBottom: "10px"
+  };
+  const statItemStyle = {
+    background: "rgba(255, 255, 255, 0.5)",
+    borderRadius: "6px",
+    padding: "4px 2px",
+    textAlign: "center",
+    border: "1px solid rgba(0, 0, 0, 0.14)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+    minHeight: "45px"
+  };
+  const statValStyle = { fontSize: "0.75rem", fontWeight: 700, color: "#2d3748", lineHeight: "1.1", marginBottom: "1px" };
+  const statLblStyle = { fontSize: "0.55rem", fontWeight: 600, color: "#718096", textTransform: "uppercase", width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
   return (
     <div
@@ -1166,10 +1241,10 @@ function InstructorCourseViewPage() {
             <div className="container-fluid">
               <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
                 <div className="d-flex justify-content-between align-items-center mb-2">
-                  <div style={{ width: "150px" }}></div>
+                  <div style={{ width: "80px" }}></div>
                   <h2 className="page-title text-primary pt-0 dashboard-hero-title">View Course Content</h2>
                   <a href="/my-courseware" className="btn btn-outline-primary mt-3 mt-md-0">
-                    <i className="fa fa-arrow-left mr-1"></i> Back to Courseware
+                    <i className="fa fa-arrow-left mr-1"></i> Back
                   </a>
                 </div>
                 <h5 className="text-muted mb-0 mt-0 dashboard-hero-sub">
@@ -1179,14 +1254,14 @@ function InstructorCourseViewPage() {
             </div>
 
             {/* Unit Tabs */}
-            <div className="unit-tabs mb-4">
+            <div style={unitTabContainerStyle}>
               {allUnits.map((unit) => {
                 const titleForUnit = unitTitleByUnit[unit] || "No title found";
 
                 return (
                   <button
                     key={unit}
-                    className={`unit-tab ${activeUnit === unit ? "active" : ""}`}
+                    style={getUnitTabStyle(activeUnit === unit)}
                     onClick={() => {
                       log("Unit tab clicked", { from: activeUnit, to: unit });
                       setActiveUnit(unit);
@@ -1198,7 +1273,6 @@ function InstructorCourseViewPage() {
                 );
               })}
 
-              {/* Pass both examinationId and unitId */}
               <Link
                 to="/discussionforum"
                 state={{
@@ -1206,11 +1280,11 @@ function InstructorCourseViewPage() {
                   unitId: activeUnit ? Number(activeUnit.split("-")[1]) : null,
                 }}
               >
-                <button className="unit-tab">Discussion Forum</button>
+                <button style={getUnitTabStyle(false)}>Discussion Forum</button>
               </Link>
 
               <Link to="/recorded-classes">
-                <button className="unit-tab">Recorded classes</button>
+                <button style={getUnitTabStyle(false)}>Recorded classes</button>
               </Link>
             </div>
 
@@ -1241,17 +1315,12 @@ function InstructorCourseViewPage() {
             )}
 
             {/* Section Mapping */}
-            {/* For Admin: Show Student Videos and Other Videos separately */}
             {isAdmin ? (
               <>
-                {/* Student Videos Section (utype='S') */}
                 {renderVideoSection("Student Videos", "student-videos", studentVideos, "success", "fas fa-graduation-cap")}
-                
-                {/* Other Videos Section (utype='O') */}
                 {renderVideoSection("Faculty Videos", "other-videos", otherVideos, "info", "fas fa-chalkboard-teacher")}
               </>
             ) : (
-              /* For Faculty/Student: Show single Videos section (already filtered by backend/role) */
               renderVideoSection("Videos", "videos", filteredVideos, "info", "fas fa-video")
             )}
 
@@ -1262,87 +1331,83 @@ function InstructorCourseViewPage() {
             ].map((section, idx) => {
               log(`Rendering section: ${section.title}`, { itemCount: section.data.length, key: section.key });
               return (
-              <div key={section.key} ref={section.ref} className={`card shadow-sm mb-4 section-card animate-section border-${section.color}`}>
-                <div className={`card-header bg-${section.color} text-white`}>
-                  <h6 className="mb-0">
-                    <i className={`${section.icon} me-2 mr-2`}></i>
-                    {section.title}
-                  </h6>
-                </div>
-                <div className="card-body">
-                  {section.data.length === 0 ? (
-                    renderEmptyMessage(section.title)
-                  ) : (
-                    <div className="row">
-                      {section.data.map((item, idx2) => {
-                        const playableUrl =
-                          section.key === "videos"
-                            ? getPlayableVideoUrl(item)
-                            : toAbsoluteLocal(apiOrigin, item.fileUrl);
+                <div key={section.key} ref={section.ref} className={`card shadow-sm mb-4 section-card animate-section border-${section.color}`}>
+                  <div className={`card-header bg-${section.color} text-white`}>
+                    <h6 className="mb-0">
+                      <i className={`${section.icon} me-2 mr-2`}></i>
+                      {section.title}
+                    </h6>
+                  </div>
+                  <div className="card-body">
+                    {section.data.length === 0 ? (
+                      renderEmptyMessage(section.title)
+                    ) : (
+                      <div className="row">
+                        {section.data.map((item, idx2) => {
+                          const playableUrl =
+                            section.key === "videos"
+                              ? getPlayableVideoUrl(item)
+                              : toAbsoluteLocal(apiOrigin, item.fileUrl);
 
-                        const idKey =
-                          item.id ?? item.contentId ?? item.examid ?? playableUrl ?? idx2;
+                          const idKey =
+                            item.id ?? item.contentId ?? item.examid ?? playableUrl ?? idx2;
+                          const thisItemId = (item.id ?? item.contentId ?? item.Id ?? item.ContentId);
 
-                        let progressKey = "";
-                        if (section.key === "videos") progressKey = `video-progress-${playableUrl}`;
-                        else if (section.key === "ebooks") progressKey = `ebook-progress-${playableUrl}`;
-                        else if (section.key === "webresources") progressKey = `webresource-progress-${playableUrl}`;
-                        else if (section.key === "liveclass") progressKey = `liveclass-progress-${playableUrl}`;
-                        else if (section.key === "discussionforum") progressKey = `discussion-progress-${playableUrl}`;
-
-                        const progress = parseInt(localStorage.getItem(progressKey)) || 0;
-                        const progressColor =
-                          progress < 30 ? "#e74c3c" : progress < 70 ? "#f39c12" : "#27ae60";
-
-                        const thisItemId = (item.id ?? item.contentId ?? item.Id ?? item.ContentId);
-
-                        return (
-                          <div className="col-md-6 col-lg-4 mb-3" key={idKey}>
-                            <div className="resource-card welcome-card animate-welcome h-100" style={{ position: "relative" }}>
-                              {/* Delete icon (only for non-students) */}
-                              {role !== "Student" && (
-                                <button
-                                  type="button"
-                                  className="delete-btn text-danger btn btn-link p-0"
-                                  title="Delete content"
-                                  onClick={(e) => handleDeleteContent(item, e)}
-                                  disabled={deletingId === thisItemId}
-                                  aria-label="Delete content"
-                                  style={{ lineHeight: 0 }}
-                                >
-                                  <i className="fa fa-trash" aria-hidden="true"></i>
-                                </button>
-                              )}
-
-                              <div className="card-body d-flex flex-column">
-                                <h6 className="fw-bold">{item.title}</h6>
-                                <p className="text-muted flex-grow-1">{item.description}</p>
-
-                                {section.key === "videos" ? (
+                          return (
+                            <div className="col-md-6 col-lg-4 col-xl-3 mb-4" key={idKey}>
+                              <div
+                                className="card h-100 border-0"
+                                style={{
+                                  borderRadius: "16px",
+                                  background: "linear-gradient(135deg, #eaf2fb, #ffffff)",
+                                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+                                  backdropFilter: "blur(16px)",
+                                  WebkitBackdropFilter: "blur(16px)",
+                                  position: 'relative'
+                                }}
+                              >
+                                {role !== "Student" && (
                                   <button
-                                    className="btn btn-sm btn-outline-info mt-auto"
-                                    onClick={() => handleWatchVideo(item)}
+                                    type="button"
+                                    className="delete-btn text-danger btn btn-link p-0"
+                                    title="Delete content"
+                                    onClick={(e) => handleDeleteContent(item, e)}
+                                    disabled={deletingId === thisItemId}
+                                    style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}
                                   >
-                                    Watch Video
-                                  </button>
-                                ) : (
-                                  <button
-                                    className="btn btn-sm btn-outline-primary mt-auto"
-                                    onClick={() => handleViewFile(item.fileUrl)}
-                                  >
-                                    View File
+                                    <i className="fa fa-trash" aria-hidden="true"></i>
                                   </button>
                                 )}
+
+                                <div className="card-body p-3 d-flex flex-column">
+                                  <h6 className="font-weight-bold text-dark mb-1" style={{ fontSize: "0.95rem" }}>{item.title}</h6>
+                                  <p className="text-muted flex-grow-1 mb-3" style={{ fontSize: "0.75rem" }}>{item.description}</p>
+
+                                  {section.key === "videos" ? (
+                                    <button
+                                      className="btn btn-sm btn-outline-info rounded-pill w-100 mt-auto"
+                                      onClick={() => handleWatchVideo(item)}
+                                    >
+                                      Watch Video
+                                    </button>
+                                  ) : (
+                                    <button
+                                      className="btn btn-sm btn-outline-primary rounded-pill w-100 mt-auto"
+                                      onClick={() => handleViewFile(item.fileUrl)}
+                                    >
+                                      View File
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
+              );
             })}
           </div>
 
@@ -1365,55 +1430,60 @@ function InstructorCourseViewPage() {
                       const isMCQ = exam.examType === "MP";
 
                       return (
-                        <div className="col-md-6 col-lg-4 mb-3" key={exam.examid}>
-                          <div className="resource-card welcome-card animate-welcome h-100">
-                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
-                              <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                                <i className="fa fa-book text-primary mr-2"></i>
-                                {exam.title}
+                        <div className="col-md-6 col-lg-4 col-xl-3 mb-4" key={exam.examid}>
+                          <div
+                            className="card h-100 border-0"
+                            style={{
+                              borderRadius: "16px",
+                              background: "linear-gradient(135deg, #eaf2fb, #ffffff)",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+                              backdropFilter: "blur(16px)",
+                              WebkitBackdropFilter: "blur(16px)",
+                            }}
+                          >
+                            <div className="card-body p-3 d-flex flex-column">
+                              <h6 className="font-weight-bold text-dark mb-2 d-flex align-items-center gap-2" style={{ fontSize: "0.9rem" }}>
+                                <i className="fa fa-book text-primary"></i> {exam.title}
                               </h6>
 
-                              <p className="mb-2">
-                                <i className="fa fa-calendar-plus me-2 mr-2 text-success"></i>
-                                <strong>Created At:</strong> {new Date(exam.createdAt).toLocaleString()}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-clock me-2 mr-2 text-primary"></i>
-                                <strong>Duration:</strong> {exam.durationMinutes} min
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                                <strong>Marks:</strong> {exam.totmrk} | <strong>Pass:</strong> {exam.passmrk}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
-                                <strong>Unit:</strong> {exam.unitId}
-                              </p>
+                              {/* Compact Stats Grid */}
+                              <div style={statContainerStyle}>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{new Date(exam.createdAt).toLocaleDateString()}</div>
+                                  <div style={statLblStyle}>Created</div>
+                                </div>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{exam.durationMinutes} min</div>
+                                  <div style={statLblStyle}>Duration</div>
+                                </div>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{exam.totmrk} / {exam.passmrk}</div>
+                                  <div style={statLblStyle}>Marks / Pass</div>
+                                </div>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{exam.unitId}</div>
+                                  <div style={statLblStyle}>Unit</div>
+                                </div>
+                              </div>
 
                               {exam.fileurl ? (
                                 <a
                                   href={toAbsoluteLocal(apiOrigin, exam.fileurl)}
-                                  className="btn btn-sm btn-outline-primary"
+                                  className="btn btn-sm btn-outline-primary rounded-pill w-100 mt-2"
                                   target="_blank"
                                   rel="noreferrer"
-                                  onClick={() =>
-                                    log("Opening exam attachment", { url: toAbsoluteLocal(apiOrigin, exam.fileurl) })
-                                  }
                                 >
                                   📄 View Attachment
                                 </a>
                               ) : !isMCQ ? (
-                                <button className="btn btn-sm btn-outline-secondary" disabled>
+                                <button className="btn btn-sm btn-outline-secondary rounded-pill w-100 mt-2" disabled>
                                   🚫 No Attachment
                                 </button>
                               ) : null}
 
                               {isMCQ && isAttendStatus && (
-                                <Link to={`/practice-exam/${exam.examid}`} state={{ exam }} className="mt-2">
-                                  <button className="btn btn-sm btn-success w-100" style={{ marginLeft: "0px" }}>📝 Attend Practice Exam</button>
+                                <Link to={`/practice-exam/${exam.examid}`} state={{ exam }} className="mt-2 w-100">
+                                  <button className="btn btn-sm btn-success rounded-pill w-100">📝 Attend Exam</button>
                                 </Link>
                               )}
 
@@ -1425,7 +1495,7 @@ function InstructorCourseViewPage() {
                                     const f = e.target.files?.[0];
                                     if (f && userId) submitSubjectivePracticeExam(exam.examid, userId, f);
                                   }}
-                                  className="form-control mt-2"
+                                  className="form-control form-control-sm mt-2"
                                 />
                               )}
                             </div>
@@ -1456,60 +1526,58 @@ function InstructorCourseViewPage() {
                       const isSubjective = (test.PracticeExamType || "").toLowerCase() === "subjective";
 
                       const typeBadge = isObjective ? (
-                        <span className="badge bg-primary text-white px-2 py-1 rounded-pill">
-                          <i className="fa fa-list me-1"></i> Objective
-                        </span>
+                        <span className="badge bg-primary px-2 py-1 rounded-pill" style={{ fontSize: "0.6rem" }}>Objective</span>
                       ) : isSubjective ? (
-                        <span className="badge bg-warning text-dark px-2 py-1 rounded-pill">
-                          <i className="fa fa-file-alt me-1"></i> Subjective
-                        </span>
+                        <span className="badge bg-warning text-dark px-2 py-1 rounded-pill" style={{ fontSize: "0.6rem" }}>Subjective</span>
                       ) : (
-                        <span className="badge bg-secondary text-white px-2 py-1 rounded-pill">
-                          {test.PracticeExamType}
-                        </span>
+                        <span className="badge bg-secondary px-2 py-1 rounded-pill" style={{ fontSize: "0.6rem" }}>{test.PracticeExamType}</span>
                       );
 
                       return (
-                        <div className="col-md-6 col-lg-4 mb-3" key={test.examid}>
-                          <div className="resource-card welcome-card animate-welcome h-100">
-                            <div className="card-body d-flex flex-column" style={{ textAlign: "left", gap: "6px" }}>
-                              <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                                <i className="fa fa-book text-primary"></i>
-                                {test.AssignmentTitle}
-                              </h6>
+                        <div className="col-md-6 col-lg-4 col-xl-3 mb-4" key={test.examid}>
+                          <div
+                            className="card h-100 border-0"
+                            style={{
+                              borderRadius: "16px",
+                              background: "linear-gradient(135deg, #eaf2fb, #ffffff)",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+                              backdropFilter: "blur(16px)",
+                              WebkitBackdropFilter: "blur(16px)",
+                            }}
+                          >
+                            <div className="card-body p-3 d-flex flex-column">
+                              <div className="d-flex justify-content-between align-items-start mb-2">
+                                <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: "0.9rem" }}>
+                                  <i className="fa fa-book text-primary"></i> {test.AssignmentTitle}
+                                </h6>
+                                {typeBadge}
+                              </div>
 
-                              <p className="mb-2">
-                                <i className="fa fa-user me-2 mr-2 text-dark"></i>
-                                {test.pname}
-                              </p>
+                              <div style={statContainerStyle}>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{test.pname}</div>
+                                  <div style={statLblStyle}>User</div>
+                                </div>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{test.Duration} min</div>
+                                  <div style={statLblStyle}>Duration</div>
+                                </div>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{test.totmrk} / {test.passmrk}</div>
+                                  <div style={statLblStyle}>Marks/Pass</div>
+                                </div>
+                                <div style={statItemStyle}>
+                                  <div style={statValStyle}>{test.attempted ? "Yes" : "No"}</div>
+                                  <div style={statLblStyle}>Attempted</div>
+                                </div>
+                              </div>
 
-                              <p className="mb-2">
-                                <i className="fa fa-layer-group me-2 mr-2 text-secondary"></i>
-                                <strong>Unit:</strong> {activeUnit}
-                              </p>
+                              <div className="mt-2 text-center">
+                                <small className="text-muted d-block" style={{ fontSize: "0.65rem" }}>
+                                  {new Date(test.StartDate).toLocaleDateString()} - {new Date(test.EndDate).toLocaleDateString()}
+                                </small>
+                              </div>
 
-                              <p className="mb-2">
-                                <i className="fa fa-clock me-2 mr-2 text-primary"></i>
-                                <strong>Duration:</strong> {test.Duration} min
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-star me-2 mr-2 text-warning"></i>
-                                <strong>Marks:</strong> {test.totmrk} | <strong>Pass:</strong> {test.passmrk}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-check-circle me-2 mr-2 text-success"></i>
-                                <strong>Attempted:</strong> {test.attempted ? "Yes" : "No"}
-                              </p>
-
-                              <p className="mb-2">
-                                <i className="fa fa-calendar-alt me-2 mr-2 text-danger"></i>
-                                <strong>From:</strong> {new Date(test.StartDate).toLocaleDateString()} -{" "}
-                                {new Date(test.EndDate).toLocaleDateString()}
-                              </p>
-
-                              <div className="mt-auto text-end">{typeBadge}</div>
                             </div>
                           </div>
                         </div>

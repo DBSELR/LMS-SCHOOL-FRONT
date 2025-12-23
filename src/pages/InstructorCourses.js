@@ -179,15 +179,18 @@ function InstructorCourses() {
                           className="p-3 mt-2 semester-panel-body"
                           tabIndex={-1}
                         >
-                          {filtered.map((course) => (
-                            <CourseCard
-                              key={course.courseId}
-                              course={course}
-                              navigate={navigate}
-                              role={userRole}
-                              userId={userId} // <-- pass userId to card
-                            />
-                          ))}
+                          <div className="row">
+                            {filtered.map((course) => (
+                              <div key={course.courseId} className="col-md-6 col-lg-4 col-xl-3 mb-4">
+                                <CourseCard
+                                  course={course}
+                                  navigate={navigate}
+                                  role={userRole}
+                                  userId={userId}
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </Collapse>
                     </div>
@@ -209,7 +212,6 @@ function CourseCard({ course, navigate, role, userId }) {
 
   const isStudent = role === "Student";
 
-  // Small helper: safely read count keys
   const getCount = (obj, keys, fallback = 0) => {
     for (const k of keys) {
       if (obj && obj[k] != null) return obj[k];
@@ -220,13 +222,10 @@ function CourseCard({ course, navigate, role, userId }) {
   useEffect(() => {
     const load = async () => {
       try {
-        if (!userId) return; // wait until userId available
+        if (!userId) return;
 
         const token = localStorage.getItem("jwt");
-        // ✅ Pass userId to stats API
         const url = `${API_BASE_URL}/Content/stats/${course.examinationID}?userId=${userId}`;
-
-        console.log("📊 Loading stats:", { url });
 
         const res = await fetch(url, {
           method: "GET",
@@ -237,14 +236,6 @@ function CourseCard({ course, navigate, role, userId }) {
         if (res.ok) {
           const data = await res.json();
           setDetails(data);
-          console.log(
-            "📊 Course stats for",
-            course.examinationID,
-            ":",
-            data
-          );
-        } else {
-          console.warn("⚠ Stats request not OK", res.status);
         }
       } catch (err) {
         console.error("❌ Error loading course details:", err);
@@ -253,254 +244,224 @@ function CourseCard({ course, navigate, role, userId }) {
     load();
   }, [course.examinationID, userId]);
 
-  // ===== Stat configuration (video separated) =====
   const statsToRender = [];
 
   if (isStudent) {
-    // 👉 Student: show ONLY single Video box
     const videoCount = getCount(details, ["videoCount", "VideoCount"]);
     statsToRender.push({
       key: "video",
       label: "Video",
       count: videoCount,
+      icon: "fa-video",
+      color: "text-primary"
     });
   } else {
-    // 👉 Non-students: split only Video into S_Video & O_Video
-    const sVideoCount = getCount(
-      details,
-      ["sVideoCount", "SVideoCount", "studentVideoCount", "s_videoCount"]
-    );
-    const oVideoCount = getCount(
-      details,
-      ["oVideoCount", "OVideoCount", "otherVideoCount", "o_videoCount"]
-    );
+    const sVideoCount = getCount(details, ["sVideoCount", "SVideoCount", "studentVideoCount", "s_videoCount"]);
+    const oVideoCount = getCount(details, ["oVideoCount", "OVideoCount", "otherVideoCount", "o_videoCount"]);
 
     statsToRender.push({
       key: "s_video",
       label: "S_Video",
       count: sVideoCount,
+      icon: "fa-video",
+      color: "text-info"
     });
     statsToRender.push({
       key: "o_video",
       label: "F_Video",
       count: oVideoCount,
+      icon: "fa-film",
+      color: "text-secondary"
     });
   }
 
-  // ⭐ Remaining stats "as usual" - NOW VISIBLE FOR ALL ROLES
   statsToRender.push({
     key: "ebook",
     label: "E-Book",
     count: getCount(details, ["ebookCount", "EBookCount"]),
+    icon: "fa-book",
+    color: "text-success"
   });
   statsToRender.push({
     key: "web",
     label: "Web Resource",
     count: getCount(details, ["webCount", "webResourceCount"]),
+    icon: "fa-globe",
+    color: "text-warning"
   });
   statsToRender.push({
     key: "pa",
     label: "Practice Test",
     count: getCount(details, ["paCount", "practiceTestCount"]),
+    icon: "fa-pencil-alt",
+    color: "text-danger"
   });
   statsToRender.push({
     key: "live",
     label: "Live Class",
     count: getCount(details, ["livecount", "liveCount"]),
+    icon: "fa-broadcast-tower",
+    color: "text-primary"
   });
   statsToRender.push({
     key: "disc",
     label: "Discussions",
     count: getCount(details, ["discussionCount"]),
+    icon: "fa-comments",
+    color: "text-success"
   });
 
-  // ===== Inline styles for nice stat boxes =====
+  // Updated styles for cleaner layout
   const statContainerStyle = {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "12px",
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "3px", // Tighter gap
+    marginTop: "10px"
   };
 
   const statItemStyle = {
-    flex: "1 1 120px",
-    minWidth: "120px",
-    maxWidth: "150px",
-    background: "#f8f9ff",
-    borderRadius: "10px",
-    padding: "10px 8px",
+    background: "rgba(255, 255, 255, 0.5)",
+    borderRadius: "6px",
+    padding: "4px 1px", // Very compact padding
     textAlign: "center",
-    boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
-    border: "1px solid #e2e8f0",
+    border: "1px solid rgba(0, 0, 0, 0.14)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
+    alignItems: "center",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+    minHeight: "45px" // Enforce a small but consistent height
   };
 
   const statCountStyle = {
-    fontSize: "1.25rem",
+    fontSize: "0.85rem", // Smaller count
     fontWeight: 700,
-    color: "#1d4ed8",
-    marginBottom: "4px",
+    color: "#2d3748",
+    lineHeight: "1.1",
+    marginBottom: "1px" // slight separation
   };
 
   const statLabelStyle = {
-    fontSize: "0.78rem",
-    fontWeight: 500,
-    color: "#4b5563",
+    fontSize: "0.55rem", // Smaller label
+    fontWeight: 600,
+    color: "#718096",
     textTransform: "uppercase",
-    letterSpacing: "0.03em",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    width: "100%",
+    padding: "0" // No extra padding
   };
 
   return (
-    <div className="course-card welcome-card animate-welcome">
-      <div className="course-header">
-        <h1
-          className="course-title"
-          style={{ fontSize: "1.25rem", fontWeight: "600" }}
-        >
-          {course.paperCode} - {course.paperName}
-        </h1>
-        <div className="course-btn-group">
-          <button
-            className="btn btn-sm btn-outline-success"
-            onClick={() => {
-              console.log("➡️ Navigating to view content for:", course);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              navigate(`/view-course-content/${course.examinationID}`, {
-                state: {
-                  examinationID: course.examinationID,
-                  paperCode: course.paperCode,
-                  paperName: course.paperName,
-                  batchName: course.batchName,
-                  name: course.name,
-                  semester: course.semester,
-                  class: course.class,
-                },
-              });
-            }}
-          >
-            <i className="fas fa-eye me-1"></i> View
-          </button>
+    <div
+      className="card h-100 border-0"
+      style={{
+        borderRadius: "16px",
+       background: "linear-gradient(135deg, #eaf2fb, #ffffff)",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+      }}
+    >
+      <div className="card-body p-3 d-flex flex-column">
 
-          {role === "Admin" && (
+        {/* Header Section */}
+        <div className="d-flex justify-content-between align-items-start mb-3">
+          <div style={{ minWidth: 0, paddingRight: '10px' }}>
+            <h6 className="font-weight-bold mb-0 text-dark text-truncate" style={{ fontSize: "1rem", letterSpacing: "-0.01em" }}  title={course.paperName}>
+              {course.paperName}
+            </h6>
+            <small className="text-muted d-block text-truncate" style={{ fontSize: "0.8rem", marginTop: '2px' }} title={course.paperCode + ' - ' + course.paperName}>
+              {course.paperCode}
+            </small>
+            
+          </div>
+          <div className="d-flex flex-column gap-1 flex-shrink-0">
             <button
-              className="btn btn-sm btn-outline-primary"
+              className="btn btn-xs btn-outline-success rounded-pill px-3 py-1"
+              style={{ fontSize: "0.75rem", fontWeight: "600" }}
               onClick={() => {
-                console.log("🆙 Navigating to upload content for:", course);
-                navigate(
-                  `/admin/upload-course-content/${course.examinationID}`,
-                  {
-                    state: {
-                      paperCode: course.paperCode,
-                      paperName: course.paperName,
-                      batchName: course.batchName,
-                      semester: course.semester,
-                      name: course.name,
-                    },
-                  }
-                );
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                navigate(`/view-course-content/${course.examinationID}`, {
+                  state: { ...course },
+                });
               }}
             >
-              <i className="fas fa-upload me-1"></i> Upload
+              View
             </button>
-          )}
-        </div>
-      </div>
 
-      <div className="row g-4">
-        <div className="col-md-7">
-          <div className="course-info-box welcome-card animate-welcome">
-            <h6 className="course-info-title mb-3">
-              <i className="fas fa-book-open me-2"></i>Courseware
-            </h6>
-
-            {/* ⭐ Neatly aligned stat boxes */}
-            <div
-              className="course-stats-container"
-              style={statContainerStyle}
-            >
-              {statsToRender.map((stat) => (
-                <div
-                  key={stat.key}
-                  className="course-stat-item"
-                  style={statItemStyle}
-                >
-                  <div
-                    className="course-stat-count"
-                    style={statCountStyle}
-                  >
-                    {stat.count || 0}
-                  </div>
-                  <div
-                    className="course-stat-label"
-                    style={statLabelStyle}
-                  >
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-5">
-          <div className="course-info-box welcome-card animate-welcome">
-            <h6 className="course-info-title">
-              <i className="fas fa-chalkboard-teacher me-2"></i>Schedules
-            </h6>
-            {details.upLiveClass || details.upAExam || details.upTExam ? (
-              <>
-                {details.upLiveClass && (
-                  <p className="text-muted mb-0">
-                    <strong>Live Class:</strong>{" "}
-                    {new Date(details.upLiveClass)
-                      .toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })
-                      .replace(",", "")}
-                  </p>
-                )}
-                {details.upAExam && (
-                  <p className="text-muted mb-0">
-                    <strong>Assignment:</strong>{" "}
-                    {new Date(details.upAExam)
-                      .toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })
-                      .replace(",", "")}
-                  </p>
-                )}
-                {details.upTExam && (
-                  <p className="text-muted mb-0">
-                    <strong>Theory Exam:</strong>{" "}
-                    {new Date(details.upTExam)
-                      .toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })
-                      .replace(",", "")}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="text-muted mb-0">Nothing scheduled</p>
+            {role === "Admin" && (
+              <button
+                className="btn btn-xs btn-outline-primary rounded-pill px-3 py-1 mt-1"
+                style={{ fontSize: "0.75rem", fontWeight: "600" }}
+                onClick={() => {
+                  navigate(`/admin/upload-course-content/${course.examinationID}`, {
+                    state: { ...course },
+                  });
+                }}
+              >
+                Upload
+              </button>
             )}
           </div>
         </div>
+
+        {/* Stats Grid */}
+        <div className="flex-grow-1">
+          <div style={statContainerStyle}>
+            {statsToRender.map((stat) => (
+              <div key={stat.key} style={statItemStyle}>
+                <div style={statCountStyle}>{stat.count || 0}</div>
+                <div style={statLabelStyle} title={stat.label}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Schedule Footer */}
+        <div className="mt-3 pt-3 border-top" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+          <small className="text-secondary font-weight-bold d-block mb-1" style={{ fontSize: "0.7rem", textTransform: 'uppercase', letterSpacing: '0.05em' }}>Upcoming</small>
+          <div style={{ fontSize: "0.75rem" }}>
+            {details.upLiveClass || details.upAExam || details.upTExam ? (
+              <>
+                {details.upLiveClass && (
+                  <div className="d-flex align-items-center mb-1 text-primary">
+                    <span style={{ width: '16px', display: 'flex', justifyContent: 'center' }} className="me-2"><i className="fas fa-video"></i></span>
+                    <span className="text-truncate" title={new Date(details.upLiveClass).toLocaleString()}>
+                      {new Date(details.upLiveClass).toLocaleString("en-GB", {
+                        day: "2-digit", month: "short", hour: "numeric", minute: "2-digit", hour12: true
+                      })}
+                    </span>
+                  </div>
+                )}
+                {details.upAExam && (
+                  <div className="d-flex align-items-center mb-1 text-warning">
+                    <span style={{ width: '16px', display: 'flex', justifyContent: 'center' }} className="me-2"><i className="fas fa-file-alt"></i></span>
+                    <span className="text-truncate" title={new Date(details.upAExam).toLocaleString()}>
+                      {new Date(details.upAExam).toLocaleString("en-GB", {
+                        day: "2-digit", month: "short", hour: "numeric", minute: "2-digit", hour12: true
+                      })}
+                    </span>
+                  </div>
+                )}
+                {details.upTExam && (
+                  <div className="d-flex align-items-center text-danger">
+                    <span style={{ width: '16px', display: 'flex', justifyContent: 'center' }} className="me-2"><i className="fas fa-edit"></i></span>
+                    <span className="text-truncate" title={new Date(details.upTExam).toLocaleString()}>
+                      {new Date(details.upTExam).toLocaleString("en-GB", {
+                        day: "2-digit", month: "short", hour: "numeric", minute: "2-digit", hour12: true
+                      })}
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-muted font-italic" style={{ fontSize: "0.75rem" }}>No upcoming schedules</div>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );
