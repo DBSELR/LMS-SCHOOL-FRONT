@@ -205,17 +205,17 @@ function AdminCourseUploadPage() {
             <Modal.Body>
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                  <label>Select Unit</label>
+                  <label>Select Chapter</label>
                   <select
                     className="form-control"
                     value={selectedUnitId}
                     onChange={(e) => setSelectedUnitId(e.target.value)}
                     required
                   >
-                    <option value="">-- Select Unit --</option>
+                    <option value="">-- Select Chapter --</option>
                     {units.map((unit) => (
                       <option key={unit.unitId} value={unit.unitId}>
-                        Unit {unit.unitNumber} - {unit.title}
+                        Chapter {unit.unitNumber} - {unit.title}
                       </option>
                     ))}
                   </select>
