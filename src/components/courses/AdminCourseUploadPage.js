@@ -291,12 +291,12 @@ function AdminCourseUploadPage() {
                         htmlFor="chkOthers"
                         className="form-check-label"
                       >
-                        Others
+                        Faculty
                       </label>
                     </div>
                   </div>
                   <small className="text-muted d-block mt-1">
-                    Choose exactly one: Students (S) or Others (O).
+                    Choose exactly one: Students (S) or Faculty (O).
                   </small>
                 </div>
 

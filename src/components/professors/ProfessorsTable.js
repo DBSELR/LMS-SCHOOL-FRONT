@@ -42,6 +42,9 @@ const ProfessorsTable = ({
                   />
                 </div>
                 <h5 className="font-weight-bold mb-1">{prof.fullName}</h5>
+                <p className="text-muted small mb-1">
+                  <strong>Username:</strong> {prof.username || "N/A"}
+                </p>
                 <p className="text-muted small mb-2">{prof.department}</p>
 
                 <ul className="list-unstyled text-muted small mb-3">

@@ -282,7 +282,7 @@ function CourseCard({ course, navigate, role, userId }) {
     });
     statsToRender.push({
       key: "o_video",
-      label: "O_Video",
+      label: "F_Video",
       count: oVideoCount,
     });
   }

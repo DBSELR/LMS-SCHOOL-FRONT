@@ -51,6 +51,22 @@ function LibraryTable({ books = [] }) {
     setShowModal(false);
   };
 
+
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfFullscreen, setPdfFullscreen] = useState(false);
+  const [viewingBook, setViewingBook] = useState(null);
+
+  const handleViewPdf = (book) => {
+    setViewingBook(book);
+    setShowPdfModal(true);
+    setPdfFullscreen(false); // Default to normal size
+  };
+
+  const closePdfModal = () => {
+    setViewingBook(null);
+    setShowPdfModal(false);
+  };
+
   return (
     <>
       <div className="row">
@@ -86,22 +102,18 @@ function LibraryTable({ books = [] }) {
                 </ul>
 
                 {book.fileUrl ? (
-                  <a
-                    href={book.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
                     className="btn btn-sm btn-outline-secondary mb-2"
+                    onClick={() => handleViewPdf(book)}
                   >
-                    <i className="fa fa-file-pdf-o mr-1"></i> View
-                  </a>
+                    <i className="fa fa-eye mr-1"></i> View
+                  </button>
                 ) : (
                   <div className="text-muted small mb-2">No PDF available</div>
                 )}
 
                 <div className="mt-auto d-flex justify-content-between align-items-center">
-                  {/* <button className="btn btn-sm btn-outline-primary rounded-pill" onClick={() => handleView(book)}>
-                    <i className="fa fa-eye mr-1"></i> View
-                  </button> */}
+                  {/* Actions if needed */}
                 </div>
               </div>
             </div>
@@ -109,10 +121,10 @@ function LibraryTable({ books = [] }) {
         ))}
       </div>
 
-      {/* Book Details Modal */}
+      {/* Book Details Modal (Keep existing logic if needed, or remove if unused/redundant. Keeping it as it was in original code structure but not invoked by the View button anymore, actually the View button previously was a direct link) */}
       {selectedBook && (
         <Modal show={showModal} onHide={handleClose} centered>
-          <Modal.Header>
+          <Modal.Header closeButton>
             <Modal.Title>Book Details</Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -124,9 +136,9 @@ function LibraryTable({ books = [] }) {
             {selectedBook.fileUrl ? (
               <p>
                 <strong>PDF:</strong>{" "}
-                <a href={selectedBook.fileUrl} target="_blank" rel="noopener noreferrer">
-                  Download
-                </a>
+                <button className="btn btn-link p-0" onClick={() => { handleClose(); handleViewPdf(selectedBook); }}>
+                  View PDF
+                </button>
               </p>
             ) : (
               <p className="text-muted">No PDF available</p>
@@ -135,6 +147,57 @@ function LibraryTable({ books = [] }) {
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>Close</Button>
           </Modal.Footer>
+        </Modal>
+      )}
+
+
+      {/* PDF Viewer Modal */}
+      {viewingBook && (
+        <Modal
+          show={showPdfModal}
+          onHide={closePdfModal}
+          size="xl"
+          centered
+          className="pdf-viewer-modal"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title className="d-flex align-items-center w-100 justify-content-between">
+              <span>{viewingBook.title}</span>
+              <div className="mr-5"> {/* Margin right to avoid overlapping close button */}
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => {
+                    const iframe = document.getElementById('pdf-iframe');
+                    if (iframe) {
+                      if (iframe.requestFullscreen) {
+                        iframe.requestFullscreen();
+                      } else if (iframe.mozRequestFullScreen) { /* Firefox */
+                        iframe.mozRequestFullScreen();
+                      } else if (iframe.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+                        iframe.webkitRequestFullscreen();
+                      } else if (iframe.msRequestFullscreen) { /* IE/Edge */
+                        iframe.msRequestFullscreen();
+                      }
+                    }
+                  }}
+                  className="mr-2"
+                >
+                  <i className="fa fa-expand mr-1"></i>
+                  Fullscreen
+                </Button>
+              </div>
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="p-0" style={{ height: '80vh' }}>
+            <iframe
+              id="pdf-iframe"
+              src={viewingBook.fileUrl}
+              style={{ width: "100%", height: "100%", border: "none" }}
+              title="PDF Viewer"
+              allowFullScreen
+            ></iframe>
+          </Modal.Body>
         </Modal>
       )}
 

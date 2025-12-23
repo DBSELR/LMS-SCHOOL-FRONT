@@ -1120,13 +1120,14 @@ function InstructorCourseViewPage() {
                       )}
 
                       <div className="card-body d-flex flex-column">
-                        <h6 className="fw-bold">{item.title}</h6>
-                        <p className="text-muted flex-grow-1">{item.description}</p>
                         {item.utype && (
-                          <span className={`badge ${item.utype?.toUpperCase() === 'S' ? 'bg-success' : 'bg-info'} text-white mb-2`}>
+                          <span className={`badge ${item.utype?.toUpperCase() === 'S' ? 'bg-success' : 'bg-info'} text-white mb-2`} style={{width:"40%"}}>
                             {item.utype?.toUpperCase() === 'S' ? 'Student' : 'Faculty'} Content
                           </span>
                         )}
+                        <h6 className="fw-bold">{item.title}</h6>
+                        <p className="text-muted flex-grow-1">{item.description}</p>
+                        
                         <button
                           className="btn btn-sm btn-outline-info mt-auto"
                           onClick={() => handleWatchVideo(item)}
@@ -1216,7 +1217,7 @@ function InstructorCourseViewPage() {
             {activeUnit && (
               <div className="d-flex justify-content-between align-items-center mb-3 px-1">
                 <h5 className="mb-0">
-                  <i className="fa fa-book text-primary me-2 mr-2"></i> Unit Title:{" "}
+                  <i className="fa fa-book text-primary me-2 mr-2"></i> Chapter Title:{" "}
                   {unitTitleByUnit[activeUnit] || "No title found"}
                 </h5>
                 {role !== "Student" && (
