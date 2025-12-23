@@ -196,30 +196,90 @@ function InstructorCourseViewPage() {
   const className = location.state?.class || "Unknown Class";
 
   // NEW: keep raw content and a unit -> title map
-  const [rawContent, setRawContent] = useState([]);
-  const [unitTitleByUnit, setUnitTitleByUnit] = useState({});
+  const [rawContent, setRawContent] = useState(() => {
+    log("Initializing rawContent state");
+    return [];
+  });
+  const [unitTitleByUnit, setUnitTitleByUnit] = useState(() => {
+    log("Initializing unitTitleByUnit state");
+    return {};
+  });
 
-  const [materials, setMaterials] = useState([]);
-  const [ebooks, setEBOOKS] = useState([]);
-  const [webresources, setwebresources] = useState([]);
-  const [videos, setVideos] = useState([]);
-  const [liveClasses, setLiveClasses] = useState([]);
+  const [materials, setMaterials] = useState(() => {
+    log("Initializing materials state");
+    return [];
+  });
+  const [ebooks, setEBOOKS] = useState(() => {
+    log("Initializing ebooks state");
+    return [];
+  });
+  const [webresources, setwebresources] = useState(() => {
+    log("Initializing webresources state");
+    return [];
+  });
+  const [videos, setVideos] = useState(() => {
+    log("Initializing videos state");
+    return [];
+  });
+  const [liveClasses, setLiveClasses] = useState(() => {
+    log("Initializing liveClasses state");
+    return [];
+  });
 
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [isVimeoUrl, setIsVimeoUrl] = useState(false);
-  const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
-  const [currentVideoProgress, setCurrentVideoProgress] = useState(0);
+  const [showVideoModal, setShowVideoModal] = useState(() => {
+    log("Initializing showVideoModal state");
+    return false;
+  });
+  const [videoUrl, setVideoUrl] = useState(() => {
+    log("Initializing videoUrl state");
+    return "";
+  });
+  const [isVimeoUrl, setIsVimeoUrl] = useState(() => {
+    log("Initializing isVimeoUrl state");
+    return false;
+  });
+  const [isYouTubeUrl, setIsYouTubeUrl] = useState(() => {
+    log("Initializing isYouTubeUrl state");
+    return false;
+  });
+  const [currentVideoProgress, setCurrentVideoProgress] = useState(() => {
+    log("Initializing currentVideoProgress state");
+    return 0;
+  });
 
-  const [showFileModal, setShowFileModal] = useState(false);
-  const [fileUrl, setFileUrl] = useState("");
-  const [fileProgress, setFileProgress] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [numPages, setNumPages] = useState(null);
-  const [visitedPages, setVisitedPages] = useState(new Set());
+  const [showFileModal, setShowFileModal] = useState(() => {
+    log("Initializing showFileModal state");
+    return false;
+  });
+  const [fileUrl, setFileUrl] = useState(() => {
+    log("Initializing fileUrl state");
+    return "";
+  });
+  const [fileProgress, setFileProgress] = useState(() => {
+    log("Initializing fileProgress state");
+    return 0;
+  });
+  const [pageNumber, setPageNumber] = useState(() => {
+    log("Initializing pageNumber state");
+    return 1;
+  });
+  const [numPages, setNumPages] = useState(() => {
+    log("Initializing numPages state");
+    return null;
+  });
+  const [visitedPages, setVisitedPages] = useState(() => {
+    log("Initializing visitedPages state");
+    return new Set();
+  });
 
-  const [activeUnit, setActiveUnit] = useState("");
-  const [allUnits, setAllUnits] = useState([]);
+  const [activeUnit, setActiveUnit] = useState(() => {
+    log("Initializing activeUnit state");
+    return "";
+  });
+  const [allUnits, setAllUnits] = useState(() => {
+    log("Initializing allUnits state");
+    return [];
+  });
 
   const sectionRefs = {
     ebooks: useRef(null),
@@ -230,7 +290,11 @@ function InstructorCourseViewPage() {
   const lastLoggedVideoPct = useRef(-1);
 
   // Watermark refs and displayText (live ticking time)
-  const { role: wmRole, userId: wmUserId } = useMemo(() => getIdentityFromToken("jwt"), []);
+  const { role: wmRole, userId: wmUserId } = useMemo(() => {
+    const identity = getIdentityFromToken("jwt");
+    log("Watermark identity extracted", identity);
+    return identity;
+  }, []);
   const liveTime = useLiveClock({ timeZone: 'Asia/Kolkata', intervalMs: 1000 });
   const displayText = `${wmRole}-${wmUserId} | ${liveTime}`;
 
@@ -272,24 +336,46 @@ function InstructorCourseViewPage() {
   const [deletingId, setDeletingId] = useState(null);
 
   function removeContentLocallyById(id) {
+    log("Removing content locally by id", { id });
     const drop = (arr) => (Array.isArray(arr) ? arr.filter((x) => getContentId(x) !== id) : []);
-    setEBOOKS((p) => drop(p));
-    setVideos((p) => drop(p));
-    setwebresources((p) => drop(p));
-    setMaterials((p) => drop(p));
+    setEBOOKS((p) => {
+      const filtered = drop(p);
+      log("Updated ebooks after removal", { before: p.length, after: filtered.length });
+      return filtered;
+    });
+    setVideos((p) => {
+      const filtered = drop(p);
+      log("Updated videos after removal", { before: p.length, after: filtered.length });
+      return filtered;
+    });
+    setwebresources((p) => {
+      const filtered = drop(p);
+      log("Updated webresources after removal", { before: p.length, after: filtered.length });
+      return filtered;
+    });
+    setMaterials((p) => {
+      const filtered = drop(p);
+      log("Updated materials after removal", { before: p.length, after: filtered.length });
+      return filtered;
+    });
+    log("Content removal complete", { id });
   }
 
   async function handleDeleteContent(item, e) {
     if (e) e.stopPropagation();
     const id = getContentId(item);
+    log("Delete content initiated", { id, item });
     if (!id) {
       warn("Cannot delete: no content id on item", item);
       alert("Delete failed: content id not found.");
       return;
     }
+    log("Prompting user for delete confirmation", { id });
     if (!window.confirm("Are you sure you want to delete this content? This cannot be undone.")) {
+      log("Delete cancelled by user", { id });
       return;
     }
+    log("Delete confirmed by user", { id });
     try {
       setDeletingId(id);
       const token = localStorage.getItem("jwt");
@@ -377,9 +463,11 @@ function InstructorCourseViewPage() {
 
   // Watermark animation effect
   useEffect(() => {
+    log("Watermark animation effect triggered", { showVideoModal, showFileModal });
     let rafId = null;
 
     const animateWatermark = (wmRef, stateRef, containerId) => {
+      log("Setting up watermark animation", { containerId });
       const wm = wmRef.current;
       const container = document.querySelector(containerId);
       if (!wm || !container) return;
@@ -440,23 +528,34 @@ function InstructorCourseViewPage() {
 
     // Start animation when modals are open
     if (showVideoModal) {
+      log("Starting video modal watermark animation");
       const step = animateWatermark(wmVideoRef, videoWmStateRef, '.video-wrapper');
       rafId = requestAnimationFrame(step);
+      log("Video watermark animation frame requested", { rafId });
     } else if (showFileModal) {
+      log("Starting file modal watermark animation");
       const step = animateWatermark(wmPdfRef, pdfWmStateRef, '.relative-wrap');
       rafId = requestAnimationFrame(step);
+      log("File watermark animation frame requested", { rafId });
     }
 
     return () => {
       if (rafId) {
+        log("Cleaning up watermark animation", { rafId });
         cancelAnimationFrame(rafId);
+        log("Watermark animation cancelled");
       }
     };
   }, [showVideoModal, showFileModal]);
 
   // Enhanced modal security - Block right-click when modals are open
   useEffect(() => {
-    if (!showVideoModal && !showFileModal) return;
+    log("Modal security effect triggered", { showVideoModal, showFileModal });
+    if (!showVideoModal && !showFileModal) {
+      log("No modals open, skipping security setup");
+      return;
+    }
+    log("Setting up enhanced modal security");
 
     const preventAll = (e) => {
       e.preventDefault();
@@ -495,10 +594,12 @@ function InstructorCourseViewPage() {
     }, true);
 
     return () => {
+      log("Cleaning up modal security listeners");
       document.removeEventListener("contextmenu", preventAll, true);
       document.removeEventListener("selectstart", preventAll, true);
       document.removeEventListener("dragstart", preventAll, true);
       document.removeEventListener("keydown", preventDevToolsStrict, true);
+      log("Modal security cleanup complete");
     };
   }, [showVideoModal, showFileModal]);
 
@@ -628,9 +729,18 @@ function InstructorCourseViewPage() {
   /* =========================
      Auth / data loads
      ========================= */
-  const [practiceExams, setPracticeExams] = useState([]);
-  const [userId, setUserId] = useState(null);
-  const [role, setRole] = useState("");
+  const [practiceExams, setPracticeExams] = useState(() => {
+    log("Initializing practiceExams state");
+    return [];
+  });
+  const [userId, setUserId] = useState(() => {
+    log("Initializing userId state");
+    return null;
+  });
+  const [role, setRole] = useState(() => {
+    log("Initializing role state");
+    return "";
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("jwt");
@@ -729,7 +839,10 @@ function InstructorCourseViewPage() {
   }, [activeUnit, examId, userId]);
 
   // Fetch admin practice tests
-  const [adminPracticeTests, setAdminPracticeTests] = useState([]);
+  const [adminPracticeTests, setAdminPracticeTests] = useState(() => {
+    log("Initializing adminPracticeTests state");
+    return [];
+  });
   useEffect(() => {
     const fetchAdminPracticeTests = async () => {
       if (!userId || !activeUnit || !examId) {
@@ -811,17 +924,57 @@ function InstructorCourseViewPage() {
         console.timeEnd("[ICVP] GET Content bundle");
 
         // Keep the raw list for unit tabs
+        log("Processing content bundle", { contentLength: content?.length, allLiveClassesLength: allLiveClasses?.length });
         setRawContent(Array.isArray(content) ? content : []);
 
         // case-insensitive contentType filter
         const ci = (v) => String(v || "").toLowerCase();
-        setEBOOKS(content.filter((c) => ci(c.contentType) === "ebook"));
-        setVideos(content.filter((c) => ci(c.contentType) === "video"));
-        setwebresources(content.filter((c) => ci(c.contentType) === "webresources"));
-        setMaterials(content.filter((c) => ci(c.contentType) === "pdf"));
+        const ebooksFiltered = content.filter((c) => ci(c.contentType) === "ebook");
+        let videosFiltered = content.filter((c) => ci(c.contentType) === "video");
+        const webresourcesFiltered = content.filter((c) => ci(c.contentType) === "webresources");
+        const materialsFiltered = content.filter((c) => ci(c.contentType) === "pdf");
+        
+        // Filter videos based on role and utype
+        // Admin: sees all (O and S) - will be separated in UI
+        // Faculty/Instructor: sees only 'O' (Other) videos
+        // Student: sees only 'S' (Student) videos - handled by backend but we double-check
+        const currentRole = role || "";
+        const roleUpper = currentRole.toUpperCase();
+        
+        if (roleUpper === "FACULTY" || roleUpper === "INSTRUCTOR") {
+          videosFiltered = videosFiltered.filter((v) => {
+            const utype = String(v.utype || "").toUpperCase();
+            return utype === "O";
+          });
+          log("Faculty role: filtered videos to show only utype='O'", { count: videosFiltered.length });
+        } else if (roleUpper === "STUDENT") {
+          videosFiltered = videosFiltered.filter((v) => {
+            const utype = String(v.utype || "").toUpperCase();
+            return utype === "S";
+          });
+          log("Student role: filtered videos to show only utype='S'", { count: videosFiltered.length });
+        } else if (roleUpper === "ADMIN") {
+          log("Admin role: showing all videos (O and S)", { count: videosFiltered.length });
+          // Admin sees all - no filtering
+        }
+        
+        log("Content filtered by type", {
+          ebooks: ebooksFiltered.length,
+          videos: videosFiltered.length,
+          webresources: webresourcesFiltered.length,
+          materials: materialsFiltered.length,
+          role: currentRole
+        });
+        
+        setEBOOKS(ebooksFiltered);
+        setVideos(videosFiltered);
+        setwebresources(webresourcesFiltered);
+        setMaterials(materialsFiltered);
 
         const cid = parseInt(courseId);
-        setLiveClasses((allLiveClasses || []).filter((lc) => lc.examinationID === cid));
+        const filteredLiveClasses = (allLiveClasses || []).filter((lc) => lc.examinationID === cid);
+        log("Filtered live classes for course", { courseId: cid, totalClasses: allLiveClasses?.length, filteredCount: filteredLiveClasses.length });
+        setLiveClasses(filteredLiveClasses);
       } catch (err) {
         console.error("[ICVP] Content bundle load failed", err);
       }
@@ -832,6 +985,7 @@ function InstructorCourseViewPage() {
 
   // Build unit tabs from rawContent (handles Title/title casing)
   useEffect(() => {
+    log("Building unit tabs from rawContent", { rawContentLength: rawContent?.length });
     const toStr = (v) => (v == null ? "" : String(v).trim());
 
     // be liberal about keys coming from the API
@@ -878,10 +1032,18 @@ function InstructorCourseViewPage() {
     };
     const sortedUnits = Array.from(unitSet).sort((a, b) => num(a) - num(b));
 
+    log("Unit tabs built", { 
+      totalUnits: sortedUnits.length, 
+      units: sortedUnits,
+      titleMap,
+      willSetActiveUnit: !activeUnit && sortedUnits.length > 0
+    });
+
     setAllUnits(sortedUnits);
     setUnitTitleByUnit(titleMap);
 
     if (!activeUnit && sortedUnits.length > 0) {
+      log("Setting initial active unit", { unit: sortedUnits[0] });
       setActiveUnit(sortedUnits[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -891,11 +1053,97 @@ function InstructorCourseViewPage() {
     <div className="text-muted text-center py-3">No {label} available.</div>
   );
 
-  const filteredByUnit = (data) => data.filter((item) => item.unit?.trim() === activeUnit);
+  const filteredByUnit = (data) => {
+    const filtered = data.filter((item) => item.unit?.trim() === activeUnit);
+    log("Filtered data by unit", { activeUnit, beforeCount: data.length, afterCount: filtered.length });
+    return filtered;
+  };
 
   const filteredEbooks = filteredByUnit(ebooks);
   const filteredVideos = filteredByUnit(videos);
   const filteredWebResources = filteredByUnit(webresources);
+  
+  // For Admin: separate videos by utype
+  const isAdmin = role?.toUpperCase() === "ADMIN";
+  const studentVideos = isAdmin ? filteredVideos.filter(v => String(v.utype || "").toUpperCase() === "S") : [];
+  const otherVideos = isAdmin ? filteredVideos.filter(v => String(v.utype || "").toUpperCase() === "O") : [];
+  
+  log("Content filtered for active unit", { 
+    activeUnit, 
+    ebooks: filteredEbooks.length, 
+    videos: filteredVideos.length,
+    studentVideos: studentVideos.length,
+    otherVideos: otherVideos.length,
+    webresources: filteredWebResources.length,
+    isAdmin
+  });
+
+  // Helper function to render video sections
+  const renderVideoSection = (title, key, data, color, icon) => {
+    log(`Rendering video section: ${title}`, { itemCount: data.length, key });
+    return (
+      <div key={key} ref={key === "videos" ? sectionRefs.videos : null} className={`card shadow-sm mb-4 section-card animate-section border-${color}`}>
+        <div className={`card-header bg-${color} text-white`}>
+          <h6 className="mb-0">
+            <i className={`${icon} me-2 mr-2`}></i>
+            {title}
+          </h6>
+        </div>
+        <div className="card-body">
+          {data.length === 0 ? (
+            renderEmptyMessage(title)
+          ) : (
+            <div className="row">
+              {data.map((item, idx) => {
+                const playableUrl = getPlayableVideoUrl(item);
+                const idKey = item.id ?? item.contentId ?? item.examid ?? playableUrl ?? idx;
+                const progressKey = `video-progress-${playableUrl}`;
+                const progress = parseInt(localStorage.getItem(progressKey)) || 0;
+                const thisItemId = item.id ?? item.contentId ?? item.Id ?? item.ContentId;
+
+                return (
+                  <div className="col-md-6 col-lg-4 mb-3" key={idKey}>
+                    <div className="resource-card welcome-card animate-welcome h-100" style={{ position: "relative" }}>
+                      {/* Delete icon (only for non-students) */}
+                      {role !== "Student" && (
+                        <button
+                          type="button"
+                          className="delete-btn text-danger btn btn-link p-0"
+                          title="Delete content"
+                          onClick={(e) => handleDeleteContent(item, e)}
+                          disabled={deletingId === thisItemId}
+                          aria-label="Delete content"
+                          style={{ lineHeight: 0 }}
+                        >
+                          <i className="fa fa-trash" aria-hidden="true"></i>
+                        </button>
+                      )}
+
+                      <div className="card-body d-flex flex-column">
+                        <h6 className="fw-bold">{item.title}</h6>
+                        <p className="text-muted flex-grow-1">{item.description}</p>
+                        {item.utype && (
+                          <span className={`badge ${item.utype?.toUpperCase() === 'S' ? 'bg-success' : 'bg-info'} text-white mb-2`}>
+                            {item.utype?.toUpperCase() === 'S' ? 'Student' : 'Faculty'} Content
+                          </span>
+                        )}
+                        <button
+                          className="btn btn-sm btn-outline-info mt-auto"
+                          onClick={() => handleWatchVideo(item)}
+                        >
+                          Watch Video
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -992,11 +1240,27 @@ function InstructorCourseViewPage() {
             )}
 
             {/* Section Mapping */}
+            {/* For Admin: Show Student Videos and Other Videos separately */}
+            {isAdmin ? (
+              <>
+                {/* Student Videos Section (utype='S') */}
+                {renderVideoSection("Student Videos", "student-videos", studentVideos, "success", "fas fa-graduation-cap")}
+                
+                {/* Other Videos Section (utype='O') */}
+                {renderVideoSection("Faculty Videos", "other-videos", otherVideos, "info", "fas fa-chalkboard-teacher")}
+              </>
+            ) : (
+              /* For Faculty/Student: Show single Videos section (already filtered by backend/role) */
+              renderVideoSection("Videos", "videos", filteredVideos, "info", "fas fa-video")
+            )}
+
+            {/* EBOOK and Web Resources - same for all roles */}
             {[
-              { title: "Videos", key: "videos", data: filteredVideos, ref: sectionRefs.videos, color: "info", icon: "fas fa-video" },
               { title: "EBOOK Materials", key: "ebooks", data: filteredEbooks, ref: sectionRefs.ebooks, color: "primary", icon: "fas fa-file-pdf" },
               { title: "Web Resources Materials", key: "webresources", data: filteredWebResources, ref: sectionRefs.webresources, color: "primary", icon: "fas fa-file-pdf" },
-            ].map((section, idx) => (
+            ].map((section, idx) => {
+              log(`Rendering section: ${section.title}`, { itemCount: section.data.length, key: section.key });
+              return (
               <div key={section.key} ref={section.ref} className={`card shadow-sm mb-4 section-card animate-section border-${section.color}`}>
                 <div className={`card-header bg-${section.color} text-white`}>
                   <h6 className="mb-0">
@@ -1077,7 +1341,8 @@ function InstructorCourseViewPage() {
                   )}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
 
           {role === "Student" ? (
