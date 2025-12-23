@@ -35,7 +35,7 @@ function ProfessorsPage() {
     try {
       const token = localStorage.getItem("jwt");
       const res = await fetch(`${API_BASE_URL}/professor/`, {
-        
+
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -105,6 +105,7 @@ function ProfessorsPage() {
   };
 
   const handleUpdate = async (updatedProf) => {
+    console.log("handleUpdate payload:", updatedProf);
     const token = localStorage.getItem("jwt");
     await fetch(`${API_BASE_URL}/professor/${updatedProf.userId}`, {
       method: "PUT",
@@ -122,6 +123,7 @@ function ProfessorsPage() {
   };
 
   const handleAssignCoursesToProfessor = async (assignedCourseIds) => {
+    console.log("handleAssignCoursesToProfessor payload:", { courseIds: assignedCourseIds, selectedProfessor });
     if (!selectedProfessor) return alert("Please select a professor");
 
     try {
@@ -144,38 +146,39 @@ function ProfessorsPage() {
       console.error("Error:", error);
     }
   };
-// ProfessorsPage.js (or wherever you define onSubmit)
-const handleAdd = async (payload) => {
-  const token = localStorage.getItem("jwt");
+  // ProfessorsPage.js (or wherever you define onSubmit)
+  const handleAdd = async (payload) => {
+    console.log("handleAdd payload:", payload);
+    const token = localStorage.getItem("jwt");
 
-  // normalize base (no trailing slash)
-  const base = String(API_BASE_URL || "").replace(/\/+$/, "");
+    // normalize base (no trailing slash)
+    const base = String(API_BASE_URL || "").replace(/\/+$/, "");
 
-  // if base already ends with /api, use it; otherwise add /api
-  const url = /\/api$/i.test(base)
-    ? `${base}/Professor`        // e.g., https://localhost:7099/api/Professor
-    : `${base}/api/Professor`;   // e.g., https://localhost:7099/api/Professor
+    // if base already ends with /api, use it; otherwise add /api
+    const url = /\/api$/i.test(base)
+      ? `${base}/Professor`        // e.g., https://localhost:7099/api/Professor
+      : `${base}/api/Professor`;   // e.g., https://localhost:7099/api/Professor
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
 
-  const bodyText = await res.text(); // read body for details in case of error
-  if (!res.ok) {
-    if (res.status === 409) {
-      // Always throw a plain error with only the friendly message
-      throw new Error("Duplicate entries detected. Please provide a unique email address and phone number.");
+    const bodyText = await res.text(); // read body for details in case of error
+    if (!res.ok) {
+      if (res.status === 409) {
+        // Always throw a plain error with only the friendly message
+        throw new Error("Duplicate entries detected. Please provide a unique email address and phone number.");
+      }
+      console.error("❌ POST /Professor failed:", res.status, bodyText);
+      throw new Error(bodyText || `HTTP ${res.status}`);
     }
-    console.error("❌ POST /Professor failed:", res.status, bodyText);
-    throw new Error(bodyText || `HTTP ${res.status}`);
-  }
-  return bodyText ? JSON.parse(bodyText) : null;
-};
+    return bodyText ? JSON.parse(bodyText) : null;
+  };
 
 
 
@@ -201,141 +204,141 @@ const handleAdd = async (payload) => {
       <HeaderTop />
       <RightSidebar />
       <LeftSidebar />
-       
+
       <div className="section-wrapper">
-      <div className="page admin-dashboard pt-0">
-        <div className="section-body mt-3 pt-0">
-          <div className="container-fluid">
-            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
-              <div>
-                <h2 className="page-title text-primary pt-0 dashboard-hero-title">
-                  <FaChalkboardTeacher /> Manage Faculty
-                </h2>
-                <p className="text-muted mb-0 dashboard-hero-sub">
-                  View, add, and manage all Faculty in the system.
-                </p>
+        <div className="page admin-dashboard pt-0">
+          <div className="section-body mt-3 pt-0">
+            <div className="container-fluid">
+              <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+                <div>
+                  <h2 className="page-title text-primary pt-0 dashboard-hero-title">
+                    <FaChalkboardTeacher /> Manage Faculty
+                  </h2>
+                  <p className="text-muted mb-0 dashboard-hero-sub">
+                    View, add, and manage all Faculty in the system.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="d-flex flex-row justify-content-end">
-              {/* <a
+              <div className="d-flex flex-row justify-content-end">
+                {/* <a
                 href="/users-dashboard"
                 className="btn btn-outline-primary mt-2 mt-md-0 mb-2"
               >
                 <i className="fa fa-arrow-left mr-1"></i> Back
               </a> */}
 
-              <button
-                onClick={() => window.history.back()}
-                className="btn btn-outline-primary mt-2 mt-md-0 mb-2"
-              >
-                <i className="fa fa-arrow-left mr-1"></i> Back
-              </button>
-
-            </div>
-          </div>
-        </div>
-
-
-        <div className="section-body mt-2">
-          <div className="container-fluid">
-            <div className="welcome-card animate-welcome">
-              <div className="card-header bg-primary text-white d-flex align-items-center">
-                <FaChalkboardTeacher className="mr-2 mt-2" />
-                <h6 className="mb-0">Faculty Management</h6>
-              </div>
-              
-              
-              <div className="card-body">
-                <div className="d-flex justify-content-between mb-3">
-                  <input
-                    type="text"
-                    placeholder="Search by name, phone, email, or department..."
-                    className="form-control w-50"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-
-                  <button className="btn btn-primary" onClick={handleAddNew}>
-                    <i className="fa fa-plus mr-1"></i> Add Faculty
-                  </button>
-                </div>
-                
-                <div className="semester-panel-body">
-                {loading ? (
-                  <div className="text-center p-5">Loading faculty...</div>
-                ) : (
-                  <ProfessorsTable
-                    professors={filteredProfessors}
-                    onView={handleView}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onAssignCourses={handleAssignCourses}
-                  />
-                )}
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {showAddEditModal && (
-          <div
-            className="modal show fade d-block"
-            tabIndex="-1"
-            role="dialog"
-            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          >
-            <div className="modal-dialog modal-lg" role="document">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">
-                    {mode === "edit"
-                      ? "Edit Faculty"
-                      : mode === "view"
-                        ? "View Faculty"
-                        : "Add Faculty"}
-                  </h5>
-                  <button
-                    type="button"
-                    className="close"
-                    onClick={closeAddEditModal}
-                  >
-                    <span>&times;</span>
-                  </button>
-                </div>
-
-                <div
-                  className="modal-body"
-                  style={{ maxHeight: "70vh", overflowY: "auto" }}
+                <button
+                  onClick={() => window.history.back()}
+                  className="btn btn-outline-primary mt-2 mt-md-0 mb-2"
                 >
-                  <AddProfessor
-                    key={mode + (selectedProfessor?.userId || "new")}
-                    professor={selectedProfessor}
-                    mode={mode}
-                    onSubmit={mode === "edit" ? handleUpdate : handleAdd}
-                    onCancel={closeAddEditModal}
-                  />
+                  <i className="fa fa-arrow-left mr-1"></i> Back
+                </button>
+
+              </div>
+            </div>
+          </div>
+
+
+          <div className="section-body mt-2">
+            <div className="container-fluid">
+              <div className="welcome-card animate-welcome">
+                <div className="card-header bg-primary text-white d-flex align-items-center">
+                  <FaChalkboardTeacher className="mr-2 mt-2" />
+                  <h6 className="mb-0">Faculty Management</h6>
+                </div>
+
+
+                <div className="card-body">
+                  <div className="d-flex justify-content-between mb-3">
+                    <input
+                      type="text"
+                      placeholder="Search by name, phone, email, or department..."
+                      className="form-control w-50"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+
+                    <button className="btn btn-primary" onClick={handleAddNew}>
+                      <i className="fa fa-plus mr-1"></i> Add Faculty
+                    </button>
+                  </div>
+
+                  <div className="semester-panel-body">
+                    {loading ? (
+                      <div className="text-center p-5">Loading faculty...</div>
+                    ) : (
+                      <ProfessorsTable
+                        professors={filteredProfessors}
+                        onView={handleView}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onAssignCourses={handleAssignCourses}
+                      />
+                    )}
+                  </div>
+
                 </div>
               </div>
             </div>
           </div>
-        )}
 
-        {showAssignCoursesModal && (
-          <CourseAssignmentModal
-            professorId={selectedProfessor?.userId}
-            assignedCourseIds={assignedCourseIds}
-            onAssign={() => {
-              refreshProfessors();
-              handleCloseModal();
-            }}
-            onClose={handleCloseModal}
-          />
-        )}
+          {showAddEditModal && (
+            <div
+              className="modal show fade d-block"
+              tabIndex="-1"
+              role="dialog"
+              style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+            >
+              <div className="modal-dialog modal-lg" role="document">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">
+                      {mode === "edit"
+                        ? "Edit Faculty"
+                        : mode === "view"
+                          ? "View Faculty"
+                          : "Add Faculty"}
+                    </h5>
+                    <button
+                      type="button"
+                      className="close"
+                      onClick={closeAddEditModal}
+                    >
+                      <span>&times;</span>
+                    </button>
+                  </div>
 
-         
-      </div>
+                  <div
+                    className="modal-body"
+                    style={{ maxHeight: "70vh", overflowY: "auto" }}
+                  >
+                    <AddProfessor
+                      key={mode + (selectedProfessor?.userId || "new")}
+                      professor={selectedProfessor}
+                      mode={mode}
+                      onSubmit={mode === "edit" ? handleUpdate : handleAdd}
+                      onCancel={closeAddEditModal}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showAssignCoursesModal && (
+            <CourseAssignmentModal
+              professorId={selectedProfessor?.userId}
+              assignedCourseIds={assignedCourseIds}
+              onAssign={() => {
+                refreshProfessors();
+                handleCloseModal();
+              }}
+              onClose={handleCloseModal}
+            />
+          )}
+
+
+        </div>
       </div>
     </div>
   );

@@ -343,7 +343,7 @@ const GroupsTab = ({ isActive }) => {
             {/* Save */}
             <div className="groups-form-col groups-form-save">
               <Button
-                className="rounded-pill px-4 class-save-btn"
+                className="rounded-pill px-4 class-save-btn mt-4"
                 variant="success"
                 onClick={(e) => {
                   e.preventDefault();

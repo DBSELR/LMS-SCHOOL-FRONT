@@ -499,7 +499,7 @@ const SubjectsBankTab = ({ isActive }) => {
                     <Form.Group>
                       <Form.Label>Subject Code</Form.Label>
                       <Form.Control
-                        name="paperCode"
+                        name="paperCode" placeholder="e.g., AP10ET"
                         value={form.paperCode}
                         onChange={handleChange}
                       />
@@ -510,7 +510,7 @@ const SubjectsBankTab = ({ isActive }) => {
                     <Form.Group>
                       <Form.Label>Subject Name</Form.Label>
                       <Form.Control
-                        name="paperName"
+                        name="paperName" placeholder="Enter Subject Name"
                         value={form.paperName}
                         onChange={handleChange}
                       />

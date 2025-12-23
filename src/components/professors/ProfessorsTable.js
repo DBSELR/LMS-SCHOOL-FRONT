@@ -60,9 +60,8 @@ const ProfessorsTable = ({
                 </ul>
 
                 <span
-                  className={`badge px-3 py-2 ${
-                    prof.isActive ? "badge-success" : "badge-danger"
-                  }`}
+                  className={`badge px-3 py-2 ${prof.isActive ? "badge-success" : "badge-danger"
+                    }`}
                 >
                   {prof.isActive ? "Active" : "Inactive"}
                 </span>

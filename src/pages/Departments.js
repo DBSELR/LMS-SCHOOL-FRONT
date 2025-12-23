@@ -116,7 +116,7 @@ function Departments() {
                 <FaUniversity className="me-2 mb-1" /> Manage Departments
               </h2>
               <p className="text-muted mb-0">
-                Add, edit, and manage department information easily
+                Add, edit and manage department information easily
               </p>
             </div>
 

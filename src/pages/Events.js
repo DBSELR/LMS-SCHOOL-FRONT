@@ -57,7 +57,7 @@ function Events() {
           console.error("❌ Fetch error", err);
           toast.error("Error fetching events.");
         })
-        .finally(() => setLoading(false));
+        .finally(() => setLoading(false)); 
     } catch (error) {
       console.error("❌ JWT decode error", error);
       toast.error("Invalid user token.");
