@@ -174,14 +174,14 @@ function Login() {
                 className="form-control mb-2"
                 id="email"
                 name="email"
-                // placeholder="Enter your username"
+                // placeholder="Enter your Mobile Number"
                 value={form.email}
                 onChange={handleChange}
                 required
                 autoComplete="username"
               /* use defaultValue to keep it uncontrolled */
               />
-              <label htmlFor="username">Username</label>
+              <label htmlFor="username">Mobile Number</label>
             </div>
 
 

@@ -101,9 +101,8 @@ function InstructorLiveClassManage() {
       );
       let key = cls.className; // fallback
       if (courseInfo) {
-        key = `Subject: ${courseInfo.paperCode} - ${courseInfo.paperName} (${courseInfo.semester} batch / ${
-          courseInfo.batchName || "N/A"
-        })`;
+        key = `Subject: ${courseInfo.paperCode} - ${courseInfo.paperName} (${courseInfo.semester} batch / ${courseInfo.batchName || "N/A"
+          })`;
       }
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(cls);
@@ -455,9 +454,8 @@ function InstructorLiveClassManage() {
     );
 
     const subjectLine = courseInfo
-      ? `${courseInfo.paperCode} - ${courseInfo.paperName} ( Batch / ${
-          courseInfo.batchName || "N/A"
-        })`
+      ? `${courseInfo.paperCode} - ${courseInfo.paperName} ( Batch / ${courseInfo.batchName || "N/A"
+      })`
       : "Subject info not found";
 
     return (
@@ -637,7 +635,7 @@ function InstructorLiveClassManage() {
 
           <div className="container-fluid">
             <div className="d-flex justify-content-center gap-3 mt-3 mb-3 flex-wrap tab-buttons-container">
-              
+
 
               <button
                 className={`tab-btn ${activeTab === "batch" ? "active" : ""}`}
@@ -822,7 +820,7 @@ function InstructorLiveClassManage() {
             )}
           </div>
 
-           
+
         </div>
       </div>
 

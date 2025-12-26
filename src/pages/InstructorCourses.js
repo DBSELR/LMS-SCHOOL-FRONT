@@ -420,7 +420,7 @@ function CourseCard({ course, navigate, role, userId }) {
         </div>
 
         {/* Schedule Footer */}
-        <div className="mt-3 pt-3 border-top" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+        <div className="mt-0 pt-3 border-top" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
           <small className="text-secondary font-weight-bold d-block mb-1" style={{ fontSize: "0.7rem", textTransform: 'uppercase', letterSpacing: '0.05em' }}>Upcoming</small>
           <div style={{ fontSize: "0.75rem" }}>
             {details.upLiveClass || details.upAExam || details.upTExam ? (

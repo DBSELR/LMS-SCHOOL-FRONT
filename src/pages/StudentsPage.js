@@ -390,22 +390,22 @@ function StudentsPage() {
                 <i className="fa fa-arrow-left mr-1"></i> Back
               </a> */}
 
-              {/* ✅ YOUR NEW TOGGLE BUTTON BLOCK */}
-                      {(activeTab === "batch" || activeTab === "subject") && (
-                        <button
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={toggleAll}
-                          title={allOpen ? "Collapse all" : "Expand all"}
-                          aria-label={allOpen ? "Collapse all" : "Expand all"}
-                          style={{ marginLeft: "10px" }}
-                        >
-                          {allOpen ? (
-                            <i className="fa-solid fa-minimize" />
-                          ) : (
-                            <i className="fa-solid fa-maximize" />
-                          )}
-                        </button>
+                  {/* ✅ YOUR NEW TOGGLE BUTTON BLOCK */}
+                  {(activeTab === "batch" || activeTab === "subject") && (
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={toggleAll}
+                      title={allOpen ? "Collapse all" : "Expand all"}
+                      aria-label={allOpen ? "Collapse all" : "Expand all"}
+                      style={{ marginLeft: "10px" }}
+                    >
+                      {allOpen ? (
+                        <i className="fa-solid fa-minimize" />
+                      ) : (
+                        <i className="fa-solid fa-maximize" />
                       )}
+                    </button>
+                  )}
                   <button
                     onClick={() => window.history.back()}
                     className="btn btn-outline-primary mt-2 mt-md-0 mb-2"
@@ -436,7 +436,7 @@ function StudentsPage() {
                     />
 
                     <div className="d-flex align-items-center mt-2 mt-md-0">
-                      
+
 
                       {["Admin", "Faculty"].includes(role) && (
                         <button
@@ -454,11 +454,10 @@ function StudentsPage() {
                     ([batchSemester, programmes], bsIndex) => (
                       <div key={batchSemester} className="mb-3 p-2">
                         <div
-                          className={`d-flex justify-content-between align-items-center semester-toggle-btn ${
-                            openBatch[bsIndex]
+                          className={`d-flex justify-content-between align-items-center semester-toggle-btn ${openBatch[bsIndex]
                               ? "text-blue"
                               : "text-blue"
-                          }`}
+                            }`}
                           onClick={() =>
                             setOpenBatch((prev) => ({
                               ...prev,
@@ -473,11 +472,10 @@ function StudentsPage() {
                           </div>
 
                           <i
-                            className={`fa ml-2 ${
-                              openBatch[bsIndex]
+                            className={`fa ml-2 ${openBatch[bsIndex]
                                 ? "fa-chevron-up"
                                 : "fa-chevron-down"
-                            }`}
+                              }`}
                           ></i>
                         </div>
 
@@ -499,11 +497,10 @@ function StudentsPage() {
                                     className="mb-2 border p-2"
                                   >
                                     <div
-                                      className={`d-flex justify-content-between align-items-center text-white semester-toggle-btn ${
-                                        openProgramme[programmeKey]
+                                      className={`d-flex justify-content-between align-items-center text-white semester-toggle-btn ${openProgramme[programmeKey]
                                           ? "bg-secondary"
                                           : "bg-dark"
-                                      }`}
+                                        }`}
                                       onClick={() =>
                                         setOpenProgramme((prev) => ({
                                           ...prev,
@@ -518,11 +515,10 @@ function StudentsPage() {
                                         {programmeName}
                                       </div>
                                       <i
-                                        className={`fa ml-2 ${
-                                          openProgramme[programmeKey]
+                                        className={`fa ml-2 ${openProgramme[programmeKey]
                                             ? "fa-chevron-up"
                                             : "fa-chevron-down"
-                                        }`}
+                                          }`}
                                       ></i>
                                     </div>
 
@@ -606,15 +602,14 @@ function StudentsPage() {
                                                         </li>
                                                       </ul>
                                                       <span
-                                                        className={`badge px-3 py-2 ${
-                                                          student.status ===
-                                                          "Active"
+                                                        className={`badge px-3 py-2 ${student.status ===
+                                                            "PAID"
                                                             ? "badge-success"
                                                             : "badge-danger"
-                                                        }`}
+                                                          }`}
                                                       >
                                                         {student.status ||
-                                                          "Inactive"}
+                                                          "UNPAID"}
                                                       </span>
                                                       <div className="mt-3">
                                                         <button
@@ -671,11 +666,10 @@ function StudentsPage() {
                                                     className="mb-2 border p-2"
                                                   >
                                                     <div
-                                                      className={`d-flex justify-content-between align-items-center text-white semester-toggle-btn ${
-                                                        openGroup[groupKey]
+                                                      className={`d-flex justify-content-between align-items-center text-white semester-toggle-btn ${openGroup[groupKey]
                                                           ? "bg-dark"
                                                           : "bg-secondary"
-                                                      }`}
+                                                        }`}
                                                       onClick={() =>
                                                         setOpenGroup(
                                                           (prev) => ({
@@ -696,11 +690,10 @@ function StudentsPage() {
                                                         {groupName}
                                                       </div>
                                                       <i
-                                                        className={`fa ml-2 ${
-                                                          openGroup[groupKey]
+                                                        className={`fa ml-2 ${openGroup[groupKey]
                                                             ? "fa-chevron-up"
                                                             : "fa-chevron-down"
-                                                        }`}
+                                                          }`}
                                                       ></i>
                                                     </div>
 
@@ -713,7 +706,7 @@ function StudentsPage() {
                                                         {Array.isArray(
                                                           studentsList
                                                         ) &&
-                                                        studentsList.length >
+                                                          studentsList.length >
                                                           0 ? (
                                                           studentsList.map(
                                                             (student) => (
@@ -801,15 +794,14 @@ function StudentsPage() {
                                                                       </li>
                                                                     </ul>
                                                                     <span
-                                                                      className={`badge px-3 py-2 ${
-                                                                        student.status ===
-                                                                        "Active"
+                                                                      className={`badge px-3 py-2 ${student.status ===
+                                                                          "PAID"
                                                                           ? "badge-success"
                                                                           : "badge-danger"
-                                                                      }`}
+                                                                        }`}
                                                                     >
                                                                       {student.status ||
-                                                                        "Inactive"}
+                                                                        "UNPAID"}
                                                                     </span>
                                                                     <div className="mt-3">
                                                                       <button
@@ -825,31 +817,31 @@ function StudentsPage() {
                                                                       </button>
                                                                       {role ===
                                                                         "Admin" && (
-                                                                        <>
-                                                                          <button
-                                                                            className="btn btn-sm btn-outline-info mr-2 rounded-pill"
-                                                                            onClick={() =>
-                                                                              handleEdit(
-                                                                                student
-                                                                              )
-                                                                            }
-                                                                          >
-                                                                            <i className="fa fa-edit mr-1"></i>{" "}
-                                                                            Edit
-                                                                          </button>
-                                                                          <button
-                                                                            className="btn btn-sm btn-outline-danger rounded-pill"
-                                                                            onClick={() =>
-                                                                              handleDelete(
-                                                                                student.userId
-                                                                              )
-                                                                            }
-                                                                          >
-                                                                            <i className="fa fa-trash mr-1"></i>{" "}
-                                                                            Delete
-                                                                          </button>
-                                                                        </>
-                                                                      )}
+                                                                          <>
+                                                                            <button
+                                                                              className="btn btn-sm btn-outline-info mr-2 rounded-pill"
+                                                                              onClick={() =>
+                                                                                handleEdit(
+                                                                                  student
+                                                                                )
+                                                                              }
+                                                                            >
+                                                                              <i className="fa fa-edit mr-1"></i>{" "}
+                                                                              Edit
+                                                                            </button>
+                                                                            <button
+                                                                              className="btn btn-sm btn-outline-danger rounded-pill"
+                                                                              onClick={() =>
+                                                                                handleDelete(
+                                                                                  student.userId
+                                                                                )
+                                                                              }
+                                                                            >
+                                                                              <i className="fa fa-trash mr-1"></i>{" "}
+                                                                              Delete
+                                                                            </button>
+                                                                          </>
+                                                                        )}
                                                                     </div>
                                                                   </div>
                                                                 </div>
@@ -898,8 +890,8 @@ function StudentsPage() {
                       {mode === "edit"
                         ? "Edit Student"
                         : mode === "view"
-                        ? "View Student Details"
-                        : "Add New Student"}
+                          ? "View Student Details"
+                          : "Add New Student"}
                     </h5>
                     <button
                       type="button"
@@ -925,7 +917,7 @@ function StudentsPage() {
               </div>
             </div>
           )}
-           
+
         </div>
       </div>
     </div>

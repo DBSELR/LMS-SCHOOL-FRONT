@@ -555,7 +555,7 @@ const SubjectsBankTab = ({ isActive }) => {
                       <tr>
                         <th>Subject Code</th>
                         <th>Subject Name</th>
-                        <th>Units</th>
+                        <th>Chapters</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -570,7 +570,7 @@ const SubjectsBankTab = ({ isActive }) => {
                               size="sm"
                               variant="link"
                               onClick={() => fetchUnitsByExamId(exam)}
-                              title={Number(exam.unitCount) > 0 ? "View Units" : "Add Units"}
+                              title={Number(exam.unitCount) > 0 ? "View Chapters" : "Add Chapters"}
                             >
                               {Number(exam.unitCount) > 0 ? exam.unitCount : "➕"}
                             </Button>
@@ -617,7 +617,7 @@ const SubjectsBankTab = ({ isActive }) => {
         centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>📚 Unit Details</Modal.Title>
+          <Modal.Title>📚 Chapter Details</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
@@ -637,7 +637,7 @@ const SubjectsBankTab = ({ isActive }) => {
               variant={isUnitEditMode ? "secondary" : "warning"}
               onClick={() => setIsUnitEditMode(!isUnitEditMode)}
             >
-              {isUnitEditMode ? "🔒 Cancel Edit" : "✏️ Edit Units"}
+              {isUnitEditMode ? "🔒 Cancel Edit" : "✏️ Edit Chapters"}
             </Button>
           </div>
 
@@ -645,7 +645,7 @@ const SubjectsBankTab = ({ isActive }) => {
             <Table bordered size="sm" className="mb-0">
               <thead>
                 <tr className="text-center">
-                  <th>Unit</th>
+                  <th>Chapters</th>
                   <th>Title</th>
                   <th>Hours</th>
                   <th>Minutes</th>
@@ -659,11 +659,11 @@ const SubjectsBankTab = ({ isActive }) => {
                   const minutes = Number(parts[1]) || 0;
                   return (
                     <tr key={unit.unitId ?? index}>
-                      <td className="text-center">Unit {unit.unitNo ?? index + 1}</td>
+                      <td className="text-center">Chapter {unit.unitNo ?? index + 1}</td>
                       <td>
                         <Form.Control
                           type="text"
-                          placeholder="Enter Unit Title"
+                          placeholder="Enter Chapter Title"
                           value={unit.title}
                           disabled={!isUnitEditMode}
                           onChange={(e) => {

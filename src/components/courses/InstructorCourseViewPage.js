@@ -1171,12 +1171,12 @@ function InstructorCourseViewPage() {
                           </span>
                         )}
 
-                        <h6 className="font-weight-bold text-dark mb-1" style={{ fontSize: "0.95rem", lineHeight: "1.3" }}>
+                        <p className="text-muted mb-1" style={{ fontSize: "0.80rem", lineHeight: "1.3" }}>
                           {item.title}
-                        </h6>
-                        <p className="text-muted flex-grow-1 mb-3" style={{ fontSize: "0.80rem" }}>
-                          {item.description}
                         </p>
+                        <h6 className="font-weight-bold flex-grow-1 mb-3" style={{ fontSize: "0.85rem", color: "#206aba" }}>
+                          {item.description}
+                        </h6>
 
                         <button
                           className="btn btn-sm btn-outline-info rounded-pill w-100 mt-auto"

@@ -87,7 +87,7 @@ function ProfilePage() {
         decoded?.id,
         decoded?.Id,
         decoded?.[
-          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
         ],
       ];
 
@@ -196,9 +196,8 @@ function ProfilePage() {
           userId: data?.userId ?? userId,
           fullName:
             (data && data.fullName) ||
-            `${(data && data.firstName) || ""} ${
-              (data && data.lastName) || ""
-            }`.trim() ||
+            `${(data && data.firstName) || ""} ${(data && data.lastName) || ""
+              }`.trim() ||
             "Unnamed User",
           firstName: (data && data.firstName) || "",
           lastName: (data && data.lastName) || "",
@@ -749,7 +748,7 @@ function ProfilePage() {
                   Change Password
                 </button>
 
-               
+
               </div>
             </div>
 
@@ -758,9 +757,9 @@ function ProfilePage() {
               <div className="idcard-shell">
                 {/* Card gradient header */}
                 <div className="idcard-header">
-                  
+
                   <div className="idcard-header-role">
-                    
+
                   </div>
 
                   <div className="idcard-avatar-wrap">
@@ -875,7 +874,7 @@ function ProfilePage() {
                       </div>
                     </div>
                   </div>
-<div className="idcard-header-badge" style={{background:'#5441e3'}}>
+                  <div className="idcard-header-badge" style={{ background: '#5441e3' }}>
                     {profile?.role || "ROLE / STATUS"} - {profile?.education || "Education not available"}
                   </div>
                   {/* action buttons */}
@@ -883,8 +882,8 @@ function ProfilePage() {
                     {profile && !editMode && (
                       <button
                         className="idcard-btn idcard-btn-edit"
-                        // onClick={() => setEditMode(true)}
-                        // disabled={updateLoading}
+                      // onClick={() => setEditMode(true)}
+                      // disabled={updateLoading}
                       >
                         ✏ Edit Profile
                       </button>
@@ -998,7 +997,7 @@ function ProfilePage() {
           </div>
         </div>
 
-         
+
       </div>
 
       {/* PASSWORD MODAL */}
@@ -1086,7 +1085,7 @@ function ProfilePage() {
                       style={{ fontSize: ".8rem" }}
                     />
                   </div>
-{/* 
+                  {/* 
                   <div
                     className="text-muted mt-2"
                     style={{

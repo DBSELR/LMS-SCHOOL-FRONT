@@ -31,7 +31,7 @@ const groupStudentsWithCourses = (students) => {
 const StudentTable = ({ students, onEdit, onDelete, onView }) => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
-   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [viewMode, setViewMode] = useState(false);
   const [role, setRole] = useState("");
   const [userName, setUserName] = useState("");
@@ -80,7 +80,7 @@ const StudentTable = ({ students, onEdit, onDelete, onView }) => {
 
         setRole(resolvedRole);
         setUserName(name);
-        console.log("Role :: ",resolvedRole)
+        console.log("Role :: ", resolvedRole)
       } catch (err) {
         console.error("Token decode failed", err);
       }
@@ -141,37 +141,36 @@ const StudentTable = ({ students, onEdit, onDelete, onView }) => {
                 </ul>
 
                 <span
-                  className={`badge px-3 py-2 ${
-                    student.status === "Active"
-                      ? "badge-success"
-                      : "badge-danger"
-                  }`}
+                  className={`badge px-3 py-2 ${student.status === "PAID"
+                    ? "badge-success"
+                    : "badge-danger"
+                    }`}
                 >
-                  {student.status || "Inactive"}
+                  {student.status || "UNPAID"}
                 </span>
                 <div className="mt-3">
-                 <button
-  className="btn btn-sm btn-outline-primary mr-2"
-  onClick={() => onView(student)} 
->
-  <i className="fa fa-eye mr-1"></i> View
-</button>
-
-                  {(role === "Admin" ) && (
-                <button
-                  className="btn btn-sm btn-outline-info mr-2 rounded-pill"
-                  onClick={() => onEdit(student)}
-                >
-                  <i className="fa fa-edit mr-1"></i> Edit
-                </button>
-              )}
-               {(role === "Admin" ) && (
-                  <button 
-                    className="btn btn-sm btn-outline-danger rounded-pill"
-                    onClick={() => handleDeleteClick(student.userId)}
+                  <button
+                    className="btn btn-sm btn-outline-primary mr-2"
+                    onClick={() => onView(student)}
                   >
-                    <i className="fa fa-trash mr-1"></i> Delete
-                  </button>)}
+                    <i className="fa fa-eye mr-1"></i> View
+                  </button>
+
+                  {(role === "Admin") && (
+                    <button
+                      className="btn btn-sm btn-outline-info mr-2 rounded-pill"
+                      onClick={() => onEdit(student)}
+                    >
+                      <i className="fa fa-edit mr-1"></i> Edit
+                    </button>
+                  )}
+                  {(role === "Admin") && (
+                    <button
+                      className="btn btn-sm btn-outline-danger rounded-pill"
+                      onClick={() => handleDeleteClick(student.userId)}
+                    >
+                      <i className="fa fa-trash mr-1"></i> Delete
+                    </button>)}
                 </div>
               </div>
             </div>

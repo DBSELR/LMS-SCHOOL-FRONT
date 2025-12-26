@@ -22,7 +22,7 @@ function log(...args) {
   console.log(`[ROLE-MENU ${ts()}]`, ...args);
 }
 function group(label) {
-  if (!DEBUG) return { end: () => {} };
+  if (!DEBUG) return { end: () => { } };
   console.groupCollapsed(`🧭 ${label}`);
   return { end: () => console.groupEnd() };
 }
@@ -48,7 +48,7 @@ function logResponse(label, res, ms, textPeek) {
   console.log("Duration:", `${ms.toFixed(1)} ms`);
   try {
     console.log("Peek (first 300 chars):", (textPeek || "").slice(0, 300));
-  } catch {}
+  } catch { }
   console.groupEnd();
 }
 async function apiFetch(label, url, options = {}) {
@@ -76,7 +76,7 @@ async function apiFetch(label, url, options = {}) {
   let json;
   try {
     json = text ? JSON.parse(text) : undefined;
-  } catch {}
+  } catch { }
   return { res, json, text, elapsed };
 }
 /* =========================== END DEBUG CONSOLE =========================== */
@@ -179,31 +179,31 @@ function RoleMenuMapping() {
     try {
       console.log("🚀 [DEBUG] Making API call to GetMainMenu");
       console.log("🚀 [DEBUG] Auth headers:", authHeaders());
-      
+
       const { res, json } = await apiFetch(label, "https://localhost:7099/api/RoleMenu/GetMainMenu", {
         headers: { ...authHeaders() },
       });
-      
+
       console.log("🚀 [DEBUG] API response:", {
         ok: res.ok,
         status: res.status,
         statusText: res.statusText
       });
       console.log("🚀 [DEBUG] Raw JSON response:", json);
-      
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const list = Array.isArray(json) ? json : [];
       console.log("🚀 [DEBUG] Converted to array, length:", list.length);
       console.log("🚀 [DEBUG] First few items:", list.slice(0, 3));
-      
+
       // Sort by mord (menu order)
       const sortedList = list.sort((a, b) => a.mord - b.mord);
       console.log("🚀 [DEBUG] Sorted list, first few items:", sortedList.slice(0, 3));
       console.log("🚀 [DEBUG] Setting mainMenus and orderedMenus state");
-      
+
       setMainMenus(sortedList);
       setOrderedMenus(sortedList);
-      
+
       if (DEBUG) {
         const g = group("Main Menus Loaded");
         console.table(sortedList);
@@ -417,36 +417,36 @@ function RoleMenuMapping() {
   // ✅ Handle drag and drop for menu ordering
   const handleMenuDragEnd = (result) => {
     console.log("🚀 [DEBUG] handleMenuDragEnd called with result:", result);
-    
+
     if (!result.destination) {
       console.log("🚀 [DEBUG] No destination, returning early");
       return;
     }
-    
+
     console.log("🚀 [DEBUG] Source index:", result.source.index);
     console.log("🚀 [DEBUG] Destination index:", result.destination.index);
     console.log("🚀 [DEBUG] Current orderedMenus length:", orderedMenus.length);
-    
+
     const newOrderedMenus = Array.from(orderedMenus);
     console.log("🚀 [DEBUG] Created copy of orderedMenus");
-    
+
     const [reorderedItem] = newOrderedMenus.splice(result.source.index, 1);
     console.log("🚀 [DEBUG] Removed item from source:", reorderedItem?.mainMenuName);
-    
+
     newOrderedMenus.splice(result.destination.index, 0, reorderedItem);
     console.log("🚀 [DEBUG] Inserted item at destination");
-    
+
     // Update the mord (menu order) based on new positions
     const updatedMenus = newOrderedMenus.map((menu, index) => ({
       ...menu,
       mord: index + 1
     }));
-    
+
     console.log("🚀 [DEBUG] Updated menus with new order:", updatedMenus.map(m => ({ name: m.mainMenuName, mord: m.mord, mMId: m.mMId })));
-    
+
     setOrderedMenus(updatedMenus);
     console.log("🚀 [DEBUG] Updated orderedMenus state");
-    
+
     if (DEBUG) {
       log("🔄 Menu reordered:", reorderedItem.mainMenuName, "to position", result.destination.index + 1);
     }
@@ -457,10 +457,10 @@ function RoleMenuMapping() {
     console.log("🚀 [DEBUG] openMenuOrderModal called");
     console.log("🚀 [DEBUG] Current mainMenus length:", mainMenus.length);
     console.log("🚀 [DEBUG] Current orderedMenus length:", orderedMenus.length);
-    
+
     fetchMainMenus();
     setShowOrderModal(true);
-    
+
     console.log("🚀 [DEBUG] Modal state set to true");
     if (DEBUG) log("🪟 Opening menu order modal");
   };
@@ -470,7 +470,7 @@ function RoleMenuMapping() {
     console.log("🚀 [DEBUG] saveMenuOrder called");
     console.log("🚀 [DEBUG] orderedMenus length:", orderedMenus.length);
     console.log("🚀 [DEBUG] orderedMenus:", orderedMenus);
-    
+
     try {
       const updates = orderedMenus.map((menu, index) => ({
         mMId: menu.mMId,
@@ -488,15 +488,15 @@ function RoleMenuMapping() {
 
       // Update each menu's order with detailed logging
       console.log("🚀 [DEBUG] Starting Promise.all for updates...");
-      
+
       const results = await Promise.all(
         updates.map(async (update, index) => {
           console.log(`🚀 [DEBUG] Processing update ${index + 1}/${updates.length}:`, update);
-          
+
           const url = `https://localhost:7099/api/RoleMenu/UpdateMenuorder/${update.mMId}/${update.displayOrder}`;
           console.log(`🚀 [DEBUG] Request URL:`, url);
           console.log(`🚀 [DEBUG] Auth headers:`, authHeaders());
-          
+
           try {
             const { res, json, text, elapsed } = await apiFetch(
               `Update Menu Order ${update.mMId}`,
@@ -506,7 +506,7 @@ function RoleMenuMapping() {
                 headers: { ...authHeaders() },
               }
             );
-            
+
             console.log(`🚀 [DEBUG] Response for mMId ${update.mMId}:`, {
               status: res.status,
               statusText: res.statusText,
@@ -515,7 +515,7 @@ function RoleMenuMapping() {
               responseText: text,
               responseJson: json
             });
-            
+
             if (!res.ok) {
               console.error(`🚀 [DEBUG] Failed response for mMId ${update.mMId}:`, {
                 status: res.status,
@@ -524,7 +524,7 @@ function RoleMenuMapping() {
               });
               throw new Error(`Failed to update menu ${update.mMId} - Status: ${res.status} ${res.statusText}`);
             }
-            
+
             console.log(`🚀 [DEBUG] Successfully updated mMId ${update.mMId}`);
             return { success: true, mMId: update.mMId };
           } catch (error) {
@@ -537,10 +537,10 @@ function RoleMenuMapping() {
       console.log("🚀 [DEBUG] All updates completed successfully:", results);
       toast.success("Menu order updated successfully!");
       setShowOrderModal(false);
-      
+
       if (DEBUG) log("✅ Menu order saved successfully");
       console.log("🚀 [DEBUG] saveMenuOrder completed successfully");
-      
+
     } catch (err) {
       console.error("🚀 [DEBUG] Error in saveMenuOrder:", err);
       console.error("🚀 [DEBUG] Error stack:", err.stack);
@@ -557,85 +557,85 @@ function RoleMenuMapping() {
 
       <div className="section-wrapper">
         <div className="page admin-dashboard pt-0">
-        <div className="section-body mt-3 pt-0">
-          <div className="container-fluid" style={{ paddingRight: "0px", paddingLeft: "0px" }}>
-            {/* Jumbotron Header */}
-            <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
-              <h2 className="page-title text-primary pt-0 dashboard-hero-title">
-                <i className="fa-solid fa-diagram-project"></i> Role Menu Mapping
-              </h2>
-              <p className="text-muted mb-0 dashboard-hero-sub">Assign menus to roles and manage mappings</p>
-            </div>
-
-            {/* Card Section */}
-            <div className="card shadow-sm mb-4">
-              <div
-                className="card-header bg-primary text-white d-flex"
-                style={{
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "15px",
-                }}
-              >
-                <h6 className="mb-0">
-                  <i className="fa fa-list mr-2"></i> Role Menu Mapping
-                </h6>
-                <div className="d-flex gap-2">
-                  <button className="btn btn-info btn-sm me-2" onClick={openMenuOrderModal}>
-                    <i className="fa fa-arrows-alt"></i> Manage Menu Order
-                  </button>
-                  <button className="btn btn-light btn-sm" onClick={() => openModal()}>
-                    <i className="fa fa-plus"></i> Add Mapping
-                  </button>
-                </div>
+          <div className="section-body mt-3 pt-0">
+            <div className="container-fluid" style={{ paddingRight: "0px", paddingLeft: "0px" }}>
+              {/* Jumbotron Header */}
+              <div className="jumbotron bg-light rounded shadow-sm mb-3 welcome-card dashboard-hero">
+                <h2 className="page-title text-primary pt-0 dashboard-hero-title">
+                  <i className="fa-solid fa-diagram-project"></i> Role Menu Mapping
+                </h2>
+                <p className="text-muted mb-0 dashboard-hero-sub">Assign menus to roles and manage mappings</p>
               </div>
 
-              <div className="card-body">
-                <table className="table table-bordered table-striped">
-                  <thead>
-                    <tr>
-                      <th>Role</th>
-                      <th>Menus</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mappings.length > 0 ? (
-                      mappings.map((map) => (
-                        <tr key={map.roleId}>
-                          <td>{map.roleName}</td>
-                          <td>{map.menus || "-"}</td>
-                          <td>
-                            <button
-                              className="btn btn-warning btn-sm me-2"
-                              onClick={() => openModal(map)}
-                            >
-                              <i className="fa fa-edit"></i> Edit
-                            </button>
-                            {/* <button
+              {/* Card Section */}
+              <div className="card shadow-sm mb-4">
+                <div
+                  className="card-header bg-primary text-white d-flex"
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "15px",
+                  }}
+                >
+                  <h6 className="mb-0">
+                    <i className="fa fa-list mr-2"></i> Role Menu Mapping
+                  </h6>
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-info btn-sm me-2" onClick={openMenuOrderModal}>
+                      <i className="fa fa-arrows-alt"></i> Manage Menu Order
+                    </button>
+                    <button className="btn btn-light btn-sm" onClick={() => openModal()}>
+                      <i className="fa fa-plus"></i> Add Mapping
+                    </button>
+                  </div>
+                </div>
+
+                <div className="card-body">
+                  <table className="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>Role</th>
+                        <th>Menus</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mappings.length > 0 ? (
+                        mappings.map((map) => (
+                          <tr key={map.roleId}>
+                            <td>{map.roleName}</td>
+                            <td>{map.menus || "-"}</td>
+                            <td>
+                              <button
+                                className="btn btn-warning btn-sm me-2"
+                                onClick={() => openModal(map)}
+                              >
+                                <i className="fa fa-edit"></i> Edit
+                              </button>
+                              {/* <button
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(map.roleId)}
                             >
                               <i className="fa fa-trash"></i> Delete
                             </button> */}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="3" className="text-center">
+                            No mappings found
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className="text-center">
-                          No mappings found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
-         
-      </div>
 
       </div>
 
@@ -800,8 +800,8 @@ function RoleMenuMapping() {
           {/* Debug info */}
           <div className="mb-2 p-2 bg-light border rounded">
             <small className="text-muted">
-              <strong>Debug Info:</strong> orderedMenus.length = {orderedMenus.length} | 
-              mainMenus.length = {mainMenus.length} | 
+              <strong>Debug Info:</strong> orderedMenus.length = {orderedMenus.length} |
+              mainMenus.length = {mainMenus.length} |
               Modal visible = {showOrderModal.toString()}
             </small>
           </div>
@@ -832,9 +832,8 @@ function RoleMenuMapping() {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`d-flex align-items-center p-3 mb-2 border rounded ${
-                              snapshot.isDragging ? "bg-light shadow" : "bg-white"
-                            }`}
+                            className={`d-flex align-items-center p-3 mb-2 border rounded ${snapshot.isDragging ? "bg-light shadow" : "bg-white"
+                              }`}
                             style={{
                               ...provided.draggableProps.style,
                               cursor: "grab",
